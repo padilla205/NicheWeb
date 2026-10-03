@@ -1,7 +1,12 @@
-import { Plus, Shirt } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Shirt } from 'lucide-react'
+import { AddItemButton } from './AddItemButton'
 
-export function ClosetEmpty() {
+type ClosetEmptyProps = {
+  addOpen: boolean
+  onAdd: (button: HTMLElement) => void
+}
+
+export function ClosetEmpty({ addOpen, onAdd }: ClosetEmptyProps) {
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-20 text-center">
       <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
@@ -11,10 +16,7 @@ export function ClosetEmpty() {
       <p className="mt-1 mb-6 text-sm text-muted-foreground">
         Agrega tu primera prenda para empezar.
       </p>
-      <Button>
-        <Plus />
-        Agregar prenda
-      </Button>
+      <AddItemButton hidden={addOpen} onOpen={onAdd} />
     </div>
   )
 }
