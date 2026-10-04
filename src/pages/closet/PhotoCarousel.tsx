@@ -47,8 +47,10 @@ export function PhotoCarousel({
       <motion.div
         layoutId={`item-photo-${itemId}`}
         layoutCrossfade={false}
-        className="relative size-full overflow-hidden bg-muted"
+        className="relative size-full overflow-hidden"
       >
+        {/* Sin fondo gris propio: si la foto tarda un instante en dibujarse, se ve el color de la
+            tarjeta y no un destello mas claro */}
         {/* Al cambiar de foto, la actual sale por un lado mientras la nueva entra por el otro */}
         <AnimatePresence initial={false} custom={direction}>
           <motion.img
@@ -61,6 +63,8 @@ export function PhotoCarousel({
             animate="center"
             exit="exit"
             transition={slideTransition}
+            // Pide al navegador tener la foto lista antes de pintar, para que no aparezca vacia al abrir
+            decoding="sync"
             className="absolute inset-0 size-full object-cover"
           />
         </AnimatePresence>
