@@ -31,8 +31,11 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
         className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs"
       />
       <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* layoutCrossfade={false}: al abrir, el detalle se ve solido desde el primer instante.
+            Si se mezclara con la tarjeta (que ya esta oculta) se veria transparente y parpadearia */}
         <motion.div
           layoutId={`item-${item.id}`}
+          layoutCrossfade={false}
           role="dialog"
           aria-modal
           aria-labelledby="item-detail-title"

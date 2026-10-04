@@ -46,6 +46,7 @@ export function PhotoCarousel({
       {/* Comparte "layoutId" entre tarjeta y detalle para que la foto crezca al abrir */}
       <motion.div
         layoutId={`item-photo-${itemId}`}
+        layoutCrossfade={false}
         className="relative size-full overflow-hidden bg-muted"
       >
         {/* Al cambiar de foto, la actual sale por un lado mientras la nueva entra por el otro */}
