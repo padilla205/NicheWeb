@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { AnimatePresence, motion, useAnimate, usePresence, useReducedMotion } from 'motion/react'
 import { type FormEvent, useEffect, useLayoutEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -223,9 +223,14 @@ function AddItemForm({ onDone }: { onDone: () => void }) {
                 onClick={() => toggleSeason(season.value)}
                 className={cn(
                   'rounded-full',
-                  active && 'border-primary bg-primary text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground',
+                  // Seleccionado: en modo claro borde marcado y fondo apenas iluminado; en modo oscuro
+                  // fondo blanco con letras negras. Las variantes dark: van completas porque las del
+                  // boton outline pesan mas
+                  active &&
+                    'border-primary bg-primary/10 hover:bg-primary/15 dark:border-white dark:bg-white dark:text-black dark:hover:bg-white/90 dark:hover:text-black',
                 )}
               >
+                {active && <Check />}
                 {season.label}
               </Button>
             )
