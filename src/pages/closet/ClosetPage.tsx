@@ -24,7 +24,7 @@ export function ClosetPage() {
     // Aperturas con un ligero rebote en unos 300 ms; si el sistema pide menos movimiento, se respeta
     <MotionConfig transition={{ type: 'spring', visualDuration: 0.3, bounce: 0.15 }} reducedMotion="user">
       <div className="flex items-start justify-between gap-4">
-        <PageTitle title="Closet" description="Aqui veras todas tus prendas." />
+        <PageTitle title="Closet" />
         <div className="flex gap-2">
           <ClosetFilters selected={selectedTypes} onChange={setSelectedTypes} />
           <AddItemButton
