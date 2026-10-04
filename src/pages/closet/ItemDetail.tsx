@@ -1,6 +1,6 @@
 import { X } from 'lucide-react'
 import { motion } from 'motion/react'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { type ClosetItem, getColorInfo, getSeasonLabel, getTypeInfo } from '@/lib/clothing'
@@ -18,7 +18,17 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
   const { label: typeLabel, zoneLabel } = getTypeInfo(item.type)
   const title = item.name || typeLabel
 
+  // El texto y la X se muestran solo cuando la ventana termino de crecer desde el cuadrito.
+  // Si aparecieran antes, se verian encogidos ("letras mini") mientras la ventana crece
+  const [settled, setSettled] = useState(false)
+
   useModalBehavior(onClose)
+
+  // Respaldo por si la animacion no avisa que termino (por ejemplo, con movimiento reducido)
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(true), 500)
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <>
@@ -36,6 +46,7 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
         <motion.div
           layoutId={`item-${item.id}`}
           layoutCrossfade={false}
+          onLayoutAnimationComplete={() => setSettled(true)}
           role="dialog"
           aria-modal
           aria-labelledby="item-detail-title"
@@ -51,10 +62,10 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
             className="aspect-square w-full md:aspect-auto md:h-full md:min-h-96"
           />
 
-          {/* La informacion aparece un instante despues de que la tarjeta se abre */}
+          {/* La informacion aparece en cuanto la tarjeta termina de abrirse */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { delay: 0.1, duration: 0.2 } }}
+            animate={{ opacity: settled ? 1 : 0, transition: { duration: 0.15 } }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
             className="flex flex-col gap-5 p-6"
           >
@@ -112,16 +123,17 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
             </DetailSection>
           </motion.div>
 
-          <Button
-            variant="secondary"
-            size="icon-sm"
-            onClick={onClose}
-            autoFocus
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: settled ? 1 : 0, transition: { duration: 0.15 } }}
+            exit={{ opacity: 0, transition: { duration: 0.1 } }}
             className="absolute top-3 right-3"
           >
-            <X />
-            <span className="sr-only">Cerrar</span>
-          </Button>
+            <Button variant="secondary" size="icon-sm" onClick={onClose} autoFocus>
+              <X />
+              <span className="sr-only">Cerrar</span>
+            </Button>
+          </motion.div>
         </motion.div>
       </div>
     </>
