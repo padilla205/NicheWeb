@@ -102,8 +102,9 @@ function AddItemPanel({ origin, onClose }: { origin: HTMLElement; onClose: () =>
           aria-describedby="add-item-description"
           style={{ opacity: 0, borderRadius: PANEL_RADIUS }}
           // Mientras se cierra ya no recibe clics, para no bloquear la pagina
+          // La ventana se sigue pudiendo desplazar, pero sin mostrar la barrita de scroll
           className={cn(
-            'relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto border bg-popover p-4 text-sm text-popover-foreground',
+            'relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border bg-popover p-4 text-sm text-popover-foreground',
             isPresent ? 'pointer-events-auto' : 'pointer-events-none',
           )}
         >
