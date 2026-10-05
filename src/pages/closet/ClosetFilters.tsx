@@ -15,6 +15,13 @@ type ClosetFiltersProps = {
 export function ClosetFilters({ selected, onChange }: ClosetFiltersProps) {
   const [query, setQuery] = useState('')
   const search = normalizeText(query)
+  const visibleZones = clothingZones
+    .map(({ zone, label, types }) => ({
+      zone,
+      label,
+      types: types.filter((type) => normalizeText(type.label).includes(search)),
+    }))
+    .filter(({ types }) => types.length > 0)
 
   function toggle(type: ClothingType, checked: boolean) {
     onChange(checked ? [...selected, type] : selected.filter((t) => t !== type))
@@ -38,9 +45,9 @@ export function ClosetFilters({ selected, onChange }: ClosetFiltersProps) {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-[30rem] gap-3 p-4 ease-out data-closed:duration-150 data-open:duration-200 data-open:zoom-in-90 data-[side=bottom]:slide-in-from-top-3"
+        className="max-h-[var(--radix-popover-content-available-height)] w-[30rem] max-w-[calc(100vw-2rem)] gap-3 p-4 ease-out data-closed:duration-150 data-open:duration-200 data-open:zoom-in-90 data-[side=bottom]:slide-in-from-top-3"
       >
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
           <h2 className="font-medium">Tipo de prenda</h2>
           <div className="flex items-center gap-1">
             <ExpandableSearch
@@ -59,42 +66,38 @@ export function ClosetFilters({ selected, onChange }: ClosetFiltersProps) {
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md bg-border">
-          {clothingZones.map(({ zone, label, types }) => {
-            const visibleTypes = types.filter((type) =>
-              normalizeText(type.label).includes(search),
-            )
-            return (
-              <div
-                key={zone}
-                role="group"
-                aria-labelledby={`zona-${zone}`}
-                className="flex flex-col bg-popover p-3"
+        <div className="min-h-0 max-h-80 overflow-y-auto rounded-md border">
+          {visibleZones.length === 0 && (
+            <p className="p-3 text-sm text-muted-foreground">Sin resultados</p>
+          )}
+          {visibleZones.map(({ zone, label, types }) => (
+            <div
+              key={zone}
+              role="group"
+              aria-labelledby={`zona-${zone}`}
+              className="border-b p-2 last:border-b-0"
+            >
+              <h3
+                id={`zona-${zone}`}
+                className="px-2 py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
               >
-                <h3
-                  id={`zona-${zone}`}
-                  className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
-                >
-                  {label}
-                </h3>
-                {/* Si una zona tiene muchas prendas, su lista se desplaza hacia abajo */}
-                <div className="flex max-h-36 flex-col gap-2.5 overflow-y-auto p-0.5 pr-1">
-                  {visibleTypes.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Sin resultados</p>
-                  )}
-                  {visibleTypes.map((type) => (
-                    <label key={type.value} className="flex cursor-pointer items-center gap-2">
+                {label}
+              </h3>
+              <ul className="flex flex-col gap-1">
+                {types.map((type) => (
+                  <li key={type.value}>
+                    <label className="flex min-h-10 cursor-pointer items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-accent has-[[data-state=checked]]:bg-accent">
                       <Checkbox
                         checked={selected.includes(type.value)}
                         onCheckedChange={(checked) => toggle(type.value, checked === true)}
                       />
                       {type.label}
                     </label>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </PopoverContent>
     </Popover>
