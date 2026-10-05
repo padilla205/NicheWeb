@@ -1,7 +1,7 @@
 {
   "name": "niche",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
     "motion": "^14.0.0",
     "radix-ui": "^1.6.7",
     "react": "^19.2.8",
+    "react-colorful": "^5.8.1",
     "react-dom": "^19.2.8",
     "react-router": "^8.4.0",
     "shadcn": "^4.21.1",

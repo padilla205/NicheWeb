@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
 import { currentUser, type Post, samplePosts } from '@/lib/feed'
 
 // TEMPORAL: el feed usa publicaciones de ejemplo en la memoria del navegador hasta que conectemos
@@ -22,6 +22,12 @@ export function usePosts() {
   return useSyncExternalStore(subscribe, () => posts)
 }
 
+// Publicaciones que republicaste, para mostrarlas en tu perfil
+export function useSharedPosts() {
+  const all = usePosts()
+  return useMemo(() => all.filter((post) => post.sharedByMe), [all])
+}
+
 export function useToggleLike() {
   return (id: string) =>
     updatePost(id, (post) => ({
@@ -40,4 +46,8 @@ export function useAddComment() {
         { id: crypto.randomUUID(), author: currentUser, text: text.trim(), createdAt: new Date() },
       ],
     }))
+}
+
+export function useToggleShare() {
+  return (id: string) => updatePost(id, (post) => ({ ...post, sharedByMe: !post.sharedByMe }))
 }

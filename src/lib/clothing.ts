@@ -1,4 +1,4 @@
-// Tipos de prenda agrupados por zona del cuerpo (filtros y, mas adelante, el formulario)
+// Catalogo compartido por los filtros y el formulario de prendas
 export const clothingZones = [
   {
     zone: 'cabeza',
@@ -7,6 +7,9 @@ export const clothingZones = [
       { value: 'gorras', label: 'Gorras' },
       { value: 'gorros', label: 'Gorros' },
       { value: 'sombreros', label: 'Sombreros' },
+      { value: 'boinas', label: 'Boinas' },
+      { value: 'viseras', label: 'Viseras' },
+      { value: 'bandanas', label: 'Bandanas' },
     ],
   },
   {
@@ -18,6 +21,10 @@ export const clothingZones = [
       { value: 'playeras', label: 'Playeras' },
       { value: 'polos', label: 'Polos' },
       { value: 'tops', label: 'Tops' },
+      { value: 'crop-tops', label: 'Crop tops' },
+      { value: 'camisetas-sin-mangas', label: 'Camisetas sin mangas' },
+      { value: 'bodies', label: 'Bodies' },
+      { value: 'tops-deportivos', label: 'Tops deportivos' },
       { value: 'sueteres', label: 'Sueteres' },
       { value: 'cardigans', label: 'Cardigans' },
       { value: 'sudaderas', label: 'Sudaderas' },
@@ -26,7 +33,11 @@ export const clothingZones = [
       { value: 'blazers', label: 'Blazers' },
       { value: 'abrigos', label: 'Abrigos' },
       { value: 'gabardinas', label: 'Gabardinas' },
+      { value: 'impermeables', label: 'Impermeables' },
+      { value: 'rompevientos', label: 'Rompevientos' },
       { value: 'vestidos', label: 'Vestidos' },
+      { value: 'jumpsuits', label: 'Jumpsuits' },
+      { value: 'overoles', label: 'Overoles' },
       { value: 'jerseys-futbol', label: 'Jersey de futbol' },
     ],
   },
@@ -35,9 +46,15 @@ export const clothingZones = [
     label: 'Piernas',
     types: [
       { value: 'pantalones', label: 'Pantalones' },
+      { value: 'pantalones-cargo', label: 'Pantalones cargo' },
+      { value: 'pantalones-vestir', label: 'Pantalones de vestir' },
+      { value: 'joggers', label: 'Joggers' },
+      { value: 'leggings', label: 'Leggings' },
       { value: 'jeans', label: 'Jeans' },
       { value: 'shorts', label: 'Shorts' },
+      { value: 'bermudas', label: 'Bermudas' },
       { value: 'faldas', label: 'Faldas' },
+      { value: 'medias', label: 'Medias' },
     ],
   },
   {
@@ -46,8 +63,29 @@ export const clothingZones = [
     types: [
       { value: 'tenis', label: 'Tenis' },
       { value: 'zapatos', label: 'Zapatos' },
+      { value: 'mocasines', label: 'Mocasines' },
+      { value: 'tacones', label: 'Tacones' },
+      { value: 'flats', label: 'Flats' },
       { value: 'botas', label: 'Botas' },
+      { value: 'botines', label: 'Botines' },
       { value: 'sandalias', label: 'Sandalias' },
+      { value: 'chanclas', label: 'Chanclas' },
+      { value: 'pantuflas', label: 'Pantuflas' },
+      { value: 'calcetines', label: 'Calcetines' },
+    ],
+  },
+  {
+    zone: 'accesorios',
+    label: 'Accesorios',
+    types: [
+      { value: 'cinturones', label: 'Cinturones' },
+      { value: 'bufandas', label: 'Bufandas' },
+      { value: 'panuelos', label: 'Panuelos' },
+      { value: 'guantes', label: 'Guantes' },
+      { value: 'corbatas', label: 'Corbatas' },
+      { value: 'bolsas', label: 'Bolsas' },
+      { value: 'mochilas', label: 'Mochilas' },
+      { value: 'lentes-sol', label: 'Lentes de sol' },
     ],
   },
 ] as const

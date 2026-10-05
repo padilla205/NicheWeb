@@ -1,17 +1,19 @@
-import { Check, Heart, MessageCircle, Send } from 'lucide-react'
-import { motion } from 'motion/react'
+import { Check, Heart, MessageCircle, Repeat2, Send } from 'lucide-react'
+import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { Post } from '@/lib/feed'
+import { popIn } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
 type PostActionsProps = {
   post: Post
   onLike: () => void
   onComment: () => void
+  onShareToProfile: () => void
 }
 
-export function PostActions({ post, onLike, onComment }: PostActionsProps) {
+export function PostActions({ post, onLike, onComment, onShareToProfile }: PostActionsProps) {
   return (
     <div className="flex items-center gap-1">
       <Button
@@ -38,8 +40,33 @@ export function PostActions({ post, onLike, onComment }: PostActionsProps) {
         <MessageCircle className="size-5" />
         <span className="tabular-nums">{post.comments.length}</span>
       </Button>
+      <RepostButton shared={post.sharedByMe} onClick={onShareToProfile} />
       <ShareButton post={post} />
     </div>
+  )
+}
+
+// Republicar en tu perfil: al activarse el icono cambia de color y vuelve a aparecer con escala y desenfoque
+function RepostButton({ shared, onClick }: { shared: boolean; onClick: () => void }) {
+  const label = shared ? 'Quitar de mi perfil' : 'Compartir en mi perfil'
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      aria-pressed={shared}
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className={cn('gap-1.5', shared && 'text-green-600 hover:text-green-600 dark:text-green-500')}
+    >
+      <span className="relative flex size-5">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span key={String(shared)} className="flex" {...popIn}>
+            <Repeat2 className="size-5" />
+          </motion.span>
+        </AnimatePresence>
+      </span>
+    </Button>
   )
 }
 

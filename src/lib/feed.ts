@@ -19,6 +19,8 @@ export type Post = {
   createdAt: Date
   likes: number
   likedByMe: boolean
+  // Si la republicaste en tu perfil
+  sharedByMe: boolean
   comments: PostComment[]
 }
 
@@ -43,6 +45,7 @@ export const samplePosts: Post[] = [
     createdAt: hoursAgo(2),
     likes: 24,
     likedByMe: false,
+    sharedByMe: false,
     comments: [
       { id: 'c1', author: leo, text: 'Me encanta la chamarra', createdAt: hoursAgo(1) },
       { id: 'c2', author: sofi, text: 'Donde compraste los tenis?', createdAt: hoursAgo(0.5) },
@@ -56,6 +59,7 @@ export const samplePosts: Post[] = [
     createdAt: hoursAgo(5),
     likes: 51,
     likedByMe: true,
+    sharedByMe: false,
     comments: [{ id: 'c3', author: ana, text: 'Que buen jersey', createdAt: hoursAgo(4) }],
   },
   {
@@ -66,6 +70,7 @@ export const samplePosts: Post[] = [
     createdAt: hoursAgo(26),
     likes: 8,
     likedByMe: false,
+    sharedByMe: false,
     comments: [],
   },
 ]
