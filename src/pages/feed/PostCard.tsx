@@ -29,7 +29,9 @@ export function PostCard({ post }: { post: Post }) {
   }
 
   return (
-    <article className="flex flex-col gap-1.5">
+    // El id permite que las tarjetas de destacados lleven hasta esta publicacion;
+    // scroll-mt deja espacio para la barra superior fija
+    <article id={`post-${post.id}`} className="flex scroll-mt-20 flex-col gap-1.5">
       <header className={cn(blockClass, 'flex items-center gap-3 p-3')}>
         <UserAvatar user={post.author} />
         <div className="min-w-0 text-sm">

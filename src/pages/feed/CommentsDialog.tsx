@@ -1,12 +1,14 @@
 import { ArrowUp, X } from 'lucide-react'
 import { motion } from 'motion/react'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { useAddComment } from '@/hooks/usePosts'
-import { formatTimeAgo, type Post } from '@/lib/feed'
+import { formatTimeAgo, type Post, type PostComment } from '@/lib/feed'
 import { UserAvatar } from './UserAvatar'
+
+type Reply = NonNullable<PostComment['reply']>
 
 type CommentsDialogProps = {
   post: Post
@@ -32,6 +34,11 @@ export function CommentsDialog({ post, onClose }: CommentsDialogProps) {
   // Se decide una sola vez al abrir; no hace falta seguir el tamano de la ventana mientras esta abierto
   const [isDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches)
   const count = post.comments.length
+  const [replyingTo, setReplyingTo] = useState<Reply | null>(null)
+
+  // Las respuestas se muestran debajo de su comentario principal, no en la lista general
+  const topLevel = post.comments.filter((comment) => !comment.reply)
+  const repliesOf = (parentId: string) => post.comments.filter((comment) => comment.reply?.parentId === parentId)
 
   useModalBehavior(onClose)
 
@@ -69,25 +76,45 @@ export function CommentsDialog({ post, onClose }: CommentsDialogProps) {
               </p>
             ) : (
               <ul className="flex flex-col gap-4">
-                {post.comments.map((comment) => (
-                  <li key={comment.id} className="flex gap-3">
-                    <UserAvatar user={comment.author} />
-                    <div className="min-w-0 text-sm">
-                      <p>
-                        <span className="font-medium">{comment.author.username}</span>{' '}
-                        <span className="text-muted-foreground">{formatTimeAgo(comment.createdAt)}</span>
-                      </p>
-                      <p className="break-words">{comment.text}</p>
-                    </div>
-                  </li>
-                ))}
+                {topLevel.map((comment) => {
+                  const replies = repliesOf(comment.id)
+                  return (
+                    <li key={comment.id}>
+                      <CommentItem
+                        comment={comment}
+                        onReply={() => setReplyingTo({ parentId: comment.id, toUsername: comment.author.username })}
+                      />
+                      {replies.length > 0 && (
+                        <ul className="mt-3 flex flex-col gap-3 pl-11">
+                          {replies.map((reply) => (
+                            <li key={reply.id}>
+                              {/* Responder a una respuesta la deja en el mismo hilo, mencionando a su autor */}
+                              <CommentItem
+                                comment={reply}
+                                small
+                                onReply={() =>
+                                  setReplyingTo({ parentId: comment.id, toUsername: reply.author.username })
+                                }
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
 
           <div className="border-t p-3">
             {/* En el celular no se enfoca solo, para que el teclado no tape los comentarios al abrir */}
-            <CommentForm postId={post.id} autoFocus={isDesktop} />
+            <CommentForm
+              postId={post.id}
+              autoFocus={isDesktop}
+              replyingTo={replyingTo}
+              onCancelReply={() => setReplyingTo(null)}
+            />
           </div>
         </motion.div>
       </div>
@@ -95,30 +122,89 @@ export function CommentsDialog({ post, onClose }: CommentsDialogProps) {
   )
 }
 
-function CommentForm({ postId, autoFocus }: { postId: string; autoFocus: boolean }) {
+type CommentItemProps = {
+  comment: PostComment
+  onReply: () => void
+  // Las respuestas usan un avatar mas chico para que se note que van dentro de un hilo
+  small?: boolean
+}
+
+function CommentItem({ comment, onReply, small = false }: CommentItemProps) {
+  return (
+    <div className="flex gap-3">
+      <UserAvatar user={comment.author} className={small ? 'size-6 text-[10px]' : undefined} />
+      <div className="min-w-0 text-sm">
+        <p>
+          <span className="font-medium">{comment.author.username}</span>{' '}
+          <span className="text-muted-foreground">{formatTimeAgo(comment.createdAt)}</span>
+        </p>
+        <p className="break-words">
+          {comment.reply && <span className="font-medium text-primary">@{comment.reply.toUsername} </span>}
+          {comment.text}
+        </p>
+        <button
+          type="button"
+          onClick={onReply}
+          className="mt-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Responder
+        </button>
+      </div>
+    </div>
+  )
+}
+
+type CommentFormProps = {
+  postId: string
+  autoFocus: boolean
+  replyingTo: Reply | null
+  onCancelReply: () => void
+}
+
+function CommentForm({ postId, autoFocus, replyingTo, onCancelReply }: CommentFormProps) {
   const [text, setText] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
   const addComment = useAddComment()
   const canSend = text.trim() !== ''
+
+  // Al tocar "Responder" el cursor salta al cuadro de texto para escribir de inmediato
+  useEffect(() => {
+    if (replyingTo) inputRef.current?.focus()
+  }, [replyingTo])
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!canSend) return
-    addComment(postId, text)
+    addComment(postId, text, replyingTo ?? undefined)
     setText('')
+    onCancelReply()
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      <Input
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        placeholder="Escribe un comentario..."
-        aria-label="Escribe un comentario"
-        autoFocus={autoFocus}
-      />
-      <Button type="submit" size="icon" disabled={!canSend} aria-label="Enviar comentario">
-        <ArrowUp />
-      </Button>
-    </form>
+    <div className="flex flex-col gap-2">
+      {replyingTo && (
+        <div className="flex items-center justify-between pl-1 text-xs text-muted-foreground">
+          <span>
+            Respondiendo a <span className="font-medium text-foreground">@{replyingTo.toUsername}</span>
+          </span>
+          <Button variant="ghost" size="icon" className="size-6" onClick={onCancelReply} aria-label="Cancelar respuesta">
+            <X />
+          </Button>
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <Input
+          ref={inputRef}
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          placeholder={replyingTo ? `Responde a @${replyingTo.toUsername}...` : 'Escribe un comentario...'}
+          aria-label={replyingTo ? `Responde a ${replyingTo.toUsername}` : 'Escribe un comentario'}
+          autoFocus={autoFocus}
+        />
+        <Button type="submit" size="icon" disabled={!canSend} aria-label="Enviar comentario">
+          <ArrowUp />
+        </Button>
+      </form>
+    </div>
   )
 }

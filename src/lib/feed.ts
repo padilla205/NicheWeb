@@ -8,6 +8,8 @@ export type PostComment = {
   author: FeedUser
   text: string
   createdAt: Date
+  // Si es una respuesta: el comentario principal bajo el que se muestra y a quien le responde
+  reply?: { parentId: string; toUsername: string }
 }
 
 export type Post = {
@@ -49,6 +51,13 @@ export const samplePosts: Post[] = [
     comments: [
       { id: 'c1', author: leo, text: 'Me encanta la chamarra', createdAt: hoursAgo(1) },
       { id: 'c2', author: sofi, text: 'Donde compraste los tenis?', createdAt: hoursAgo(0.5) },
+      {
+        id: 'c4',
+        author: ana,
+        text: 'En una tienda del centro',
+        createdAt: hoursAgo(0.2),
+        reply: { parentId: 'c2', toUsername: 'sofi' },
+      },
     ],
   },
   {
@@ -73,7 +82,35 @@ export const samplePosts: Post[] = [
     sharedByMe: false,
     comments: [],
   },
+  {
+    id: 'p4',
+    author: ana,
+    caption: 'Colores de otono',
+    gradient: ['#c79081', '#dfa579'],
+    createdAt: hoursAgo(30),
+    likes: 37,
+    likedByMe: false,
+    sharedByMe: false,
+    comments: [{ id: 'c5', author: sofi, text: 'Esa combinacion queda increible', createdAt: hoursAgo(29) }],
+  },
+  {
+    id: 'p5',
+    author: leo,
+    caption: 'Basicos que nunca fallan',
+    gradient: ['#a1c4fd', '#c2e9fb'],
+    createdAt: hoursAgo(48),
+    likes: 15,
+    likedByMe: false,
+    sharedByMe: false,
+    comments: [],
+  },
 ]
+
+// Puntaje para decidir que publicaciones se destacan: un comentario vale mas que un like
+// porque cuesta mas esfuerzo escribirlo
+export function engagementScore(post: Post) {
+  return post.likes + post.comments.length * 2
+}
 
 // "hace 5 min", "hace 2 h", "hace 3 d"
 export function formatTimeAgo(date: Date) {

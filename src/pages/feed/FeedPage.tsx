@@ -1,6 +1,7 @@
 import { MotionConfig } from 'motion/react'
 import { PageTitle } from '@/components/PageTitle'
 import { usePosts } from '@/hooks/usePosts'
+import { FeaturedPosts } from './FeaturedPosts'
 import { PostCard } from './PostCard'
 
 export function FeedPage() {
@@ -11,6 +12,7 @@ export function FeedPage() {
     <MotionConfig reducedMotion="user">
       <div className="mx-auto max-w-xl">
         <PageTitle title="Feed" />
+        <FeaturedPosts />
         <div className="flex flex-col gap-8">
           {posts.map((post) => (
             <PostCard key={post.id} post={post} />
