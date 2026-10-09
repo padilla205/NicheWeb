@@ -66,6 +66,22 @@ Se trabaja una etapa a la vez y se prueba en el navegador antes de avanzar:
 7. Chat comprador-vendedor
 8. PWA, pulido y despliegue
 
+## Git y subida de cambios
+- Antes de empezar: `git pull` en main para tener lo último.
+- Nunca se hace commit directo en main. Cada arreglo o actualización va en su propia rama, con el formato `tipo/descripcion-corta` (ej. `feat/barra-inferior-celular`, `fix/destello-blanco-detalle`).
+- Mensajes de commit con Conventional Commits: `tipo: descripción en minúsculas`. Tipos:
+  - `feat`: funcionalidad nueva
+  - `fix`: arreglo de un error
+  - `refactor`: reorganizar código sin cambiar lo que hace
+  - `style`: solo apariencia o formato
+  - `perf`: mejora de rendimiento
+  - `docs`: documentación
+  - `chore`: mantenimiento (dependencias, configuración)
+  - `test`: pruebas
+- Se sube la rama y se abre un Pull Request con `gh pr create`. El PR describe qué cambió, por qué y cómo se probó. Vercel crea una URL de vista previa para cada PR.
+- El dueño del proyecto revisa el PR y la vista previa. Solo con su aprobación se hace merge a main, lo que publica en producción.
+- Versiones: al cerrar un conjunto de cambios grande se sube la versión menor en package.json y se crea la etiqueta `vX.Y`.
+
 ## Forma de trabajar
 - Se trabaja en tareas pequeñas, una a la vez. Solo se pasa a la siguiente cuando la actual quedó bien y el dueño del proyecto la aprobó.
 - Antes de escribir código en una etapa nueva, presenta un plan breve y espera confirmación.
