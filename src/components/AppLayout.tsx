@@ -7,7 +7,7 @@ export function AppLayout() {
     <div className="min-h-screen bg-background text-foreground">
       <TopBar />
       <div className="flex">
-        <main className="min-w-0 flex-1 p-6">
+        <main className="min-w-0 flex-1 p-4 pb-[calc(5rem+env(safe-area-inset-bottom))] md:p-6">
           <Outlet />
         </main>
         <SideNav />
