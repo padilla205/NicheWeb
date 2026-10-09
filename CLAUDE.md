@@ -66,7 +66,7 @@ Se trabaja una etapa a la vez y se prueba en el navegador antes de avanzar:
 7. Chat comprador-vendedor
 8. PWA, pulido y despliegue
 
-## Git y subida de cambios
+## Flujo git
 - Antes de empezar: `git pull` en main para tener lo último.
 - Nunca se hace commit directo en main. Cada arreglo o actualización va en su propia rama, con el formato `tipo/descripcion-corta` (ej. `feat/barra-inferior-celular`, `fix/destello-blanco-detalle`).
 - Mensajes de commit con Conventional Commits: `tipo: descripción en minúsculas`. Tipos:
