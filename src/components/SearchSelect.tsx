@@ -65,7 +65,12 @@ export function SearchSelect<T extends string>({
           <ChevronDown className="text-muted-foreground" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-(--radix-popover-trigger-width) p-0">
+      <PopoverContent
+        align="start"
+        className="w-(--radix-popover-trigger-width) p-0"
+        // En celular no se enfoca el buscador al abrir: el teclado taparia la lista y moveria la ventana
+        onOpenAutoFocus={(event) => matchMedia('(pointer: coarse)').matches && event.preventDefault()}
+      >
         <Command filter={filterOptions}>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>

@@ -19,7 +19,7 @@ export function ChoicePill({ active, onClick, children }: ChoicePillProps) {
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'rounded-full',
+        'touch-target relative rounded-full',
         // Seleccionado: en modo claro borde marcado y fondo apenas iluminado; en modo oscuro
         // fondo blanco con letras negras. Las variantes dark: van completas porque las del
         // boton outline pesan mas
