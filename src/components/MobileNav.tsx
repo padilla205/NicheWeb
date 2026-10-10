@@ -1,5 +1,5 @@
 import { animate, motion, type MotionValue, useMotionValue, useTransform } from 'motion/react'
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { type Section, sections } from '@/lib/sections'
 import { cn } from '@/lib/utils'
@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 // Separacion horizontal entre iconos y radio de la curva (mas chico = curva mas cerrada)
 const SPACING = 68
 const RADIUS = 420
+// Tiempo sin tocar la barra antes de que se esconda
+const HIDE_AFTER_MS = 3000
 
 const snap = { type: 'spring', duration: 0.3, bounce: 0.15 } as const
 
@@ -24,6 +26,22 @@ export function MobileNav() {
   const position = useMotionValue(activeIndex)
   const dragStart = useRef(0)
   const dragged = useRef(false)
+  // El toque que vuelve a mostrar la barra no gira el carrusel ni cambia de seccion
+  const revealing = useRef(false)
+
+  // La barra se esconde sola; queda una pestana abajo que la vuelve a mostrar al tocarla
+  const [hidden, setHidden] = useState(false)
+  const hideTimer = useRef<number>(undefined)
+  const wake = useCallback(() => {
+    setHidden(false)
+    window.clearTimeout(hideTimer.current)
+    hideTimer.current = window.setTimeout(() => setHidden(true), HIDE_AFTER_MS)
+  }, [])
+
+  useEffect(() => {
+    hideTimer.current = window.setTimeout(() => setHidden(true), HIDE_AFTER_MS)
+    return () => window.clearTimeout(hideTimer.current)
+  }, [])
 
   // Si la ruta cambia por otro lado (un link), el arco gira hasta esa seccion
   useEffect(() => {
@@ -39,24 +57,41 @@ export function MobileNav() {
   return (
     <motion.nav
       aria-label="Secciones"
-      className="fixed inset-x-0 bottom-0 z-10 h-[calc(5.5rem+env(safe-area-inset-bottom))] touch-none overflow-hidden rounded-t-[50%_2.5rem] border-t-2 bg-background md:hidden"
-      onPointerDown={() => (dragged.current = false)}
+      className={cn(
+        'fixed inset-x-0 bottom-0 z-10 h-[calc(5.5rem+env(safe-area-inset-bottom))] touch-none overflow-hidden rounded-t-[50%_2.5rem] border-t-2 bg-background transition-transform duration-300 ease-out md:hidden',
+        hidden && 'translate-y-[calc(100%-1.75rem)]',
+      )}
+      onPointerDown={() => {
+        dragged.current = false
+        revealing.current = hidden
+        wake()
+      }}
+      onPointerUp={wake}
       onPanStart={() => {
         dragged.current = true
         dragStart.current = position.get()
       }}
       onPan={(_, info) => {
+        if (revealing.current) return
         // Arrastrar a la izquierda avanza a la siguiente seccion; en los extremos frena
         const raw = dragStart.current - info.offset.x / SPACING
         const edge = clampIndex(raw)
         position.set(edge + (raw - edge) / 3)
       }}
       onPanEnd={(_, info) => {
+        if (revealing.current) return
         // Un deslizamiento rapido avanza aunque el dedo haya recorrido poco
         goTo(Math.round(position.get() - info.velocity.x / 1500))
       }}
     >
-      <ul className="relative h-full">
+      <span
+        aria-hidden
+        className={cn(
+          'absolute top-2 left-1/2 h-1 w-10 -translate-x-1/2 rounded-full bg-muted-foreground/50 transition-opacity duration-300',
+          !hidden && 'opacity-0',
+        )}
+      />
+      <ul className={cn('relative h-full transition-opacity duration-300', hidden && 'opacity-0')}>
         {sections.map((section, i) => (
           <ArcItem
             key={section.path}
@@ -64,7 +99,7 @@ export function MobileNav() {
             index={i}
             position={position}
             active={i === activeIndex}
-            onSelect={() => !dragged.current && goTo(i)}
+            onSelect={() => !dragged.current && !revealing.current && goTo(i)}
           />
         ))}
       </ul>
