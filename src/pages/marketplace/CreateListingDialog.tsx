@@ -15,7 +15,7 @@ import { type ListingCondition, listingConditions } from '@/lib/marketplace'
 import { ClothingTypePicker } from '@/pages/closet/ClothingTypePicker'
 import { ColorPicker } from '@/pages/closet/ColorPicker'
 import { PhotoPicker } from '@/pages/closet/PhotoPicker'
-import { SeasonPicker } from '@/pages/closet/SeasonPicker'
+import { MAX_SEASONS, SeasonPicker } from '@/pages/closet/SeasonPicker'
 import { TeamPicker } from '@/pages/closet/TeamPicker'
 
 type CreateListingDialogProps = {
@@ -169,7 +169,7 @@ function CreateListingForm({ onDone }: { onDone: () => void }) {
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">
-          Temporada <span className="font-normal text-muted-foreground">(opcional)</span>
+          Temporada <span className="font-normal text-muted-foreground">(opcional, maximo {MAX_SEASONS})</span>
         </span>
         <SeasonPicker value={selectedSeasons} onChange={setSelectedSeasons} />
       </div>
