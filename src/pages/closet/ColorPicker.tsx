@@ -15,7 +15,7 @@ type ColorPickerProps = {
 
 // Solo se animan escala y anillo (box-shadow); al presionar se hunde a 0.96 como respuesta tactil
 const swatchClass =
-  'relative flex size-8 items-center justify-center rounded-full border transition-[scale,box-shadow] duration-150 ease-out outline-none hover:scale-110 active:scale-[0.96] focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100'
+  'touch-target relative flex size-8 items-center justify-center rounded-full border transition-[scale,box-shadow] duration-150 ease-out outline-none hover:scale-110 active:scale-[0.96] focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100'
 const selectedClass = 'ring-2 ring-primary ring-offset-2 ring-offset-popover'
 
 function AnimatedCheck({ show, className }: { show: boolean; className: string }) {

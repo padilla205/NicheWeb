@@ -129,7 +129,21 @@
     }
   html {
     @apply font-sans;
+    /* Sin zoom por doble toque: cada tap responde al instante (el zoom con dos dedos sigue) */
+    touch-action: manipulation;
     }
+}
+
+/* Area de toque mas grande sin cambiar como se ve; solo en pantallas tactiles.
+   El elemento necesita position: relative */
+@utility touch-target {
+  @media (pointer: coarse) {
+    &::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+    }
+  }
 }
 /* Selector de color personalizado (react-colorful) dentro del popover */
 .custom-color-picker.react-colorful {
