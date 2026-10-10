@@ -1,6 +1,5 @@
 import {
   type LucideIcon,
-  MessageCircle,
   Newspaper,
   Shirt,
   Sparkles,
@@ -20,6 +19,5 @@ export const sections: Section[] = [
   { path: '/outfits', label: 'Outfits', icon: Sparkles },
   { path: '/feed', label: 'Feed', icon: Newspaper },
   { path: '/marketplace', label: 'Marketplace', icon: Store },
-  { path: '/chat', label: 'Mensajes', icon: MessageCircle },
   { path: '/profile', label: 'Perfil', icon: User },
 ]

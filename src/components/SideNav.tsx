@@ -2,26 +2,25 @@ import { NavLink } from 'react-router'
 import { sections } from '@/lib/sections'
 import { cn } from '@/lib/utils'
 
-// En celular es una barra fija abajo; desde md es el menu lateral
 export function SideNav() {
   return (
     <nav
       aria-label="Secciones"
-      className="fixed inset-x-0 bottom-0 z-10 border-t-2 bg-background px-1 pb-[env(safe-area-inset-bottom)] md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:w-56 md:shrink-0 md:border-t-0 md:border-l-2 md:p-3"
+      className="sticky top-16 hidden h-[calc(100vh-4rem)] w-56 shrink-0 border-l-2 p-3 md:block"
     >
-      <ul className="flex md:flex-col md:gap-1">
+      <ul className="flex flex-col gap-1">
         {sections.map(({ path, label, icon: Icon }) => (
-          <li key={path} className="flex-1">
+          <li key={path}>
             <NavLink
               to={path}
               className={({ isActive }) =>
                 cn(
-                  'flex flex-col items-center gap-1 rounded-md py-2 text-[11px] font-medium text-muted-foreground transition-colors duration-150 hover:text-foreground md:flex-row md:gap-3 md:px-3 md:text-sm md:hover:bg-accent',
-                  isActive && 'text-foreground md:bg-accent',
+                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground',
+                  isActive && 'bg-accent text-foreground',
                 )
               }
             >
-              <Icon className="size-5 md:size-4" />
+              <Icon className="size-4" />
               {label}
             </NavLink>
           </li>

@@ -39,7 +39,7 @@ export function FeaturedPosts() {
           className="h-full origin-left rounded-full bg-orange-500/60"
         />
       </div>
-      <ul className="-mx-6 flex snap-x scroll-px-6 gap-3 overflow-x-auto px-6 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
+      <ul className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
         <AnimatePresence mode="popLayout">
           {featured.map((post, index) => (
             <motion.li
