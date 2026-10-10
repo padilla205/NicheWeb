@@ -4,9 +4,8 @@ import { useLocation, useNavigate } from 'react-router'
 import { type Section, sections } from '@/lib/sections'
 import { cn } from '@/lib/utils'
 
-// Separacion horizontal entre iconos y radio de la curva (mas chico = curva mas cerrada)
+// Separacion horizontal entre iconos
 const SPACING = 68
-const RADIUS = 420
 // Tiempo sin tocar la barra antes de que se esconda
 const HIDE_AFTER_MS = 3000
 
@@ -16,7 +15,7 @@ function clampIndex(i: number) {
   return Math.min(sections.length - 1, Math.max(0, i))
 }
 
-// Barra de secciones para celular: los iconos corren sobre un arco y el del centro es el activo
+// Barra de secciones para celular: los iconos se deslizan en fila y el del centro es el activo
 export function MobileNav() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
@@ -43,7 +42,7 @@ export function MobileNav() {
     return () => window.clearTimeout(hideTimer.current)
   }, [])
 
-  // Si la ruta cambia por otro lado (un link), el arco gira hasta esa seccion
+  // Si la ruta cambia por otro lado (un link), la fila se desliza hasta esa seccion
   useEffect(() => {
     animate(position, activeIndex, snap)
   }, [activeIndex, position])
@@ -58,7 +57,7 @@ export function MobileNav() {
     <motion.nav
       aria-label="Secciones"
       className={cn(
-        'fixed inset-x-0 bottom-0 z-10 h-[calc(5.5rem+env(safe-area-inset-bottom))] touch-none overflow-hidden rounded-t-[50%_2.5rem] border-t-2 bg-background transition-transform duration-300 ease-out md:hidden',
+        'fixed inset-x-0 bottom-0 z-10 h-[calc(5.5rem+env(safe-area-inset-bottom))] touch-none overflow-hidden border-t-2 bg-background transition-transform duration-300 ease-out md:hidden',
         hidden && 'translate-y-[calc(100%-1.75rem)]',
       )}
       onPointerDown={() => {
@@ -93,7 +92,7 @@ export function MobileNav() {
       />
       <ul className={cn('relative h-full transition-opacity duration-300', hidden && 'opacity-0')}>
         {sections.map((section, i) => (
-          <ArcItem
+          <NavItem
             key={section.path}
             section={section}
             index={i}
@@ -107,7 +106,7 @@ export function MobileNav() {
   )
 }
 
-type ArcItemProps = {
+type NavItemProps = {
   section: Section
   index: number
   position: MotionValue<number>
@@ -115,18 +114,16 @@ type ArcItemProps = {
   onSelect: () => void
 }
 
-function ArcItem({ section: { label, icon: Icon }, index, position, active, onSelect }: ArcItemProps) {
+function NavItem({ section: { label, icon: Icon }, index, position, active, onSelect }: NavItemProps) {
   // Distancia en pixeles desde el centro de la pantalla
   const x = useTransform(position, (p) => (index - p) * SPACING)
-  // Cuanto baja el icono al alejarse del centro, siguiendo un circulo
-  const y = useTransform(x, (d) => RADIUS - Math.sqrt(Math.max(0, RADIUS ** 2 - d ** 2)))
-  const rotate = useTransform(x, (d) => (Math.asin(Math.max(-1, Math.min(1, d / RADIUS))) * 180) / Math.PI)
+  // El del centro se ve mas grande; los de los lados se achican y desvanecen
   const scale = useTransform(x, (d) => Math.max(0.75, 1.25 - Math.abs(d) / SPACING / 4))
   const opacity = useTransform(x, (d) => Math.max(0, 1 - Math.abs(d) / (SPACING * 3)))
   const labelOpacity = useTransform(x, (d) => Math.max(0, 1 - Math.abs(d) / (SPACING / 2)))
 
   return (
-    <motion.li className="absolute top-3 left-1/2 -ml-7 w-14" style={{ x, y, rotate, scale, opacity }}>
+    <motion.li className="absolute top-3 left-1/2 -ml-7 w-14" style={{ x, scale, opacity }}>
       <button
         type="button"
         aria-label={label}
