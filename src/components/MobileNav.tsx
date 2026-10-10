@@ -1,7 +1,8 @@
-import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react'
+import { animate, motion, useMotionValue, useTransform } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { sections } from '@/lib/sections'
+import { cn } from '@/lib/utils'
 
 // Tiempo sin tocar la barra antes de que se esconda
 const HIDE_AFTER_MS = 3000
@@ -106,23 +107,16 @@ export function MobileNav() {
         </div>
       </motion.nav>
 
-      {/* Escondida: queda una rayita abajo; tocarla vuelve a subir la barra */}
-      <AnimatePresence>
-        {hidden && (
-          <motion.button
-            type="button"
-            aria-label="Mostrar secciones"
-            onClick={wake}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed bottom-[env(safe-area-inset-bottom)] left-1/2 z-10 flex h-8 w-28 -translate-x-1/2 items-center justify-center md:hidden"
-          >
-            <span className="h-1.5 w-12 rounded-full bg-neutral-900 ring-1 ring-white/20" />
-          </motion.button>
+      {/* Escondida: al poner el dedo en la orilla de abajo de la pantalla vuelve a subir */}
+      {/* Siempre montada para que el toque que la sube no caiga en lo que hay debajo */}
+      <div
+        aria-hidden
+        onPointerDown={wake}
+        className={cn(
+          'fixed inset-x-0 bottom-0 z-10 h-[calc(2.5rem+env(safe-area-inset-bottom))] md:hidden',
+          !hidden && 'pointer-events-none',
         )}
-      </AnimatePresence>
+      />
     </>
   )
 }
