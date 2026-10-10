@@ -19,10 +19,10 @@ function clampIndex(i: number) {
 export function MobileNav() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const activeIndex = Math.max(0, sections.findIndex((s) => pathname.startsWith(s.path)))
+  const activeIndex = sections.findIndex((s) => pathname.startsWith(s.path))
 
   // Posicion continua de la pastilla: 0 = primera seccion, 1 = la segunda, etc.
-  const position = useMotionValue(activeIndex)
+  const position = useMotionValue(Math.max(0, activeIndex))
   const pillX = useTransform(position, (p) => `${p * 100}%`)
   const navRef = useRef<HTMLElement>(null)
   const rowRef = useRef<HTMLDivElement>(null)
@@ -49,7 +49,7 @@ export function MobileNav() {
 
   // Si la ruta cambia por otro lado (un link), la pastilla va hasta esa seccion
   useEffect(() => {
-    animate(position, activeIndex, snap)
+    if (activeIndex >= 0) animate(position, activeIndex, snap)
   }, [activeIndex, position])
 
   function goTo(index: number) {
@@ -82,14 +82,19 @@ export function MobileNav() {
       >
         <div ref={rowRef} className="relative">
           {/* Mide lo mismo que una seccion y se mueve en saltos de su propio ancho */}
-          <motion.div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 w-1/6 px-1"
-            style={{ x: pillX }}
+          {activeIndex >= 0 && (
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 left-0 px-1"
+              style={{ x: pillX, width: `${100 / sections.length}%` }}
+            >
+              <span className="block size-full rounded-full bg-white/15" />
+            </motion.div>
+          )}
+          <ul
+            className="relative grid"
+            style={{ gridTemplateColumns: `repeat(${sections.length}, minmax(0, 1fr))` }}
           >
-            <span className="block size-full rounded-full bg-white/15" />
-          </motion.div>
-          <ul className="relative grid grid-cols-6">
             {sections.map(({ path, label, icon: Icon }, i) => (
               <li key={path}>
                 <button
