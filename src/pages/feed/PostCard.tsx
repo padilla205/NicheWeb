@@ -49,7 +49,7 @@ export function PostCard({ post }: { post: Post }) {
           className="relative flex aspect-[4/5] items-center justify-center select-none"
           style={{ backgroundImage: `linear-gradient(135deg, ${post.gradient[0]}, ${post.gradient[1]})` }}
         >
-          <PostPhoto post={post} iconClassName="size-16" />
+          <PostPhoto post={post} iconClassName="size-16" fit="contain" />
           <AnimatePresence>
             {burst > 0 && (
               <motion.span

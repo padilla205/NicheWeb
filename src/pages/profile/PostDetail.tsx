@@ -54,7 +54,7 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
             className="relative flex aspect-[4/5] shrink-0 items-center justify-center md:aspect-auto md:h-full md:w-1/2"
             style={{ backgroundImage: `linear-gradient(135deg, ${post.gradient[0]}, ${post.gradient[1]})` }}
           >
-            <PostPhoto post={post} iconClassName="size-16" />
+            <PostPhoto post={post} iconClassName="size-16" fit="contain" />
           </motion.div>
 
           {/* "layout" dibuja el texto a su tamano real mientras la ventana crece (sin "letras mini") */}

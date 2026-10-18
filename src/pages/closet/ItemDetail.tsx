@@ -51,6 +51,7 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
             index={photoIndex}
             onIndexChange={setPhotoIndex}
             alt={title}
+            fit="contain"
             className="aspect-square w-full md:aspect-auto md:h-full md:min-h-96"
           />
 
