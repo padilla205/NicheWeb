@@ -34,12 +34,6 @@ export function usePosts() {
   return useSyncExternalStore(subscribe, () => posts)
 }
 
-// Publicaciones que republicaste, para mostrarlas en tu perfil
-export function useSharedPosts() {
-  const all = usePosts()
-  return useMemo(() => all.filter((post) => post.sharedByMe), [all])
-}
-
 // Los contadores de las tarjetas siguen en vivo; la seleccion solo cambia cada hora.
 export function useFeaturedPosts(limit = 4) {
   const all = usePosts()
