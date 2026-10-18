@@ -34,12 +34,6 @@ export function usePosts() {
   return useSyncExternalStore(subscribe, () => posts)
 }
 
-// Publicaciones que republicaste, para mostrarlas en tu perfil
-export function useSharedPosts() {
-  const all = usePosts()
-  return useMemo(() => all.filter((post) => post.sharedByMe), [all])
-}
-
 // Los contadores de las tarjetas siguen en vivo; la seleccion solo cambia cada hora.
 export function useFeaturedPosts(limit = 4) {
   const all = usePosts()
@@ -108,4 +102,24 @@ export function useAddComment() {
 
 export function useToggleShare() {
   return (id: string) => updatePost(id, (post) => ({ ...post, sharedByMe: !post.sharedByMe }))
+}
+
+export function useCreatePost() {
+  return (photos: File[], caption: string) => {
+    const post: Post = {
+      id: crypto.randomUUID(),
+      author: currentUser,
+      caption: caption.trim(),
+      gradient: ['#d4d4d8', '#71717a'],
+      photoUrls: photos.map((photo) => URL.createObjectURL(photo)),
+      createdAt: new Date(),
+      likes: 0,
+      likedByMe: false,
+      sharedByMe: false,
+      comments: [],
+    }
+    // Las mas nuevas van primero
+    posts = [post, ...posts]
+    listeners.forEach((listener) => listener())
+  }
 }

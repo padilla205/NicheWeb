@@ -1,7 +1,8 @@
-import { Clock3, Flame, Heart, MessageCircle, Shirt } from 'lucide-react'
+import { Clock3, Flame, Heart, MessageCircle } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useFeaturedPosts } from '@/hooks/usePosts'
 import type { Post } from '@/lib/feed'
+import { PostPhoto } from './PostPhoto'
 
 // Fila de tarjetas con las publicaciones con mas likes y comentarios.
 // En el celular se desliza de lado; en escritorio caben las cuatro
@@ -77,7 +78,7 @@ function FeaturedCard({ post, rank }: { post: Post; rank: number }) {
         className="relative flex aspect-square items-center justify-center"
         style={{ backgroundImage: `linear-gradient(135deg, ${post.gradient[0]}, ${post.gradient[1]})` }}
       >
-        <Shirt className="size-8 text-white/70" strokeWidth={1.5} />
+        <PostPhoto post={post} iconClassName="size-8" />
         <span className="absolute top-2 left-2 flex size-6 items-center justify-center rounded-full bg-black/40 text-xs font-semibold text-white tabular-nums backdrop-blur-sm">
           {rank}
         </span>
