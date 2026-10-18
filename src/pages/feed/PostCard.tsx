@@ -6,7 +6,7 @@ import { formatTimeAgo, type Post } from '@/lib/feed'
 import { cn } from '@/lib/utils'
 import { CommentsDialog } from './CommentsDialog'
 import { PostActions } from './PostActions'
-import { PostPhoto } from './PostPhoto'
+import { PostPhotos } from './PostPhotos'
 import { UserAvatar } from './UserAvatar'
 
 // Cada parte de la publicacion es un bloque redondeado aparte
@@ -49,7 +49,7 @@ export function PostCard({ post }: { post: Post }) {
           className="relative flex aspect-[4/5] items-center justify-center select-none"
           style={{ backgroundImage: `linear-gradient(135deg, ${post.gradient[0]}, ${post.gradient[1]})` }}
         >
-          <PostPhoto post={post} iconClassName="size-16" fit="contain" />
+          <PostPhotos post={post} carouselId={`feed-post-${post.id}`} iconClassName="size-16" />
           <AnimatePresence>
             {burst > 0 && (
               <motion.span

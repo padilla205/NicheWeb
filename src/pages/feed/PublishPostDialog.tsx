@@ -1,11 +1,11 @@
 import { type FormEvent, useState } from 'react'
-import { ImageInput } from '@/components/ImageInput'
 import { MorphDialog } from '@/components/MorphDialog'
 import { Button } from '@/components/ui/button'
 import { DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreatePost } from '@/hooks/usePosts'
+import { PhotoPicker } from '@/pages/closet/PhotoPicker'
 
 type PublishPostDialogProps = {
   // Boton que abrio la ventana (crece desde ahi y regresa a el); null si esta cerrada
@@ -19,7 +19,7 @@ export function PublishPostDialog({ origin, onClose }: PublishPostDialogProps) {
       origin={origin}
       onClose={onClose}
       title="Publicar"
-      description="Sube una foto de tu outfit. Aparecera en el feed y en tu perfil."
+      description="Sube fotos de tu outfit. Apareceran en el feed y en tu perfil."
     >
       <PublishPostForm onDone={onClose} />
     </MorphDialog>
@@ -27,22 +27,21 @@ export function PublishPostDialog({ origin, onClose }: PublishPostDialogProps) {
 }
 
 function PublishPostForm({ onDone }: { onDone: () => void }) {
-  const [photoUrl, setPhotoUrl] = useState<string>()
+  const [photos, setPhotos] = useState<File[]>([])
   const [caption, setCaption] = useState('')
   const createPost = useCreatePost()
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!photoUrl) return
-    createPost(photoUrl, caption)
+    if (photos.length === 0) return
+    createPost(photos, caption)
     onDone()
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <ImageInput onPick={setPhotoUrl} className="mx-auto aspect-[4/5] w-full max-w-64 rounded-lg">
-        {photoUrl && <img src={photoUrl} alt="" className="size-full object-cover" />}
-      </ImageInput>
+      {/* Siempre queda el boton "Agregar" para sumar mas fotos, hasta el maximo */}
+      <PhotoPicker files={photos} onChange={setPhotos} label="Sube fotos de tu outfit" />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="post-caption">
@@ -62,7 +61,7 @@ function PublishPostForm({ onDone }: { onDone: () => void }) {
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={!photoUrl}>
+        <Button type="submit" disabled={photos.length === 0}>
           Publicar
         </Button>
       </DialogFooter>

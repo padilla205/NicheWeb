@@ -8,9 +8,11 @@ const MAX_PHOTOS = 5
 type PhotoPickerProps = {
   files: File[]
   onChange: (files: File[]) => void
+  // Texto del area vacia
+  label?: string
 }
 
-export function PhotoPicker({ files, onChange }: PhotoPickerProps) {
+export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda' }: PhotoPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const isFull = files.length >= MAX_PHOTOS
 
@@ -48,7 +50,7 @@ export function PhotoPicker({ files, onChange }: PhotoPickerProps) {
       <>
         <AddPhotoArea onPick={() => inputRef.current?.click()} onDropFiles={add} className="h-56">
           <ImagePlus className="size-8" />
-          <span className="text-sm font-medium text-foreground">Sube fotos de la prenda</span>
+          <span className="text-sm font-medium text-foreground">{label}</span>
           <span className="text-xs">
             Arrastralas aqui o haz clic para elegirlas (hasta {MAX_PHOTOS})
           </span>

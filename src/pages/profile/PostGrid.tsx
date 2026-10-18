@@ -1,3 +1,4 @@
+import { Layers } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useState } from 'react'
 import type { Post } from '@/lib/feed'
@@ -46,6 +47,10 @@ export function PostGrid({ posts, emptyText }: { posts: Post[]; emptyText: strin
                 >
                   <PostPhoto post={post} iconClassName="size-10" />
                 </motion.div>
+                {/* Marca de que la publicacion tiene varias fotos */}
+                {post.photoUrls.length > 1 && (
+                  <Layers className="absolute top-2 right-2 size-4 text-white drop-shadow" aria-label="Varias fotos" />
+                )}
                 <p className="relative w-full truncate bg-gradient-to-t from-black/50 to-transparent px-3 pt-6 pb-2 text-xs text-white">
                   <span className="font-medium">{post.author.username}</span> {post.caption}
                 </p>

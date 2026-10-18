@@ -7,7 +7,7 @@ import { useToggleLike, useToggleShare } from '@/hooks/usePosts'
 import { formatTimeAgo, type Post } from '@/lib/feed'
 import { CommentsThread } from '@/pages/feed/CommentsDialog'
 import { PostActions } from '@/pages/feed/PostActions'
-import { PostPhoto } from '@/pages/feed/PostPhoto'
+import { PostPhotos } from '@/pages/feed/PostPhotos'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
 
 type PostDetailProps = {
@@ -54,7 +54,7 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
             className="relative flex aspect-[4/5] shrink-0 items-center justify-center md:aspect-auto md:h-full md:w-1/2"
             style={{ backgroundImage: `linear-gradient(135deg, ${post.gradient[0]}, ${post.gradient[1]})` }}
           >
-            <PostPhoto post={post} iconClassName="size-16" fit="contain" />
+            <PostPhotos post={post} carouselId={`profile-post-detail-${post.id}`} iconClassName="size-16" />
           </motion.div>
 
           {/* "layout" dibuja el texto a su tamano real mientras la ventana crece (sin "letras mini") */}

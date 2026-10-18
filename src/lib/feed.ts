@@ -18,8 +18,8 @@ export type Post = {
   caption: string
   // TEMPORAL: mientras no hay fotos reales, cada publicacion se dibuja con un degradado
   gradient: [string, string]
-  // Foto subida por el usuario; si no hay, se ve el degradado
-  photoUrl?: string
+  // Fotos subidas por el usuario (la primera es la portada); sin fotos se ve el degradado
+  photoUrls: string[]
   createdAt: Date
   likes: number
   likedByMe: boolean
@@ -46,6 +46,7 @@ export const samplePosts: Post[] = [
     author: ana,
     caption: 'Outfit para el fin de semana',
     gradient: ['#f6d365', '#fda085'],
+    photoUrls: [],
     createdAt: hoursAgo(2),
     likes: 24,
     likedByMe: false,
@@ -67,6 +68,7 @@ export const samplePosts: Post[] = [
     author: leo,
     caption: 'Dia de partido',
     gradient: ['#4facfe', '#00f2fe'],
+    photoUrls: [],
     createdAt: hoursAgo(5),
     likes: 51,
     likedByMe: true,
@@ -78,6 +80,7 @@ export const samplePosts: Post[] = [
     author: sofi,
     caption: 'Todo negro para la oficina',
     gradient: ['#434343', '#000000'],
+    photoUrls: [],
     createdAt: hoursAgo(26),
     likes: 8,
     likedByMe: false,
@@ -89,6 +92,7 @@ export const samplePosts: Post[] = [
     author: ana,
     caption: 'Colores de otono',
     gradient: ['#c79081', '#dfa579'],
+    photoUrls: [],
     createdAt: hoursAgo(30),
     likes: 37,
     likedByMe: false,
@@ -100,6 +104,7 @@ export const samplePosts: Post[] = [
     author: leo,
     caption: 'Basicos que nunca fallan',
     gradient: ['#a1c4fd', '#c2e9fb'],
+    photoUrls: [],
     createdAt: hoursAgo(48),
     likes: 15,
     likedByMe: false,

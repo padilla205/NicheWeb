@@ -105,13 +105,13 @@ export function useToggleShare() {
 }
 
 export function useCreatePost() {
-  return (photoUrl: string, caption: string) => {
+  return (photos: File[], caption: string) => {
     const post: Post = {
       id: crypto.randomUUID(),
       author: currentUser,
       caption: caption.trim(),
       gradient: ['#d4d4d8', '#71717a'],
-      photoUrl,
+      photoUrls: photos.map((photo) => URL.createObjectURL(photo)),
       createdAt: new Date(),
       likes: 0,
       likedByMe: false,
