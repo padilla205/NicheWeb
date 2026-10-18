@@ -1,8 +1,10 @@
 import { X } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
+import { SwipeHandle } from '@/components/SwipeHandle'
 import { Button } from '@/components/ui/button'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
+import { useSwipeToClose } from '@/hooks/useSwipeToClose'
 import { useToggleLike, useToggleShare } from '@/hooks/usePosts'
 import { formatTimeAgo, type Post } from '@/lib/feed'
 import { CommentsThread } from '@/pages/feed/CommentsDialog'
@@ -27,6 +29,7 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
   const toggleShare = useToggleShare()
 
   useModalBehavior(onClose)
+  const swipe = useSwipeToClose(onClose)
 
   return (
     <>
@@ -43,12 +46,14 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
         <motion.div
           layoutId={`profile-post-${post.id}`}
           layoutCrossfade={false}
+          {...swipe.panelProps}
           role="dialog"
           aria-modal
           aria-label={`Publicacion de ${post.author.username}`}
           style={{ borderRadius: 16 }}
           className="pointer-events-auto relative flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-y-auto border bg-popover text-popover-foreground md:h-[min(85dvh,640px)] md:flex-row md:overflow-hidden"
         >
+          <SwipeHandle onPointerDown={swipe.startDrag} />
           <motion.div
             layoutId={`profile-post-photo-${post.id}`}
             className="relative flex aspect-[4/5] shrink-0 items-center justify-center md:aspect-auto md:h-full md:w-1/2"

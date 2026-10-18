@@ -20,7 +20,7 @@ const controlVisibility =
   'pointer-events-none opacity-0 transition-opacity duration-150 group-hover/photos:pointer-events-auto group-hover/photos:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 has-[:focus-visible]:pointer-events-auto has-[:focus-visible]:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100'
 const arrowClass = cn(
   controlVisibility,
-  'absolute top-1/2 z-10 flex size-7 -translate-y-1/2 items-center justify-center rounded-full bg-background/85 text-foreground shadow-sm outline-none hover:bg-background focus-visible:ring-3 focus-visible:ring-ring/50',
+  'touch-target absolute top-1/2 z-10 flex size-7 -translate-y-1/2 items-center justify-center rounded-full bg-background/85 text-foreground shadow-sm outline-none hover:bg-background focus-visible:ring-3 focus-visible:ring-ring/50',
 )
 
 const slideVariants = {
@@ -48,6 +48,10 @@ const cardTransition = {
   ease: [0.45, 0, 0.2, 1],
   zIndex: { duration: 0 },
 } as const
+
+// Distancia (px) o rapidez (px/s) minima del dedo para que cuente como deslizar a otra foto
+const SWIPE_DISTANCE = 40
+const SWIPE_VELOCITY = 300
 
 export function PhotoCarousel({
   itemId,
@@ -85,9 +89,18 @@ export function PhotoCarousel({
       className={cn('group/photos relative outline-none focus-visible:ring-3 focus-visible:ring-ring/50', className)}
     >
       {/* Comparte "layoutId" entre tarjeta y detalle para que la foto crezca al abrir */}
+      {/* Deslizar el dedo de lado cambia de foto; "pan-y" deja que el desplazamiento vertical de
+          la pagina siga funcionando normal */}
       <motion.div
         layoutId={`item-photo-${itemId}`}
         layoutCrossfade={false}
+        onPanEnd={(_, { offset, velocity }) => {
+          const horizontal = Math.abs(offset.x) > Math.abs(offset.y)
+          if (horizontal && (Math.abs(offset.x) > SWIPE_DISTANCE || Math.abs(velocity.x) > SWIPE_VELOCITY)) {
+            go(offset.x < 0 ? 1 : -1)
+          }
+        }}
+        style={{ touchAction: 'pan-y' }}
         className="relative size-full overflow-hidden"
       >
         {/* Sin fondo gris propio: si la foto tarda un instante en dibujarse, se ve el color de la

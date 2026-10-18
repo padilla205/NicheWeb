@@ -55,7 +55,7 @@ export function ProfileTabs() {
             aria-selected={tab === value}
             onClick={() => select(value)}
             className={cn(
-              'touch-target relative flex shrink-0 items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+              'touch-target relative flex shrink-0 items-center gap-2 px-3 py-2.5 text-sm font-medium transition duration-150 outline-none active:scale-[0.96] focus-visible:ring-3 focus-visible:ring-ring/50',
               tab === value ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
             )}
           >

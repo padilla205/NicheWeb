@@ -134,14 +134,18 @@
     }
 }
 
-/* Area de toque mas grande sin cambiar como se ve; solo en pantallas tactiles.
-   El elemento necesita position: relative */
+/* Area de toque de al menos 44x44 px (lo minimo recomendado para un dedo) sin cambiar como se ve;
+   solo en pantallas tactiles. El elemento necesita position: relative o absolute */
 @utility touch-target {
   @media (pointer: coarse) {
     &::before {
       content: '';
       position: absolute;
-      inset: -4px;
+      top: 50%;
+      left: 50%;
+      width: max(100%, 44px);
+      height: max(100%, 44px);
+      transform: translate(-50%, -50%);
     }
   }
 }

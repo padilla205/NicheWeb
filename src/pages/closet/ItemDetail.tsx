@@ -1,8 +1,10 @@
 import { X } from 'lucide-react'
 import { motion } from 'motion/react'
 import { type ReactNode, useState } from 'react'
+import { SwipeHandle } from '@/components/SwipeHandle'
 import { Button } from '@/components/ui/button'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
+import { useSwipeToClose } from '@/hooks/useSwipeToClose'
 import { type ClosetItem, getColorInfo, getSeasonLabel, getTypeInfo } from '@/lib/clothing'
 import { getTeamLabel } from '@/lib/teams'
 import { PhotoCarousel } from './PhotoCarousel'
@@ -22,6 +24,7 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
   const title = item.name || typeLabel
 
   useModalBehavior(onClose)
+  const swipe = useSwipeToClose(onClose)
 
   return (
     <>
@@ -39,12 +42,14 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
         <motion.div
           layoutId={`item-${item.id}`}
           layoutCrossfade={false}
+          {...swipe.panelProps}
           role="dialog"
           aria-modal
           aria-labelledby="item-detail-title"
           style={{ borderRadius: 16 }}
           className="pointer-events-auto relative grid max-h-[calc(100dvh-2rem)] w-full max-w-3xl overflow-y-auto border bg-popover text-popover-foreground md:grid-cols-2"
         >
+          <SwipeHandle onPointerDown={swipe.startDrag} />
           <PhotoCarousel
             itemId={item.id}
             photos={item.photoUrls}
