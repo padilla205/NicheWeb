@@ -51,7 +51,8 @@ export function PostGrid({ posts, emptyText }: { posts: Post[]; emptyText: strin
                 {post.photoUrls.length > 1 && (
                   <Layers className="absolute top-2 right-2 size-4 text-white drop-shadow" aria-label="Varias fotos" />
                 )}
-                <p className="relative w-full truncate bg-gradient-to-t from-black/50 to-transparent px-3 pt-6 pb-2 text-xs text-white">
+                {/* Sombra oscura mas alta y firme abajo, para que el texto se lea sobre fotos claras */}
+                <p className="relative w-full truncate bg-gradient-to-t from-black/80 via-black/45 to-transparent px-3 pt-12 pb-2.5 text-xs text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
                   <span className="font-medium">{post.author.username}</span> {post.caption}
                 </p>
               </motion.button>
