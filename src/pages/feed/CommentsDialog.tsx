@@ -34,11 +34,6 @@ export function CommentsDialog({ post, onClose }: CommentsDialogProps) {
   // Se decide una sola vez al abrir; no hace falta seguir el tamano de la ventana mientras esta abierto
   const [isDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches)
   const count = post.comments.length
-  const [replyingTo, setReplyingTo] = useState<Reply | null>(null)
-
-  // Las respuestas se muestran debajo de su comentario principal, no en la lista general
-  const topLevel = post.comments.filter((comment) => !comment.reply)
-  const repliesOf = (parentId: string) => post.comments.filter((comment) => comment.reply?.parentId === parentId)
 
   useModalBehavior(onClose)
 
@@ -69,54 +64,71 @@ export function CommentsDialog({ post, onClose }: CommentsDialogProps) {
             </Button>
           </header>
 
-          <div className="flex-1 overflow-y-auto p-4">
-            {count === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                Aun no hay comentarios. Se el primero.
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-4">
-                {topLevel.map((comment) => {
-                  const replies = repliesOf(comment.id)
-                  return (
-                    <li key={comment.id}>
-                      <CommentItem
-                        comment={comment}
-                        onReply={() => setReplyingTo({ parentId: comment.id, toUsername: comment.author.username })}
-                      />
-                      {replies.length > 0 && (
-                        <ul className="mt-3 flex flex-col gap-3 pl-11">
-                          {replies.map((reply) => (
-                            <li key={reply.id}>
-                              {/* Responder a una respuesta la deja en el mismo hilo, mencionando a su autor */}
-                              <CommentItem
-                                comment={reply}
-                                small
-                                onReply={() =>
-                                  setReplyingTo({ parentId: comment.id, toUsername: reply.author.username })
-                                }
-                              />
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </div>
-
-          <div className="border-t p-3">
-            {/* En el celular no se enfoca solo, para que el teclado no tape los comentarios al abrir */}
-            <CommentForm
-              postId={post.id}
-              autoFocus={isDesktop}
-              replyingTo={replyingTo}
-              onCancelReply={() => setReplyingTo(null)}
-            />
-          </div>
+          {/* En el celular no se enfoca solo, para que el teclado no tape los comentarios al abrir */}
+          <CommentsThread post={post} autoFocus={isDesktop} />
         </motion.div>
+      </div>
+    </>
+  )
+}
+
+// Lista de comentarios con sus respuestas y el cuadro para escribir; el que la usa pone el contenedor
+// (flex en columna) para que la lista se desplace y el cuadro quede abajo
+export function CommentsThread({ post, autoFocus }: { post: Post; autoFocus: boolean }) {
+  const count = post.comments.length
+  const [replyingTo, setReplyingTo] = useState<Reply | null>(null)
+
+  // Las respuestas se muestran debajo de su comentario principal, no en la lista general
+  const topLevel = post.comments.filter((comment) => !comment.reply)
+  const repliesOf = (parentId: string) => post.comments.filter((comment) => comment.reply?.parentId === parentId)
+
+  return (
+    <>
+      <div className="flex-1 overflow-y-auto p-4">
+        {count === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            Aun no hay comentarios. Se el primero.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-4">
+            {topLevel.map((comment) => {
+              const replies = repliesOf(comment.id)
+              return (
+                <li key={comment.id}>
+                  <CommentItem
+                    comment={comment}
+                    onReply={() => setReplyingTo({ parentId: comment.id, toUsername: comment.author.username })}
+                  />
+                  {replies.length > 0 && (
+                    <ul className="mt-3 flex flex-col gap-3 pl-11">
+                      {replies.map((reply) => (
+                        <li key={reply.id}>
+                          {/* Responder a una respuesta la deja en el mismo hilo, mencionando a su autor */}
+                          <CommentItem
+                            comment={reply}
+                            small
+                            onReply={() =>
+                              setReplyingTo({ parentId: comment.id, toUsername: reply.author.username })
+                            }
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className="border-t p-3">
+        <CommentForm
+          postId={post.id}
+          autoFocus={autoFocus}
+          replyingTo={replyingTo}
+          onCancelReply={() => setReplyingTo(null)}
+        />
       </div>
     </>
   )
@@ -195,6 +207,7 @@ function CommentForm({ postId, autoFocus, replyingTo, onCancelReply }: CommentFo
       <form onSubmit={handleSubmit} className="flex gap-2">
         <Input
           ref={inputRef}
+          id={`comment-input-${postId}`}
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder={replyingTo ? `Responde a @${replyingTo.toUsername}...` : 'Escribe un comentario...'}
