@@ -1,7 +1,8 @@
-import { Pencil } from 'lucide-react'
+import { Pencil, Plus } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { MorphButton } from '@/components/MorphButton'
 import { useProfile } from '@/hooks/useProfile'
+import { PublishPostDialog } from '@/pages/feed/PublishPostDialog'
 import { EditProfileDialog } from './EditProfileDialog'
 import { SocialLinks } from './SocialLinks'
 
@@ -11,6 +12,8 @@ export function ProfileHeader() {
   // Boton que abrio "Editar perfil"; null si la ventana esta cerrada
   const [editOrigin, setEditOrigin] = useState<HTMLElement | null>(null)
   const closeEdit = useCallback(() => setEditOrigin(null), [])
+  const [publishOrigin, setPublishOrigin] = useState<HTMLElement | null>(null)
+  const closePublish = useCallback(() => setPublishOrigin(null), [])
 
   return (
     <>
@@ -38,12 +41,19 @@ export function ProfileHeader() {
 
         <SocialLinks links={profile.socials} />
 
-        <MorphButton hidden={editOrigin !== null} onOpen={setEditOrigin}>
-          <Pencil />
-          Editar perfil
-        </MorphButton>
+        <div className="flex gap-2">
+          <MorphButton hidden={publishOrigin !== null} onOpen={setPublishOrigin}>
+            <Plus />
+            Publicar
+          </MorphButton>
+          <MorphButton variant="outline" hidden={editOrigin !== null} onOpen={setEditOrigin}>
+            <Pencil />
+            Editar perfil
+          </MorphButton>
+        </div>
       </header>
-      {/* Fuera del encabezado para que no herede el texto centrado */}
+      {/* Fuera del encabezado para que no hereden el texto centrado */}
+      <PublishPostDialog origin={publishOrigin} onClose={closePublish} />
       <EditProfileDialog origin={editOrigin} onClose={closeEdit} />
     </>
   )

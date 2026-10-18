@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import type { ReactNode } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -7,11 +7,12 @@ type MorphButtonProps = {
   // true mientras la ventana que abrio este boton esta abierta o cerrandose
   hidden: boolean
   onOpen: (button: HTMLElement) => void
+  variant?: ComponentProps<typeof Button>['variant']
   children: ReactNode
 }
 
 // Boton que abre una MorphDialog: la ventana crece desde el y al cerrar regresa a el
-export function MorphButton({ hidden, onOpen, children }: MorphButtonProps) {
+export function MorphButton({ hidden, onOpen, variant, children }: MorphButtonProps) {
   return (
     // Mientras la ventana esta abierta el boton se esconde, porque la ventana "sale" de el.
     // Al cerrar reaparece justo cuando la ventana termina de encogerse sobre el, y hace un
@@ -34,7 +35,7 @@ export function MorphButton({ hidden, onOpen, children }: MorphButtonProps) {
       }
       className={cn('inline-flex', hidden && 'pointer-events-none')}
     >
-      <Button onClick={(event) => onOpen(event.currentTarget)}>{children}</Button>
+      <Button variant={variant} onClick={(event) => onOpen(event.currentTarget)}>{children}</Button>
     </motion.span>
   )
 }

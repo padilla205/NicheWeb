@@ -103,3 +103,23 @@ export function useAddComment() {
 export function useToggleShare() {
   return (id: string) => updatePost(id, (post) => ({ ...post, sharedByMe: !post.sharedByMe }))
 }
+
+export function useCreatePost() {
+  return (photoUrl: string, caption: string) => {
+    const post: Post = {
+      id: crypto.randomUUID(),
+      author: currentUser,
+      caption: caption.trim(),
+      gradient: ['#d4d4d8', '#71717a'],
+      photoUrl,
+      createdAt: new Date(),
+      likes: 0,
+      likedByMe: false,
+      sharedByMe: false,
+      comments: [],
+    }
+    // Las mas nuevas van primero
+    posts = [post, ...posts]
+    listeners.forEach((listener) => listener())
+  }
+}

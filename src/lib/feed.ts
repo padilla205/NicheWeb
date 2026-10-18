@@ -18,6 +18,8 @@ export type Post = {
   caption: string
   // TEMPORAL: mientras no hay fotos reales, cada publicacion se dibuja con un degradado
   gradient: [string, string]
+  // Foto subida por el usuario; si no hay, se ve el degradado
+  photoUrl?: string
   createdAt: Date
   likes: number
   likedByMe: boolean

@@ -1,6 +1,7 @@
-import { ImagePlus, Plus, X } from 'lucide-react'
-import { type FormEvent, type ReactNode, useRef, useState } from 'react'
+import { Plus, X } from 'lucide-react'
+import { type FormEvent, useState } from 'react'
 import { ChoicePill } from '@/components/ChoicePill'
+import { ImageInput } from '@/components/ImageInput'
 import { MorphDialog } from '@/components/MorphDialog'
 import { Button } from '@/components/ui/button'
 import { DialogFooter } from '@/components/ui/dialog'
@@ -9,7 +10,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile'
 import { BIO_MAX, getPlatform, getSocialUrl, type SocialLink, socialPlatforms } from '@/lib/profile'
-import { cn } from '@/lib/utils'
 
 type EditProfileDialogProps = {
   // Boton que abrio la ventana (crece desde ahi y regresa a el); null si esta cerrada
@@ -157,44 +157,5 @@ function EditProfileForm({ onDone }: { onDone: () => void }) {
         </Button>
       </DialogFooter>
     </form>
-  )
-}
-
-type ImageInputProps = {
-  onPick: (url: string) => void
-  className: string
-  // La foto actual; si no hay, se ve el icono de agregar
-  children: ReactNode
-}
-
-// Area que abre el selector de archivos y devuelve una direccion temporal para ver la foto
-function ImageInput({ onPick, className, children }: ImageInputProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        className={cn(
-          'relative flex items-center justify-center overflow-hidden border border-dashed bg-muted text-muted-foreground transition-colors duration-150 outline-none hover:bg-muted/70 focus-visible:ring-3 focus-visible:ring-ring/50',
-          className,
-        )}
-      >
-        {children ?? <ImagePlus className="size-6" />}
-        <span className="sr-only">Elegir foto</span>
-      </button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0]
-          if (file?.type.startsWith('image/')) onPick(URL.createObjectURL(file))
-          event.target.value = ''
-        }}
-      />
-    </>
   )
 }
