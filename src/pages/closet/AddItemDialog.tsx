@@ -9,7 +9,7 @@ import type { ClothingType, Season } from '@/lib/clothing'
 import { ClothingTypePicker } from './ClothingTypePicker'
 import { ColorPicker } from './ColorPicker'
 import { PhotoPicker } from './PhotoPicker'
-import { SeasonPicker } from './SeasonPicker'
+import { MAX_SEASONS, SeasonPicker } from './SeasonPicker'
 import { TeamPicker } from './TeamPicker'
 
 type AddItemDialogProps = {
@@ -94,7 +94,9 @@ function AddItemForm({ onDone }: { onDone: () => void }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Temporada</span>
+        <span className="text-sm font-medium">
+          Temporada <span className="font-normal text-muted-foreground">(maximo {MAX_SEASONS})</span>
+        </span>
         <SeasonPicker value={selectedSeasons} onChange={setSelectedSeasons} />
       </div>
 
