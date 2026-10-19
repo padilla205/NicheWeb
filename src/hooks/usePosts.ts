@@ -90,12 +90,20 @@ export function useToggleLike() {
 }
 
 export function useAddComment() {
-  return (id: string, text: string, reply?: PostComment['reply']) =>
+  return (id: string, text: string, reply?: PostComment['reply'], image?: File) =>
     updatePost(id, (post) => ({
       ...post,
       comments: [
         ...post.comments,
-        { id: crypto.randomUUID(), author: currentUser, text: text.trim(), createdAt: new Date(), reply },
+        {
+          id: crypto.randomUUID(),
+          author: currentUser,
+          text: text.trim(),
+          // Un GIF se guarda tal cual para que siga animado
+          imageUrl: image ? URL.createObjectURL(image) : undefined,
+          createdAt: new Date(),
+          reply,
+        },
       ],
     }))
 }

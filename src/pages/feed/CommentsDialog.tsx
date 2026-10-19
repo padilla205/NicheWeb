@@ -1,6 +1,6 @@
-import { ArrowUp, X } from 'lucide-react'
+import { ArrowUp, ImagePlus, X } from 'lucide-react'
 import { motion } from 'motion/react'
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { SwipeHandle } from '@/components/SwipeHandle'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -156,10 +156,21 @@ function CommentItem({ comment, onReply, small = false }: CommentItemProps) {
           <span className="font-medium">{comment.author.username}</span>{' '}
           <span className="text-muted-foreground">{formatTimeAgo(comment.createdAt)}</span>
         </p>
-        <p className="break-words">
-          {comment.reply && <span className="font-medium text-primary">@{comment.reply.toUsername} </span>}
-          {comment.text}
-        </p>
+        {(comment.text || comment.reply) && (
+          <p className="break-words">
+            {comment.reply && <span className="font-medium text-primary">@{comment.reply.toUsername} </span>}
+            {comment.text}
+          </p>
+        )}
+        {/* Completa segun sus proporciones, sin pasar de un tamano comodo para leer el hilo */}
+        {comment.imageUrl && (
+          <img
+            src={comment.imageUrl}
+            alt={`Imagen de ${comment.author.username}`}
+            loading="lazy"
+            className="mt-1.5 max-h-60 max-w-full rounded-lg border object-contain"
+          />
+        )}
         <button
           type="button"
           onClick={onReply}
@@ -181,9 +192,18 @@ type CommentFormProps = {
 
 function CommentForm({ postId, autoFocus, replyingTo, onCancelReply }: CommentFormProps) {
   const [text, setText] = useState('')
+  const [image, setImage] = useState<File>()
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const addComment = useAddComment()
-  const canSend = text.trim() !== ''
+  // Se puede mandar solo texto, solo imagen o las dos cosas
+  const canSend = text.trim() !== '' || image !== undefined
+
+  // Vista previa de la imagen elegida; se libera al cambiarla o quitarla
+  const previewUrl = useMemo(() => (image ? URL.createObjectURL(image) : undefined), [image])
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+  }, [previewUrl])
 
   // Al tocar "Responder" el cursor salta al cuadro de texto para escribir de inmediato
   useEffect(() => {
@@ -193,8 +213,9 @@ function CommentForm({ postId, autoFocus, replyingTo, onCancelReply }: CommentFo
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!canSend) return
-    addComment(postId, text, replyingTo ?? undefined)
+    addComment(postId, text, replyingTo ?? undefined, image)
     setText('')
+    setImage(undefined)
     onCancelReply()
   }
 
@@ -210,7 +231,44 @@ function CommentForm({ postId, autoFocus, replyingTo, onCancelReply }: CommentFo
           </Button>
         </div>
       )}
+      {previewUrl && (
+        <div className="relative self-start">
+          <img src={previewUrl} alt="Imagen para enviar" className="max-h-24 rounded-lg border object-contain" />
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon-xs"
+            className="absolute -top-2 -right-2 rounded-full"
+            onClick={() => setImage(undefined)}
+            aria-label="Quitar imagen"
+          >
+            <X />
+          </Button>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="flex gap-2">
+        {/* Fotos y GIFs del dispositivo */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => fileRef.current?.click()}
+          aria-label="Agregar imagen o GIF"
+        >
+          <ImagePlus />
+        </Button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            if (file?.type.startsWith('image/')) setImage(file)
+            // Permite volver a elegir la misma imagen despues de quitarla
+            event.target.value = ''
+          }}
+        />
         <Input
           ref={inputRef}
           id={`comment-input-${postId}`}
