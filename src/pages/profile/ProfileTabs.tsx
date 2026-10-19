@@ -1,4 +1,4 @@
-import { type LucideIcon, Repeat2, Shirt, SquareUser, Tag } from 'lucide-react'
+import { Lock, type LucideIcon, Repeat2, Shirt, SquareUser, Tag } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { useItems } from '@/hooks/useItems'
@@ -17,7 +17,7 @@ export function ProfileTabs() {
   const [tab, setTab] = useState<Tab>('posts')
   // Hacia que lado se movio: 1 si la nueva pestana esta a la derecha, -1 si esta a la izquierda
   const [direction, setDirection] = useState(1)
-  const { username } = useProfile()
+  const { username, closetPublic } = useProfile()
   const posts = usePosts()
   const items = useItems()
   const listings = useListings()
@@ -88,7 +88,23 @@ export function ProfileTabs() {
           (items.length === 0 ? (
             <EmptyTab>Aun no tienes prendas. Agregalas desde la seccion Closet.</EmptyTab>
           ) : (
-            <ClosetGrid items={items} />
+            <div className="flex flex-col gap-3">
+              {/* Por ahora solo tu ves tu propio perfil; esto avisa que los demas no veran tu closet */}
+              {!closetPublic ? (
+                <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Lock className="size-4 shrink-0" />
+                  Tu closet es privado: solo tu lo ves. Puedes hacerlo publico desde la seccion Closet.
+                </p>
+              ) : (
+                items.some((item) => item.private) && (
+                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Lock className="size-4 shrink-0" />
+                    Las prendas con candado son privadas: solo tu las ves.
+                  </p>
+                )
+              )}
+              <ClosetGrid items={items} />
+            </div>
           ))}
         {tab === 'shared' && (
           <PostGrid

@@ -8,6 +8,7 @@ import { AddItemDialog } from './AddItemDialog'
 import { ClosetEmpty } from './ClosetEmpty'
 import { ClosetFilters } from './ClosetFilters'
 import { ClosetGrid } from './ClosetGrid'
+import { ClosetVisibility } from './ClosetVisibility'
 
 export function ClosetPage() {
   const [selectedTypes, setSelectedTypes] = useState<ClothingType[]>([])
@@ -23,9 +24,11 @@ export function ClosetPage() {
   return (
     // Aperturas con un ligero rebote en unos 300 ms; si el sistema pide menos movimiento, se respeta
     <MotionConfig transition={{ type: 'spring', visualDuration: 0.3, bounce: 0.15 }} reducedMotion="user">
-      <div className="flex items-start justify-between gap-4">
+      {/* En pantallas angostas los botones bajan a su propia fila debajo del titulo */}
+      <div className="flex flex-wrap items-start justify-between gap-x-4">
         <PageTitle title="Closet" />
-        <div className="flex gap-2">
+        <div className="mb-6 flex gap-2">
+          <ClosetVisibility />
           <ClosetFilters selected={selectedTypes} onChange={setSelectedTypes} />
           <AddItemButton
             hidden={addOrigin?.from === 'top'}

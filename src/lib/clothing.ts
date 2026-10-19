@@ -134,6 +134,8 @@ export type ClosetItem = {
   colors: string[]
   // Solo en jerseys de futbol (valor de la lista de equipos)
   team?: string
+  // Si es true no se ve en tu perfil aunque tu closet sea publico
+  private: boolean
   createdAt: Date
 }
 

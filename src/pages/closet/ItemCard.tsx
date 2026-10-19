@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react'
 import { motion } from 'motion/react'
 import { type ClosetItem, getColorInfo, getTypeInfo } from '@/lib/clothing'
 import { cn } from '@/lib/utils'
@@ -34,6 +35,12 @@ export function ItemCard({ item, open, raised, onOpen, onLayoutAnimationComplete
         <motion.div layoutId={`item-photo-${item.id}`} className="aspect-square overflow-hidden bg-muted">
           <img src={item.photoUrls[0]} alt={title} loading="lazy" className="size-full object-cover" />
         </motion.div>
+        {item.private && (
+          <span className="absolute top-2 left-2 flex size-7 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
+            <Lock className="size-3.5" />
+            <span className="sr-only">Prenda privada</span>
+          </span>
+        )}
         {/* Al abrir, el texto se va casi al instante (80 ms); al cerrar regresa con suavidad */}
         <motion.div
           layout="position"

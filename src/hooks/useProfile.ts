@@ -6,7 +6,7 @@ import type { Profile } from '@/lib/profile'
 // Se conserva al cambiar de seccion, pero se borra al recargar la pagina.
 // Cuando llegue la base de datos, estos hooks se reemplazan por TanStack Query sin tocar las pantallas.
 
-let profile: Profile = { ...currentUser, bio: '', socials: [] }
+let profile: Profile = { ...currentUser, bio: '', socials: [], closetPublic: false }
 const listeners = new Set<() => void>()
 
 function subscribe(listener: () => void) {
