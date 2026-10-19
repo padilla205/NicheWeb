@@ -11,6 +11,19 @@ export const listingConditions = [
 
 export type ListingCondition = (typeof listingConditions)[number]['value']
 
+// Apartada: alguien ya la va a comprar, pero aun se ve en la lista. Vendida: deja de aparecer
+export const listingStatuses = [
+  { value: 'disponible', label: 'Disponible' },
+  { value: 'apartada', label: 'Apartada' },
+  { value: 'vendida', label: 'Vendida' },
+] as const
+
+export type ListingStatus = (typeof listingStatuses)[number]['value']
+
+export function getStatusLabel(status: ListingStatus) {
+  return listingStatuses.find((s) => s.value === status)?.label ?? status
+}
+
 // Una prenda a la venta en el marketplace
 export type Listing = {
   id: string
@@ -24,6 +37,7 @@ export type Listing = {
   // Punto o zona exacta en el mapa (opcional)
   delivery?: Delivery
   condition: ListingCondition
+  status: ListingStatus
   // Texto libre: "Chamarra de piel", "Tenis", etc.
   type: string
   // Mismas caracteristicas que una prenda del closet
@@ -86,6 +100,7 @@ export const sampleListings: Listing[] = [
     size: 'M',
     location: { country: 'mx', city: 'guadalajara' },
     condition: 'como-nuevo',
+    status: 'disponible',
     type: 'Chamarra',
     description: 'La use dos veces. Sin manchas ni rasgaduras. Entrega en el centro.',
     seasons: ['otono', 'primavera'], colors: ['azul'],
@@ -101,6 +116,7 @@ export const sampleListings: Listing[] = [
     size: '27',
     location: { country: 'mx', city: 'cdmx' },
     condition: 'usado',
+    status: 'disponible',
     type: 'Tenis',
     description: 'Tienen algo de uso pero estan limpios. Incluyen caja.',
     seasons: ['primavera', 'verano', 'otono', 'invierno'], colors: ['blanco'],
@@ -116,6 +132,7 @@ export const sampleListings: Listing[] = [
     size: 'S',
     location: { country: 'mx', city: 'guadalajara' },
     condition: 'nuevo',
+    status: 'disponible',
     type: 'Vestido',
     description: 'Nuevo con etiqueta, no me quedo. Tela ligera, ideal para eventos.',
     seasons: ['primavera', 'verano'], colors: ['negro'],
@@ -131,6 +148,7 @@ export const sampleListings: Listing[] = [
     size: 'L',
     location: { country: 'mx', city: 'cdmx' },
     condition: 'como-nuevo',
+    status: 'disponible',
     type: 'Jersey de futbol',
     description: 'Temporada pasada. Lavado a mano, los numeros estan completos.',
     seasons: ['verano'], colors: ['azul', 'blanco'],
@@ -147,6 +165,7 @@ export const sampleListings: Listing[] = [
     size: 'Unitalla',
     location: { country: 'mx', city: 'monterrey' },
     condition: 'usado',
+    status: 'disponible',
     type: 'Bolsa',
     description: 'Piel genuina, el broche funciona perfecto. Tiene un pequeno raspon en una esquina.',
     seasons: ['otono', 'invierno'], colors: ['cafe'],
@@ -162,6 +181,7 @@ export const sampleListings: Listing[] = [
     size: 'XL',
     location: { country: 'mx', city: 'cdmx' },
     condition: 'como-nuevo',
+    status: 'disponible',
     type: 'Sudadera',
     description: 'Muy comoda y calientita. Color verde olivo.',
     seasons: ['otono', 'invierno'], colors: ['verde'],

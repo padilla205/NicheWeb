@@ -26,8 +26,8 @@ export function DeliveryPicker({ value, onChange, city }: DeliveryPickerProps) {
   const [mode, setMode] = useState<Mode>(value ? (value.radiusKm ? 'radius' : 'point') : 'none')
   const [locating, setLocating] = useState(false)
   const center = useCityCenter(city) ?? FALLBACK_CENTER
-  // Si el usuario ya movio el punto a mano, cambiar de ciudad ya no lo mueve
-  const [touched, setTouched] = useState(false)
+  // Si el usuario ya movio el punto a mano (o la venta ya tenia uno guardado), cambiar de ciudad ya no lo mueve
+  const [touched, setTouched] = useState(value !== undefined)
 
   // Mientras no lo haya movido, el punto sigue a la ciudad (sus coordenadas pueden llegar un instante despues)
   useEffect(() => {

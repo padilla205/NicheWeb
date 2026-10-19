@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react'
 import type { Season } from '@/lib/clothing'
 import { currentUser } from '@/lib/feed'
 import type { UserLocation } from '@/lib/locations'
-import { type Delivery, type Listing, type ListingCondition, sampleListings } from '@/lib/marketplace'
+import { type Delivery, type Listing, type ListingCondition, type ListingStatus, sampleListings } from '@/lib/marketplace'
 
 // TEMPORAL: las ventas viven en la memoria del navegador hasta que conectemos Supabase.
 // Se conservan al cambiar de seccion, pero se borran al recargar la pagina.
@@ -41,21 +41,54 @@ export function useListing(id: string | undefined) {
   return all.find((listing) => listing.id === id)
 }
 
+// Datos del formulario ya limpios, listos para guardar en una venta
+function fromForm({ photos, title, description, size, type, ...rest }: NewListing) {
+  return {
+    ...rest,
+    title: title.trim(),
+    description: description.trim(),
+    size: size.trim(),
+    type: type.trim(),
+    photoUrls: photos.map((photo) => URL.createObjectURL(photo)),
+  }
+}
+
+function save(next: Listing[]) {
+  listings = next
+  listeners.forEach((listener) => listener())
+}
+
 export function useCreateListing() {
-  return ({ photos, title, description, size, type, ...rest }: NewListing) => {
+  return (data: NewListing) => {
     const listing: Listing = {
-      ...rest,
+      ...fromForm(data),
       id: crypto.randomUUID(),
       seller: currentUser,
-      title: title.trim(),
-      description: description.trim(),
-      size: size.trim(),
-      type: type.trim(),
-      photoUrls: photos.map((photo) => URL.createObjectURL(photo)),
+      status: 'disponible',
       createdAt: new Date(),
     }
     // Las mas nuevas van primero
-    listings = [listing, ...listings]
-    listeners.forEach((listener) => listener())
+    save([listing, ...listings])
   }
+}
+
+export function useUpdateListing() {
+  return (id: string, data: NewListing) =>
+    save(
+      listings.map((listing) => {
+        if (listing.id !== id) return listing
+        const changes = fromForm(data)
+        // Las ventas de ejemplo no tienen fotos; si no se agregan, conservan su degradado
+        return { ...listing, ...changes, photoUrls: changes.photoUrls.length > 0 ? changes.photoUrls : listing.photoUrls }
+      }),
+    )
+}
+
+export function useSetListingStatus() {
+  return (id: string, status: ListingStatus) =>
+    save(listings.map((listing) => (listing.id === id ? { ...listing, status } : listing)))
+}
+
+export function useDeleteListing() {
+  return (id: string) => save(listings.filter((listing) => listing.id !== id))
 }

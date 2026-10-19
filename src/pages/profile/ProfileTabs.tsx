@@ -24,7 +24,9 @@ export function ProfileTabs() {
 
   const myPosts = posts.filter((post) => post.author.username === username)
   const sharedPosts = posts.filter((post) => post.sharedByMe)
-  const myListings = listings.filter((listing) => listing.seller.username === username)
+  const myListings = listings.filter(
+    (listing) => listing.seller.username === username && listing.status !== 'vendida',
+  )
 
   const tabs: { value: Tab; label: string; icon: LucideIcon; count: number }[] = [
     { value: 'posts', label: 'Publicaciones', icon: SquareUser, count: myPosts.length },
