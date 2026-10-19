@@ -9,7 +9,7 @@ import { PostActions } from './PostActions'
 import { PostPhotos } from './PostPhotos'
 import { UserAvatar } from './UserAvatar'
 
-// Cada parte de la publicacion es un bloque redondeado aparte
+// La publicacion es un solo cuadro redondeado
 const blockClass = 'rounded-2xl border bg-card'
 
 export function PostCard({ post }: { post: Post }) {
@@ -32,18 +32,17 @@ export function PostCard({ post }: { post: Post }) {
   return (
     // El id permite que las tarjetas de destacados lleven hasta esta publicacion;
     // scroll-mt deja espacio para la barra superior fija
-    <article id={`post-${post.id}`} className="flex scroll-mt-20 flex-col gap-1.5">
-      <header className={cn(blockClass, 'flex items-center gap-3 p-3')}>
-        <UserAvatar user={post.author} />
-        <div className="min-w-0 text-sm">
-          <span className="font-medium">{post.author.username}</span>
-          <span className="text-muted-foreground"> · {formatTimeAgo(post.createdAt)}</span>
-        </div>
-      </header>
-
-      {/* Foto, likes, compartir y comentarios van en un solo cuadro, separados por lineas.
+    <article id={`post-${post.id}`} className="scroll-mt-20">
+      {/* Usuario, foto, likes, compartir y comentarios van en un solo cuadro, separados por lineas.
           overflow-hidden recorta la foto con las esquinas redondeadas del cuadro */}
       <div className={cn(blockClass, 'divide-y overflow-hidden')}>
+        <header className="flex items-center gap-3 p-3">
+          <UserAvatar user={post.author} />
+          <div className="min-w-0 text-sm">
+            <span className="font-medium">{post.author.username}</span>
+            <span className="text-muted-foreground"> · {formatTimeAgo(post.createdAt)}</span>
+          </div>
+        </header>
         <div
           onDoubleClick={likeFromPhoto}
           className="relative flex aspect-[4/5] items-center justify-center select-none"
