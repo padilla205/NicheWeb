@@ -73,7 +73,9 @@ export function PostGrid({ posts, emptyText }: { posts: Post[]; emptyText: strin
           )
         })}
       </ul>
-      <AnimatePresence onExitComplete={() => setClosingId(null)}>
+      {/* El cuadro no recupera su enlace al terminar de cerrar (eso haria que "creciera" desde la
+          ventana ya cerrada); lo recupera hasta que se vuelve a tocar */}
+      <AnimatePresence>
         {openPost && (
           <PostDetail key={`${openPost.id}-${openCount}`} post={openPost} onClose={close} />
         )}
