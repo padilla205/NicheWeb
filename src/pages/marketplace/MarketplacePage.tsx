@@ -4,6 +4,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { ChoicePill } from '@/components/ChoicePill'
 import { MorphButton } from '@/components/MorphButton'
 import { PageTitle } from '@/components/PageTitle'
+import { ShowMore } from '@/components/ShowMore'
+import { usePaged } from '@/hooks/usePaged'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useListings } from '@/hooks/useListings'
@@ -14,6 +16,9 @@ import { CreateListingDialog } from './CreateListingDialog'
 import { ListingCard } from './ListingCard'
 import { LocationButton } from './LocationButton'
 import { MarketplaceFilters } from './MarketplaceFilters'
+
+// Ventas por bloque antes de "Ver mas"
+const MARKETPLACE_PAGE_SIZE = 12
 
 export function MarketplacePage() {
   // Boton que abrio "Crear venta"; null si la ventana esta cerrada
@@ -32,6 +37,7 @@ export function MarketplacePage() {
     ? listings.filter((listing) => isSameCity(listing.location, location))
     : listings
   const visibleListings = cityListings.filter((listing) => matchesListing(listing, query, filters))
+  const page = usePaged(visibleListings, MARKETPLACE_PAGE_SIZE, JSON.stringify([query, filters, onlyMyCity]))
   // Tallas que existen en las ventas, sin repetir, para el filtro
   const sizes = useMemo(
     () => [...new Set(listings.map((listing) => normalizeSize(listing.size)))].sort((a, b) => a.localeCompare(b, 'es', { numeric: true })),
@@ -105,13 +111,14 @@ export function MarketplacePage() {
         </div>
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-          {visibleListings.map((listing) => (
+          {page.visible.map((listing) => (
             <li key={listing.id}>
               <ListingCard listing={listing} />
             </li>
           ))}
         </ul>
       )}
+      <ShowMore shown={page.visible.length} total={page.total} onClick={page.showMore} />
       <CreateListingDialog origin={createOrigin} onClose={closeCreate} />
     </MotionConfig>
   )
