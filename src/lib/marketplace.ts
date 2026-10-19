@@ -53,6 +53,49 @@ export function isJerseyType(type: string) {
   return text.includes('jersey') || text.includes('futbol')
 }
 
+// Filtros del marketplace; una lista vacia o un precio sin escribir no filtra
+export type ListingFilters = {
+  minPrice?: number
+  maxPrice?: number
+  sizes: string[]
+  conditions: ListingCondition[]
+  colors: string[]
+  seasons: Season[]
+}
+
+export const emptyFilters: ListingFilters = { sizes: [], conditions: [], colors: [], seasons: [] }
+
+export function countActiveFilters(filters: ListingFilters) {
+  return (
+    (filters.minPrice !== undefined || filters.maxPrice !== undefined ? 1 : 0) +
+    filters.sizes.length +
+    filters.conditions.length +
+    filters.colors.length +
+    filters.seasons.length
+  )
+}
+
+// Las tallas se comparan sin importar mayusculas ni espacios ("m" = "M ")
+export function normalizeSize(size: string) {
+  return size.trim().toUpperCase()
+}
+
+// Si la venta coincide con lo buscado (todas las palabras, sin importar acentos) y con los filtros
+export function matchesListing(listing: Listing, query: string, filters: ListingFilters) {
+  const text = normalizeText(`${listing.title} ${listing.type} ${listing.description}`)
+  const words = normalizeText(query).split(/\s+/).filter(Boolean)
+  if (!words.every((word) => text.includes(word))) return false
+
+  const { minPrice, maxPrice, sizes, conditions, colors, seasons } = filters
+  if (minPrice !== undefined && listing.price < minPrice) return false
+  if (maxPrice !== undefined && listing.price > maxPrice) return false
+  if (sizes.length > 0 && !sizes.includes(normalizeSize(listing.size))) return false
+  if (conditions.length > 0 && !conditions.includes(listing.condition)) return false
+  if (colors.length > 0 && !colors.some((color) => listing.colors.includes(color))) return false
+  if (seasons.length > 0 && !seasons.some((season) => listing.seasons.includes(season))) return false
+  return true
+}
+
 export function getConditionLabel(condition: ListingCondition) {
   return listingConditions.find((c) => c.value === condition)?.label ?? condition
 }
