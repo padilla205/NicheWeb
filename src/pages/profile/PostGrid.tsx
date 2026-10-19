@@ -37,6 +37,8 @@ export function PostGrid({ posts, emptyText }: { posts: Post[]; emptyText: strin
                   if (!open && raisedId === post.id) setRaisedId(null)
                 }}
                 aria-label={`Ver publicacion de ${post.author.username}`}
+                // Al presionarla se encoge un poquito para sentir que el toque se registro
+                whileTap={{ scale: 0.97 }}
                 style={{ borderRadius: 16, zIndex: raisedId === post.id ? 60 : undefined }}
                 className="relative flex aspect-[4/5] items-end overflow-hidden text-left outline outline-1 -outline-offset-1 outline-black/10 focus-visible:ring-3 focus-visible:ring-ring/50 dark:outline-white/10"
               >

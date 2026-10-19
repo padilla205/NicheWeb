@@ -1,9 +1,11 @@
 import { ArrowUp, X } from 'lucide-react'
 import { motion } from 'motion/react'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { SwipeHandle } from '@/components/SwipeHandle'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
+import { useSwipeToClose } from '@/hooks/useSwipeToClose'
 import { useAddComment } from '@/hooks/usePosts'
 import { formatTimeAgo, type Post, type PostComment } from '@/lib/feed'
 import { UserAvatar } from './UserAvatar'
@@ -36,6 +38,7 @@ export function CommentsDialog({ post, onClose }: CommentsDialogProps) {
   const count = post.comments.length
 
   useModalBehavior(onClose)
+  const swipe = useSwipeToClose(onClose)
 
   return (
     <>
@@ -50,12 +53,15 @@ export function CommentsDialog({ post, onClose }: CommentsDialogProps) {
       <div className="pointer-events-none fixed inset-0 z-50 flex items-end justify-center p-2 md:items-center md:p-4">
         <motion.div
           {...(isDesktop ? desktopMotion : mobileMotion)}
+          {...swipe.panelProps}
           role="dialog"
           aria-modal
           aria-labelledby={`comments-title-${post.id}`}
-          className="pointer-events-auto flex max-h-[85dvh] w-full flex-col overflow-hidden rounded-2xl border bg-popover text-popover-foreground md:max-h-[70dvh] md:max-w-md"
+          className="pointer-events-auto relative flex max-h-[85dvh] w-full flex-col overflow-hidden rounded-2xl border bg-popover text-popover-foreground md:max-h-[70dvh] md:max-w-md"
         >
-          <header className="flex items-center justify-between border-b py-2 pr-2 pl-4">
+          <SwipeHandle onPointerDown={swipe.startDrag} barClassName="bg-muted-foreground/40" />
+          {/* En el celular deja espacio arriba para la agarradera */}
+          <header className="flex items-center justify-between border-b pt-5 pr-2 pb-2 pl-4 md:pt-2">
             <h2 id={`comments-title-${post.id}`} className="text-sm font-medium">
               Comentarios <span className="text-muted-foreground tabular-nums">{count}</span>
             </h2>
@@ -157,7 +163,7 @@ function CommentItem({ comment, onReply, small = false }: CommentItemProps) {
         <button
           type="button"
           onClick={onReply}
-          className="mt-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          className="touch-target relative mt-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           Responder
         </button>

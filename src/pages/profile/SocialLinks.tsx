@@ -18,7 +18,7 @@ export function SocialLinks({ links }: { links: SocialLink[] }) {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="touch-target flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm font-medium transition-colors duration-150 outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="touch-target flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm font-medium transition duration-150 outline-none hover:bg-muted active:scale-[0.96] focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               <Icon className="size-4" />
               {getSocialLabel(link)}

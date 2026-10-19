@@ -24,6 +24,8 @@ export function ItemCard({ item, open, raised, onOpen, onLayoutAnimationComplete
         type="button"
         layoutId={`item-${item.id}`}
         onClick={onOpen}
+        // Al presionarla se encoge un poquito para sentir que el toque se registro
+        whileTap={{ scale: 0.97 }}
         onLayoutAnimationComplete={onLayoutAnimationComplete}
         style={{ borderRadius: 12, zIndex: raised ? 60 : undefined }}
         className="relative flex flex-col overflow-hidden border bg-card text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
