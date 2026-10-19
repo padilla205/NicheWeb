@@ -25,21 +25,18 @@ export function MorphDialog({ origin, ...props }: MorphDialogProps) {
 const openSpring = { type: 'spring', visualDuration: 0.3, bounce: 0.15 } as const
 const PANEL_RADIUS = 16
 const BUTTON_RADIUS = 8
+const FULL = `inset(0px 0px 0px 0px round ${PANEL_RADIUS}px)`
 
-// Cuanto hay que mover y encoger el panel (siempre centrado en la pantalla) para que
-// quede exactamente encima del boton
-function transformToButton(panel: HTMLElement, button: HTMLElement) {
-  const rect = button.getBoundingClientRect()
-  const scaleX = rect.width / panel.offsetWidth
-  const scaleY = rect.height / panel.offsetHeight
-  return {
-    x: rect.left + rect.width / 2 - window.innerWidth / 2,
-    y: rect.top + rect.height / 2 - window.innerHeight / 2,
-    scaleX,
-    scaleY,
-    // Al encoger, las esquinas tambien se encogen; esto las compensa para que se vean como las del boton
-    borderRadius: `${BUTTON_RADIUS / scaleX}px / ${BUTTON_RADIUS / scaleY}px`,
-  }
+// Recorte que deja ver solo la parte del panel que queda encima del boton. El panel nunca se
+// estira: siempre esta en su tamano real, asi el contenido se ve nitido mientras se abre
+function clipToButton(panel: HTMLElement, button: HTMLElement) {
+  const p = panel.getBoundingClientRect()
+  const b = button.getBoundingClientRect()
+  const top = Math.max(0, b.top - p.top)
+  const right = Math.max(0, p.right - b.right)
+  const bottom = Math.max(0, p.bottom - b.bottom)
+  const left = Math.max(0, b.left - p.left)
+  return `inset(${top}px ${right}px ${bottom}px ${left}px round ${BUTTON_RADIUS}px)`
 }
 
 type PanelProps = {
@@ -58,31 +55,23 @@ function MorphPanel({ origin, onClose, title, description, children }: PanelProp
   const [isPresent, safeToRemove] = usePresence()
   const reduceMotion = useReducedMotion()
 
-  // Al abrir: el panel empieza encima del boton y crece hasta el centro
+  // Al abrir: el recorte empieza del tamano del boton y crece hasta descubrir todo el panel
   useLayoutEffect(() => {
     const panel = scope.current
-    animate(panel, { opacity: [0, 1] }, { duration: 0.1 })
-    if (reduceMotion) return
-    const start = transformToButton(panel, origin)
-    animate(
-      panel,
-      {
-        x: [start.x, 0],
-        y: [start.y, 0],
-        scaleX: [start.scaleX, 1],
-        scaleY: [start.scaleY, 1],
-        borderRadius: [start.borderRadius, `${PANEL_RADIUS}px / ${PANEL_RADIUS}px`],
-      },
-      openSpring,
-    )
+    if (reduceMotion) {
+      animate(panel, { opacity: [0, 1] }, { duration: 0.15 })
+      return
+    }
+    panel.style.opacity = '1'
+    animate(panel, { clipPath: [clipToButton(panel, origin), FULL] }, openSpring)
   }, [animate, scope, origin, reduceMotion])
 
   // Al cerrar: hace el camino de regreso y se desvanece justo al llegar al boton
   useEffect(() => {
     if (isPresent) return
     const panel = scope.current
-    if (!reduceMotion) animate(panel, transformToButton(panel, origin), openSpring)
-    // Se quita en cuanto termina de desvanecerse (sin esperar el final del rebote)
+    // El recorte regresa al boton; se quita en cuanto llega (sin esperar el final del rebote)
+    if (!reduceMotion) animate(panel, { clipPath: clipToButton(panel, origin) }, openSpring)
     animate(panel, { opacity: 0 }, { delay: 0.2, duration: 0.1 }).then(safeToRemove)
   }, [isPresent, animate, scope, origin, reduceMotion, safeToRemove])
 
@@ -94,7 +83,8 @@ function MorphPanel({ origin, onClose, title, description, children }: PanelProp
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
         onClick={onClose}
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs"
+        // Solo oscurece el fondo, sin desenfocarlo
+        className="fixed inset-0 z-50 bg-black/40"
       />
       <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
@@ -111,13 +101,8 @@ function MorphPanel({ origin, onClose, title, description, children }: PanelProp
             isPresent ? 'pointer-events-auto' : 'pointer-events-none',
           )}
         >
-          {/* El contenido aparece un instante despues de que la ventana se abre */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { delay: 0.1, duration: 0.2 } }}
-            exit={{ opacity: 0, transition: { duration: 0.1 } }}
-            className="grid gap-4"
-          >
+          {/* El contenido se ve nitido desde el inicio: el recorte lo va descubriendo */}
+          <div className="grid gap-4">
             <div className="flex flex-col gap-2">
               <h2 id={titleId} className="text-base leading-none font-medium">
                 {title}
@@ -137,7 +122,7 @@ function MorphPanel({ origin, onClose, title, description, children }: PanelProp
               <X />
               <span className="sr-only">Cerrar</span>
             </Button>
-          </motion.div>
+          </div>
         </div>
       </div>
     </>
