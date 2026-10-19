@@ -39,7 +39,8 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
         onClick={onClose}
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs"
+        // Solo oscurece el fondo, sin desenfocarlo
+        className="fixed inset-0 z-50 bg-black/40"
       />
       <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* layoutCrossfade={false}: al abrir, el detalle se ve solido desde el primer instante.

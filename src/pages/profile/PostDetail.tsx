@@ -17,9 +17,6 @@ type PostDetailProps = {
   onClose: () => void
 }
 
-// Igual que el detalle de una prenda: el texto aparece casi junto con la apertura y frena suave
-const appearTransition = { delay: 0.05, duration: 0.25, ease: [0.32, 0.72, 0, 1] } as const
-
 // Publicacion completa: foto, autor, descripcion, likes y comentarios
 export function PostDetail({ post, onClose }: PostDetailProps) {
   // Se decide una sola vez al abrir: en el celular el cuadro de comentario no se enfoca solo
@@ -39,7 +36,8 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
         onClick={onClose}
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs"
+        // Solo oscurece el fondo, sin desenfocarlo
+        className="fixed inset-0 z-50 bg-black/40"
       />
       <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* layoutCrossfade={false}: se ve solido desde el primer instante, sin parpadear */}
@@ -62,11 +60,10 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
             <PostPhotos post={post} carouselId={`profile-post-detail-${post.id}`} iconClassName="size-16" />
           </motion.div>
 
-          {/* "layout" dibuja el texto a su tamano real mientras la ventana crece (sin "letras mini") */}
+          {/* "layout" dibuja el texto nitido y a su tamano real mientras la ventana crece y lo va
+              descubriendo (sin desvanecerse ni "letras mini"); al cerrar se va rapido */}
           <motion.div
             layout
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0, transition: appearTransition }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
             className="flex shrink-0 flex-col md:min-h-0 md:flex-1 md:shrink md:border-l"
           >
@@ -99,8 +96,6 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
 
           <motion.div
             layout
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: appearTransition }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
             className="absolute top-2 right-2"
           >
