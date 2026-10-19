@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from 'react'
-import type { ClothingType, Season } from '@/lib/clothing'
+import type { Season } from '@/lib/clothing'
 import { currentUser } from '@/lib/feed'
 import type { UserLocation } from '@/lib/locations'
-import { type Listing, type ListingCondition, sampleListings } from '@/lib/marketplace'
+import { type Delivery, type Listing, type ListingCondition, sampleListings } from '@/lib/marketplace'
 
 // TEMPORAL: las ventas viven en la memoria del navegador hasta que conectemos Supabase.
 // Se conservan al cambiar de seccion, pero se borran al recargar la pagina.
@@ -14,8 +14,9 @@ export type NewListing = {
   price: number
   size: string
   location: UserLocation
+  delivery?: Delivery
   condition: ListingCondition
-  type: ClothingType
+  type: string
   seasons: Season[]
   colors: string[]
   team?: string
@@ -41,7 +42,7 @@ export function useListing(id: string | undefined) {
 }
 
 export function useCreateListing() {
-  return ({ photos, title, description, size, ...rest }: NewListing) => {
+  return ({ photos, title, description, size, type, ...rest }: NewListing) => {
     const listing: Listing = {
       ...rest,
       id: crypto.randomUUID(),
@@ -49,6 +50,7 @@ export function useCreateListing() {
       title: title.trim(),
       description: description.trim(),
       size: size.trim(),
+      type: type.trim(),
       photoUrls: photos.map((photo) => URL.createObjectURL(photo)),
       createdAt: new Date(),
     }

@@ -9,14 +9,14 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateListing } from '@/hooks/useListings'
 import { useUserLocation } from '@/hooks/useUserLocation'
-import type { ClothingType, Season } from '@/lib/clothing'
+import type { Season } from '@/lib/clothing'
 import { toLocation } from '@/lib/locations'
-import { type ListingCondition, listingConditions } from '@/lib/marketplace'
-import { ClothingTypePicker } from '@/pages/closet/ClothingTypePicker'
+import { type Delivery, isJerseyType, type ListingCondition, listingConditions } from '@/lib/marketplace'
 import { ColorPicker } from '@/pages/closet/ColorPicker'
 import { PhotoPicker } from '@/pages/closet/PhotoPicker'
 import { MAX_SEASONS, SeasonPicker } from '@/pages/closet/SeasonPicker'
 import { TeamPicker } from '@/pages/closet/TeamPicker'
+import { DeliveryPicker } from './DeliveryPicker'
 
 type CreateListingDialogProps = {
   // Boton que abrio la ventana (crece desde ahi y regresa a el); null si esta cerrada
@@ -42,13 +42,14 @@ function CreateListingForm({ onDone }: { onDone: () => void }) {
   const [title, setTitle] = useState('')
   // Se guarda como texto mientras se escribe; se convierte a numero al publicar
   const [price, setPrice] = useState('')
-  const [type, setType] = useState<ClothingType | ''>('')
+  const [type, setType] = useState('')
   const [team, setTeam] = useState('')
   const [size, setSize] = useState('')
   const [condition, setCondition] = useState<ListingCondition | ''>('')
   const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([])
   const [colors, setColors] = useState<string[]>([])
   const [description, setDescription] = useState('')
+  const [delivery, setDelivery] = useState<Delivery>()
   // Empieza con tu localizacion si ya la elegiste; se puede cambiar solo para esta venta
   const userLocation = useUserLocation()
   const [place, setPlace] = useState(userLocation ?? { country: '', city: '' })
@@ -56,21 +57,21 @@ function CreateListingForm({ onDone }: { onDone: () => void }) {
   const createListing = useCreateListing()
 
   const priceNumber = Number(price)
-  const isJersey = type === 'jerseys-futbol'
+  const isJersey = isJerseyType(type)
   const canPublish =
     photos.length > 0 &&
     title.trim() !== '' &&
     Number.isInteger(priceNumber) &&
     priceNumber > 0 &&
-    type !== '' &&
+    type.trim() !== '' &&
     size.trim() !== '' &&
     condition !== '' &&
     location !== null
 
-  // Si cambia a otro tipo de prenda, se borra el equipo elegido
-  function changeType(newType: ClothingType) {
+  // Si el tipo deja de ser un jersey, se borra el equipo elegido
+  function changeType(newType: string) {
     setType(newType)
-    if (newType !== 'jerseys-futbol') setTeam('')
+    if (!isJerseyType(newType)) setTeam('')
   }
 
   function handleSubmit(event: FormEvent) {
@@ -82,6 +83,7 @@ function CreateListingForm({ onDone }: { onDone: () => void }) {
       price: priceNumber,
       size,
       location,
+      delivery,
       condition,
       type,
       seasons: selectedSeasons,
@@ -135,7 +137,13 @@ function CreateListingForm({ onDone }: { onDone: () => void }) {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="listing-type">Tipo de prenda</Label>
-        <ClothingTypePicker id="listing-type" value={type} onChange={changeType} />
+        <Input
+          id="listing-type"
+          value={type}
+          onChange={(event) => changeType(event.target.value)}
+          placeholder="Ej. Chamarra de piel, tenis, jersey de futbol"
+          maxLength={40}
+        />
       </div>
 
       {isJersey && (
@@ -150,6 +158,13 @@ function CreateListingForm({ onDone }: { onDone: () => void }) {
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">Donde se entrega</span>
         <LocationFields idPrefix="listing-location" country={place.country} city={place.city} onChange={setPlace} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-medium">
+          Lugar de entrega en el mapa <span className="font-normal text-muted-foreground">(opcional)</span>
+        </span>
+        <DeliveryPicker value={delivery} onChange={setDelivery} city={location} />
       </div>
 
       <div className="flex flex-col gap-2">
