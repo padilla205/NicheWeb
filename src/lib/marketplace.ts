@@ -1,6 +1,7 @@
-import type { ClothingType, Season } from '@/lib/clothing'
+import type { Season } from '@/lib/clothing'
 import type { FeedUser } from '@/lib/feed'
 import type { UserLocation } from '@/lib/locations'
+import { normalizeText } from '@/lib/text'
 
 export const listingConditions = [
   { value: 'nuevo', label: 'Nuevo' },
@@ -20,8 +21,11 @@ export type Listing = {
   size: string
   // Donde se entrega la prenda (el trato es en persona)
   location: UserLocation
+  // Punto o zona exacta en el mapa (opcional)
+  delivery?: Delivery
   condition: ListingCondition
-  type: ClothingType
+  // Texto libre: "Chamarra de piel", "Tenis", etc.
+  type: string
   // Mismas caracteristicas que una prenda del closet
   seasons: Season[]
   // Colores de la lista ("azul") o personalizados ("#1e90ff")
@@ -34,6 +38,19 @@ export type Listing = {
   // TEMPORAL: las ventas de ejemplo no tienen fotos y se dibujan con un degradado
   gradient?: [string, string]
   createdAt: Date
+}
+
+// Lugar de entrega en el mapa: con radio es una zona ("entrego a X km de aqui"); sin radio, un punto de encuentro
+export type Delivery = {
+  lat: number
+  lng: number
+  radiusKm?: number
+}
+
+// Con tipo libre, el campo de equipo aparece si el texto suena a jersey de futbol
+export function isJerseyType(type: string) {
+  const text = normalizeText(type)
+  return text.includes('jersey') || text.includes('futbol')
 }
 
 export function getConditionLabel(condition: ListingCondition) {
@@ -69,7 +86,7 @@ export const sampleListings: Listing[] = [
     size: 'M',
     location: { country: 'mx', city: 'guadalajara' },
     condition: 'como-nuevo',
-    type: 'chamarras',
+    type: 'Chamarra',
     description: 'La use dos veces. Sin manchas ni rasgaduras. Entrega en el centro.',
     seasons: ['otono', 'primavera'], colors: ['azul'],
     photoUrls: [],
@@ -84,7 +101,7 @@ export const sampleListings: Listing[] = [
     size: '27',
     location: { country: 'mx', city: 'cdmx' },
     condition: 'usado',
-    type: 'tenis',
+    type: 'Tenis',
     description: 'Tienen algo de uso pero estan limpios. Incluyen caja.',
     seasons: ['primavera', 'verano', 'otono', 'invierno'], colors: ['blanco'],
     photoUrls: [],
@@ -99,7 +116,7 @@ export const sampleListings: Listing[] = [
     size: 'S',
     location: { country: 'mx', city: 'guadalajara' },
     condition: 'nuevo',
-    type: 'vestidos',
+    type: 'Vestido',
     description: 'Nuevo con etiqueta, no me quedo. Tela ligera, ideal para eventos.',
     seasons: ['primavera', 'verano'], colors: ['negro'],
     photoUrls: [],
@@ -114,7 +131,7 @@ export const sampleListings: Listing[] = [
     size: 'L',
     location: { country: 'mx', city: 'cdmx' },
     condition: 'como-nuevo',
-    type: 'jerseys-futbol',
+    type: 'Jersey de futbol',
     description: 'Temporada pasada. Lavado a mano, los numeros estan completos.',
     seasons: ['verano'], colors: ['azul', 'blanco'],
     team: 'america',
@@ -130,7 +147,7 @@ export const sampleListings: Listing[] = [
     size: 'Unitalla',
     location: { country: 'mx', city: 'monterrey' },
     condition: 'usado',
-    type: 'bolsas',
+    type: 'Bolsa',
     description: 'Piel genuina, el broche funciona perfecto. Tiene un pequeno raspon en una esquina.',
     seasons: ['otono', 'invierno'], colors: ['cafe'],
     photoUrls: [],
@@ -145,7 +162,7 @@ export const sampleListings: Listing[] = [
     size: 'XL',
     location: { country: 'mx', city: 'cdmx' },
     condition: 'como-nuevo',
-    type: 'sudaderas',
+    type: 'Sudadera',
     description: 'Muy comoda y calientita. Color verde olivo.',
     seasons: ['otono', 'invierno'], colors: ['verde'],
     photoUrls: [],

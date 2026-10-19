@@ -1,15 +1,18 @@
-import { ArrowLeft, MapPin, MessageCircle } from 'lucide-react'
-import { type ReactNode } from 'react'
+import { ArrowLeft, ExternalLink, MapPin, MessageCircle } from 'lucide-react'
+import { lazy, type ReactNode, Suspense } from 'react'
 import { Link, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { useListing } from '@/hooks/useListings'
-import { getColorInfo, getSeasonLabel, getTypeInfo } from '@/lib/clothing'
+import { getColorInfo, getSeasonLabel } from '@/lib/clothing'
 import { formatTimeAgo } from '@/lib/feed'
 import { formatPrice, getConditionLabel } from '@/lib/marketplace'
 import { formatLocation } from '@/lib/locations'
 import { getTeamLabel } from '@/lib/teams'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
 import { ListingGallery } from './ListingGallery'
+
+// El mapa solo se descarga en las ventas que tienen lugar de entrega
+const DeliveryMap = lazy(() => import('@/components/DeliveryMap'))
 
 export function ListingDetailPage() {
   const { id } = useParams()
@@ -45,8 +48,32 @@ export function ListingDetailPage() {
             <dl className="grid grid-cols-3 gap-3 rounded-2xl border bg-card p-4 text-sm">
               <Detail label="Talla" value={listing.size} />
               <Detail label="Estado" value={getConditionLabel(listing.condition)} />
-              <Detail label="Tipo" value={getTypeInfo(listing.type).label} />
+              <Detail label="Tipo" value={listing.type} />
             </dl>
+
+            {listing.delivery && (
+              <DetailSection title="Lugar de entrega">
+                <p className="text-sm">
+                  {listing.delivery.radiusKm
+                    ? `Entrega a ${listing.delivery.radiusKm} km a la redonda de este punto`
+                    : 'Punto de encuentro'}
+                </p>
+                <Suspense fallback={<div className="h-56 animate-pulse rounded-lg bg-muted" />}>
+                  <DeliveryMap center={listing.delivery} value={listing.delivery} className="h-56" />
+                </Suspense>
+                {/* Abre la app de mapas del celular (o Google Maps en la computadora) para llegar */}
+                <Button variant="outline" size="sm" className="self-start" asChild>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${listing.delivery.lat},${listing.delivery.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink />
+                    Abrir en mapas
+                  </a>
+                </Button>
+              </DetailSection>
+            )}
 
             {listing.description && (
               <p className="text-sm leading-relaxed whitespace-pre-line">{listing.description}</p>

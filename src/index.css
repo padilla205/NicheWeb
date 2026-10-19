@@ -149,6 +149,10 @@
     }
   }
 }
+/* Mapa en modo oscuro: invierte los colores de las calles para que no deslumbre */
+.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
 /* Selector de color personalizado (react-colorful) dentro del popover */
 .custom-color-picker.react-colorful {
   width: 100%;
