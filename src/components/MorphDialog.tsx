@@ -26,6 +26,8 @@ const openSpring = { type: 'spring', visualDuration: 0.3, bounce: 0.15 } as cons
 const PANEL_RADIUS = 16
 const BUTTON_RADIUS = 8
 const FULL = `inset(0px 0px 0px 0px round ${PANEL_RADIUS}px)`
+// El cierre dura lo mismo que el desvanecido del fondo oscuro
+const CLOSE_SECONDS = 0.15
 
 // Recorte que deja ver solo la parte del panel que queda encima del boton. El panel nunca se
 // estira: siempre esta en su tamano real, asi el contenido se ve nitido mientras se abre
@@ -66,13 +68,13 @@ function MorphPanel({ origin, onClose, title, description, children }: PanelProp
     animate(panel, { clipPath: [clipToButton(panel, origin), FULL] }, openSpring)
   }, [animate, scope, origin, reduceMotion])
 
-  // Al cerrar: hace el camino de regreso y se desvanece justo al llegar al boton
+  // Al cerrar: todo (ventana, fotos y texto) se desvanece al mismo tiempo que el fondo, mientras
+  // el recorte se encoge un poco hacia el boton; nada se queda en pantalla despues
   useEffect(() => {
     if (isPresent) return
     const panel = scope.current
-    // El recorte regresa al boton; se quita en cuanto llega (sin esperar el final del rebote)
-    if (!reduceMotion) animate(panel, { clipPath: clipToButton(panel, origin) }, openSpring)
-    animate(panel, { opacity: 0 }, { delay: 0.2, duration: 0.1 }).then(safeToRemove)
+    if (!reduceMotion) animate(panel, { clipPath: clipToButton(panel, origin) }, { duration: CLOSE_SECONDS, ease: 'easeIn' })
+    animate(panel, { opacity: 0 }, { duration: CLOSE_SECONDS, ease: 'easeOut' }).then(safeToRemove)
   }, [isPresent, animate, scope, origin, reduceMotion, safeToRemove])
 
   return (
@@ -80,7 +82,7 @@ function MorphPanel({ origin, onClose, title, description, children }: PanelProp
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        exit={{ opacity: 0, transition: { duration: CLOSE_SECONDS } }}
         transition={{ duration: 0.2 }}
         onClick={onClose}
         // Solo oscurece el fondo, sin desenfocarlo
