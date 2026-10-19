@@ -36,10 +36,18 @@ export function useAddItem() {
       seasons: item.seasons,
       colors: item.colors,
       team: item.team,
+      private: false,
       createdAt: new Date(),
     }
     // Las mas nuevas van primero
     items = [newItem, ...items]
+    listeners.forEach((listener) => listener())
+  }
+}
+
+export function useSetItemPrivate() {
+  return (id: string, isPrivate: boolean) => {
+    items = items.map((item) => (item.id === id ? { ...item, private: isPrivate } : item))
     listeners.forEach((listener) => listener())
   }
 }

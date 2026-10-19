@@ -17,6 +17,8 @@ export type Profile = {
   avatarUrl?: string
   coverUrl?: string
   socials: SocialLink[]
+  // Si los demas pueden ver tu closet en tu perfil; empieza privado
+  closetPublic: boolean
 }
 
 // lucide-react no trae logos de marcas, asi que cada red usa un icono generico junto a su nombre

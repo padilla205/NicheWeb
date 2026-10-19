@@ -2,7 +2,10 @@ import { X } from 'lucide-react'
 import { motion } from 'motion/react'
 import { type ReactNode, useState } from 'react'
 import { SwipeHandle } from '@/components/SwipeHandle'
+import { ChoicePill } from '@/components/ChoicePill'
 import { Button } from '@/components/ui/button'
+import { useSetItemPrivate } from '@/hooks/useItems'
+import { useProfile } from '@/hooks/useProfile'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { useSwipeToClose } from '@/hooks/useSwipeToClose'
 import { type ClosetItem, getColorInfo, getSeasonLabel, getTypeInfo } from '@/lib/clothing'
@@ -24,6 +27,8 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
   const title = item.name || typeLabel
 
   useModalBehavior(onClose)
+  const setItemPrivate = useSetItemPrivate()
+  const { closetPublic } = useProfile()
   const swipe = useSwipeToClose(onClose)
 
   return (
@@ -114,6 +119,22 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
                     )
                   })}
                 </div>
+              )}
+            </DetailSection>
+
+            <DetailSection title="En tu perfil">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Quien ve esta prenda en tu perfil">
+                <ChoicePill active={!item.private} onClick={() => setItemPrivate(item.id, false)}>
+                  Visible
+                </ChoicePill>
+                <ChoicePill active={item.private} onClick={() => setItemPrivate(item.id, true)}>
+                  Privada
+                </ChoicePill>
+              </div>
+              {!closetPublic && (
+                <p className="text-xs text-muted-foreground">
+                  Tu closet es privado, asi que por ahora nadie ve ninguna prenda.
+                </p>
               )}
             </DetailSection>
 
