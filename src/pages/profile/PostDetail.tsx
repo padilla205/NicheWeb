@@ -12,6 +12,9 @@ import { PostActions } from '@/pages/feed/PostActions'
 import { PostPhotos } from '@/pages/feed/PostPhotos'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
 
+// El cierre dura lo mismo para el fondo oscuro y para la ventana
+const CLOSE_SECONDS = 0.15
+
 type PostDetailProps = {
   post: Post
   onClose: () => void
@@ -33,7 +36,7 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        exit={{ opacity: 0, transition: { duration: CLOSE_SECONDS } }}
         transition={{ duration: 0.2 }}
         onClick={onClose}
         // Solo oscurece el fondo, sin desenfocarlo
@@ -44,6 +47,8 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
         <motion.div
           layoutId={`profile-post-${post.id}`}
           layoutCrossfade={false}
+          // Al cerrar, la ventana y su foto se desvanecen juntas donde estan, al ritmo del fondo
+          exit={{ opacity: 0, transition: { duration: CLOSE_SECONDS } }}
           {...swipe.panelProps}
           role="dialog"
           aria-modal
