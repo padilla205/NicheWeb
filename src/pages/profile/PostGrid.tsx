@@ -11,14 +11,14 @@ import { PostDetail } from './PostDetail'
 export function PostGrid({ posts, emptyText }: { posts: Post[]; emptyText: string }) {
   const [openId, setOpenId] = useState<string | null>(null)
   // Al cerrar, el cuadro se vuelve a crear sin "layoutId": la ventana ya no tiene a donde regresar
-  // y solo se desvanece donde esta, sin la animacion de regreso al cuadro
+  // y desaparece al instante, sin la animacion de regreso al cuadro
   const [closingId, setClosingId] = useState<string | null>(null)
   // Cuenta las aperturas: cada una crea una ventana nueva, aunque la anterior aun se este desvaneciendo
   const [openCount, setOpenCount] = useState(0)
   const openPost = posts.find((post) => post.id === openId)
   // Paso 1: el cuadro se vuelve a crear sin enlace con la ventana
   const close = useCallback(() => setClosingId(openId), [openId])
-  // Paso 2 (en el siguiente cuadro): quita la ventana, que solo se desvanece
+  // Paso 2 (en el siguiente cuadro): quita la ventana al instante
   useEffect(() => {
     if (!closingId || closingId !== openId) return
     const frame = requestAnimationFrame(() => setOpenId(null))

@@ -13,8 +13,8 @@ import { PostActions } from '@/pages/feed/PostActions'
 import { PostPhotos } from '@/pages/feed/PostPhotos'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
 
-// El cierre dura lo mismo para el fondo oscuro y para la ventana
-const CLOSE_SECONDS = 0.15
+// Al cerrar, el fondo oscuro, la ventana y su foto desaparecen al instante, sin animacion
+const HIDE_NOW = { opacity: 0, transition: { duration: 0 } } as const
 
 type PostDetailProps = {
   post: Post
@@ -30,7 +30,7 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
   const toggleShare = useToggleShare()
 
   useModalBehavior(onClose)
-  // Mientras se desvanece al cerrarse deja pasar los toques al cuadro de abajo
+  // Mientras se esta quitando al cerrarse deja pasar los toques al cuadro de abajo
   const isPresent = useIsPresent()
   const swipe = useSwipeToClose(onClose)
 
@@ -39,7 +39,7 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0, transition: { duration: CLOSE_SECONDS } }}
+        exit={HIDE_NOW}
         transition={{ duration: 0.2 }}
         onClick={onClose}
         // Solo oscurece el fondo, sin desenfocarlo
@@ -50,8 +50,7 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
         <motion.div
           layoutId={`profile-post-${post.id}`}
           layoutCrossfade={false}
-          // Al cerrar, la ventana y su foto se desvanecen juntas donde estan, al ritmo del fondo
-          exit={{ opacity: 0, transition: { duration: CLOSE_SECONDS } }}
+          exit={HIDE_NOW}
           {...swipe.panelProps}
           role="dialog"
           aria-modal
@@ -72,10 +71,10 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
           </motion.div>
 
           {/* "layout" dibuja el texto nitido y a su tamano real mientras la ventana crece y lo va
-              descubriendo (sin desvanecerse ni "letras mini"); al cerrar se va rapido */}
+              descubriendo (sin desvanecerse ni "letras mini"); al cerrar desaparece al instante */}
           <motion.div
             layout
-            exit={{ opacity: 0, transition: { duration: 0.1 } }}
+            exit={HIDE_NOW}
             className="flex shrink-0 flex-col md:min-h-0 md:flex-1 md:shrink md:border-l"
           >
             <header className="flex items-center gap-3 border-b p-3 pr-14">
@@ -107,7 +106,7 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
 
           <motion.div
             layout
-            exit={{ opacity: 0, transition: { duration: 0.1 } }}
+            exit={HIDE_NOW}
             className="absolute top-2 right-2"
           >
             <Button variant="secondary" size="icon-sm" onClick={onClose}>
