@@ -3,6 +3,7 @@ import { lazy, type ReactNode, Suspense } from 'react'
 import { Link, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { useListing } from '@/hooks/useListings'
+import { useProfile } from '@/hooks/useProfile'
 import { getColorInfo, getSeasonLabel } from '@/lib/clothing'
 import { formatTimeAgo } from '@/lib/feed'
 import { formatPrice, getConditionLabel } from '@/lib/marketplace'
@@ -10,6 +11,8 @@ import { formatLocation } from '@/lib/locations'
 import { getTeamLabel } from '@/lib/teams'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
 import { ListingGallery } from './ListingGallery'
+import { ListingOwnerActions } from './ListingOwnerActions'
+import { StatusBadge } from './StatusBadge'
 
 // El mapa solo se descarga en las ventas que tienen lugar de entrega
 const DeliveryMap = lazy(() => import('@/components/DeliveryMap'))
@@ -17,6 +20,8 @@ const DeliveryMap = lazy(() => import('@/components/DeliveryMap'))
 export function ListingDetailPage() {
   const { id } = useParams()
   const listing = useListing(id)
+  const { username } = useProfile()
+  const isMine = listing?.seller.username === username
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -36,6 +41,7 @@ export function ListingDetailPage() {
 
           <div className="flex flex-col gap-5">
             <div>
+              {listing.status !== 'disponible' && <StatusBadge listing={listing} className="mb-2 inline-block" />}
               <h1 className="text-2xl font-semibold tracking-tight">{listing.title}</h1>
               <p className="mt-1 text-3xl font-semibold tabular-nums">{formatPrice(listing.price)}</p>
               <p className="mt-1 text-sm text-muted-foreground">Publicado {formatTimeAgo(listing.createdAt)}</p>
@@ -121,16 +127,22 @@ export function ListingDetailPage() {
               </div>
             </div>
 
-            {/* El chat llega en la etapa 7; por ahora el boton solo se muestra */}
-            <div className="flex flex-col gap-1.5">
-              <Button size="lg" disabled>
-                <MessageCircle />
-                Enviar mensaje al vendedor
-              </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                El trato se cierra en persona. Los mensajes llegan pronto.
-              </p>
-            </div>
+            {isMine ? (
+              <ListingOwnerActions listing={listing} />
+            ) : (
+              // El chat llega con Supabase; por ahora el boton solo se muestra
+              <div className="flex flex-col gap-1.5">
+                <Button size="lg" disabled>
+                  <MessageCircle />
+                  Enviar mensaje al vendedor
+                </Button>
+                <p className="text-center text-xs text-muted-foreground">
+                  {listing.status === 'vendida'
+                    ? 'Esta prenda ya se vendio.'
+                    : 'El trato se cierra en persona. Los mensajes llegan pronto.'}
+                </p>
+              </div>
+            )}
           </div>
         </article>
       )}

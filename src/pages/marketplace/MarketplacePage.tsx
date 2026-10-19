@@ -19,7 +19,8 @@ export function MarketplacePage() {
   // Boton que abrio "Crear venta"; null si la ventana esta cerrada
   const [createOrigin, setCreateOrigin] = useState<HTMLElement | null>(null)
   const closeCreate = useCallback(() => setCreateOrigin(null), [])
-  const listings = useListings()
+  // Las vendidas ya no se ofrecen; las apartadas si se ven, con su etiqueta
+  const listings = useListings().filter((listing) => listing.status !== 'vendida')
   const location = useUserLocation()
   // Con localizacion elegida se ven primero las ventas de tu ciudad; "Todas" quita el filtro
   const [showAll, setShowAll] = useState(false)

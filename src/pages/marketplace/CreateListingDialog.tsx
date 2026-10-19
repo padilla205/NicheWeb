@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { ChoicePill } from '@/components/ChoicePill'
 import { LocationFields } from '@/components/LocationFields'
 import { MorphDialog } from '@/components/MorphDialog'
@@ -7,11 +7,11 @@ import { DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { useCreateListing } from '@/hooks/useListings'
+import { useCreateListing, useUpdateListing } from '@/hooks/useListings'
 import { useUserLocation } from '@/hooks/useUserLocation'
 import type { Season } from '@/lib/clothing'
 import { toLocation } from '@/lib/locations'
-import { type Delivery, isJerseyType, type ListingCondition, listingConditions } from '@/lib/marketplace'
+import { type Delivery, isJerseyType, type Listing, type ListingCondition, listingConditions } from '@/lib/marketplace'
 import { ColorPicker } from '@/pages/closet/ColorPicker'
 import { PhotoPicker } from '@/pages/closet/PhotoPicker'
 import { MAX_SEASONS, SeasonPicker } from '@/pages/closet/SeasonPicker'
@@ -22,44 +22,67 @@ type CreateListingDialogProps = {
   // Boton que abrio la ventana (crece desde ahi y regresa a el); null si esta cerrada
   origin: HTMLElement | null
   onClose: () => void
+  // Si llega una venta, la ventana sirve para editarla en lugar de crear una nueva
+  listing?: Listing
 }
 
-export function CreateListingDialog({ origin, onClose }: CreateListingDialogProps) {
+export function CreateListingDialog({ origin, onClose, listing }: CreateListingDialogProps) {
   return (
     <MorphDialog
       origin={origin}
       onClose={onClose}
-      title="Crear venta"
-      description="Agrega fotos y los datos de la prenda. El trato se cierra en persona."
+      title={listing ? 'Editar venta' : 'Crear venta'}
+      description={
+        listing ? 'Cambia lo que necesites de tu venta.' : 'Agrega fotos y los datos de la prenda. El trato se cierra en persona.'
+      }
     >
-      <CreateListingForm onDone={onClose} />
+      <CreateListingForm onDone={onClose} listing={listing} />
     </MorphDialog>
   )
 }
 
-function CreateListingForm({ onDone }: { onDone: () => void }) {
+// Convierte las fotos ya guardadas en archivos para mostrarlas en el selector al editar
+// ponytail: las vuelve a subir al guardar; con Supabase Storage conviene conservar las direcciones existentes
+async function urlsToFiles(urls: string[]) {
+  return Promise.all(
+    urls.map(async (url, i) => {
+      const blob = await fetch(url).then((response) => response.blob())
+      return new File([blob], `foto-${i + 1}`, { type: blob.type })
+    }),
+  )
+}
+
+function CreateListingForm({ onDone, listing }: { onDone: () => void; listing?: Listing }) {
   const [photos, setPhotos] = useState<File[]>([])
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState(listing?.title ?? '')
   // Se guarda como texto mientras se escribe; se convierte a numero al publicar
-  const [price, setPrice] = useState('')
-  const [type, setType] = useState('')
-  const [team, setTeam] = useState('')
-  const [size, setSize] = useState('')
-  const [condition, setCondition] = useState<ListingCondition | ''>('')
-  const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([])
-  const [colors, setColors] = useState<string[]>([])
-  const [description, setDescription] = useState('')
-  const [delivery, setDelivery] = useState<Delivery>()
+  const [price, setPrice] = useState(listing ? String(listing.price) : '')
+  const [type, setType] = useState(listing?.type ?? '')
+  const [team, setTeam] = useState(listing?.team ?? '')
+  const [size, setSize] = useState(listing?.size ?? '')
+  const [condition, setCondition] = useState<ListingCondition | ''>(listing?.condition ?? '')
+  const [selectedSeasons, setSelectedSeasons] = useState<Season[]>(listing?.seasons ?? [])
+  const [colors, setColors] = useState<string[]>(listing?.colors ?? [])
+  const [description, setDescription] = useState(listing?.description ?? '')
+  const [delivery, setDelivery] = useState<Delivery | undefined>(listing?.delivery)
   // Empieza con tu localizacion si ya la elegiste; se puede cambiar solo para esta venta
   const userLocation = useUserLocation()
-  const [place, setPlace] = useState(userLocation ?? { country: '', city: '' })
+  const [place, setPlace] = useState(listing?.location ?? userLocation ?? { country: '', city: '' })
   const location = toLocation(place.country, place.city)
   const createListing = useCreateListing()
+  const updateListing = useUpdateListing()
+
+  // Al editar, carga las fotos actuales en el selector
+  useEffect(() => {
+    if (listing && listing.photoUrls.length > 0) urlsToFiles(listing.photoUrls).then(setPhotos)
+  }, [listing])
 
   const priceNumber = Number(price)
   const isJersey = isJerseyType(type)
+  // Las ventas de ejemplo no tienen fotos: al editarlas no se exige agregar una
+  const hasPhotos = photos.length > 0 || (listing !== undefined && listing.photoUrls.length === 0)
   const canPublish =
-    photos.length > 0 &&
+    hasPhotos &&
     title.trim() !== '' &&
     Number.isInteger(priceNumber) &&
     priceNumber > 0 &&
@@ -77,7 +100,7 @@ function CreateListingForm({ onDone }: { onDone: () => void }) {
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!canPublish) return
-    createListing({
+    const data = {
       photos,
       title,
       price: priceNumber,
@@ -90,7 +113,9 @@ function CreateListingForm({ onDone }: { onDone: () => void }) {
       colors,
       team: isJersey && team ? team : undefined,
       description,
-    })
+    }
+    if (listing) updateListing(listing.id, data)
+    else createListing(data)
     onDone()
   }
 
@@ -215,7 +240,7 @@ function CreateListingForm({ onDone }: { onDone: () => void }) {
           Cancelar
         </Button>
         <Button type="submit" disabled={!canPublish}>
-          Publicar venta
+          {listing ? 'Guardar cambios' : 'Publicar venta'}
         </Button>
       </DialogFooter>
     </form>
