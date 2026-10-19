@@ -40,13 +40,10 @@ export function ProfileTabs() {
   }
 
   return (
-    <section className="flex flex-col gap-4">
-      {/* En celular las pestanas se pueden deslizar de lado si no caben */}
-      <div
-        role="tablist"
-        aria-label="Contenido del perfil"
-        className="flex gap-1 overflow-x-auto border-b [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
+    // overflow-x-clip: el contenido que entra de lado no hace que la pagina se desplace horizontalmente
+    <section className="flex flex-col gap-4 overflow-x-clip">
+      {/* Barra fija: las 4 pestanas miden lo mismo y siempre caben, asi solo se mueve la rayita */}
+      <div role="tablist" aria-label="Contenido del perfil" className="grid grid-cols-4 border-b">
         {tabs.map(({ value, label, icon: Icon, count }) => (
           <button
             key={value}
@@ -55,17 +52,23 @@ export function ProfileTabs() {
             aria-selected={tab === value}
             onClick={() => select(value)}
             className={cn(
-              'touch-target relative flex shrink-0 items-center gap-2 px-3 py-2.5 text-sm font-medium transition duration-150 outline-none active:scale-[0.96] focus-visible:ring-3 focus-visible:ring-ring/50',
+              'relative flex min-w-0 flex-col items-center gap-1 px-1 py-2.5 font-medium transition-colors duration-150 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:justify-center sm:gap-2',
               tab === value ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
             )}
           >
-            <Icon className="size-4" />
-            {label}
-            <span className="text-muted-foreground tabular-nums">{count}</span>
+            {/* En celular: icono y numero arriba, nombre abajo en letra chica */}
+            <span className="flex items-center gap-1.5 text-sm">
+              <Icon className="size-4 shrink-0" />
+              <span className="text-muted-foreground tabular-nums sm:hidden">{count}</span>
+            </span>
+            <span className="max-w-full truncate text-[11px] sm:text-sm">{label}</span>
+            <span className="hidden text-sm text-muted-foreground tabular-nums sm:inline">{count}</span>
             {/* La rayita se desliza de la pestana anterior a la nueva */}
             {tab === value && (
               <motion.span
                 layoutId="profile-tab-indicator"
+                // Sin rebote: se desliza de lado y se detiene justo en su pestana
+                transition={{ type: 'spring', visualDuration: 0.25, bounce: 0 }}
                 className="absolute inset-x-0 bottom-0 h-0.5 bg-foreground"
               />
             )}
