@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { motion } from 'motion/react'
+import { motion, useIsPresent } from 'motion/react'
 import { useState } from 'react'
 import { SwipeHandle } from '@/components/SwipeHandle'
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,7 @@ import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { useSwipeToClose } from '@/hooks/useSwipeToClose'
 import { useToggleLike, useToggleShare } from '@/hooks/usePosts'
 import { formatTimeAgo, type Post } from '@/lib/feed'
+import { cn } from '@/lib/utils'
 import { CommentsThread } from '@/pages/feed/CommentsDialog'
 import { PostActions } from '@/pages/feed/PostActions'
 import { PostPhotos } from '@/pages/feed/PostPhotos'
@@ -29,6 +30,8 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
   const toggleShare = useToggleShare()
 
   useModalBehavior(onClose)
+  // Mientras se desvanece al cerrarse deja pasar los toques al cuadro de abajo
+  const isPresent = useIsPresent()
   const swipe = useSwipeToClose(onClose)
 
   return (
@@ -40,7 +43,7 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
         transition={{ duration: 0.2 }}
         onClick={onClose}
         // Solo oscurece el fondo, sin desenfocarlo
-        className="fixed inset-0 z-50 bg-black/40"
+        className={cn('fixed inset-0 z-50 bg-black/40', !isPresent && 'pointer-events-none')}
       />
       <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* layoutCrossfade={false}: se ve solido desde el primer instante, sin parpadear */}
@@ -54,7 +57,10 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
           aria-modal
           aria-label={`Publicacion de ${post.author.username}`}
           style={{ borderRadius: 16 }}
-          className="pointer-events-auto relative flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-y-auto border bg-popover text-popover-foreground md:h-[min(85dvh,640px)] md:flex-row md:overflow-hidden"
+          className={cn(
+            'relative flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-y-auto border bg-popover text-popover-foreground md:h-[min(85dvh,640px)] md:flex-row md:overflow-hidden',
+            isPresent ? 'pointer-events-auto' : 'pointer-events-none',
+          )}
         >
           <SwipeHandle onPointerDown={swipe.startDrag} />
           <motion.div

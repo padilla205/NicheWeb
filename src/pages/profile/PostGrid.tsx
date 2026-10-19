@@ -13,6 +13,8 @@ export function PostGrid({ posts, emptyText }: { posts: Post[]; emptyText: strin
   // Al cerrar, el cuadro se vuelve a crear sin "layoutId": la ventana ya no tiene a donde regresar
   // y solo se desvanece donde esta, sin la animacion de regreso al cuadro
   const [closingId, setClosingId] = useState<string | null>(null)
+  // Cuenta las aperturas: cada una crea una ventana nueva, aunque la anterior aun se este desvaneciendo
+  const [openCount, setOpenCount] = useState(0)
   const openPost = posts.find((post) => post.id === openId)
   // Paso 1: el cuadro se vuelve a crear sin enlace con la ventana
   const close = useCallback(() => setClosingId(openId), [openId])
@@ -39,7 +41,12 @@ export function PostGrid({ posts, emptyText }: { posts: Post[]; emptyText: strin
               <motion.button
                 type="button"
                 layoutId={linked ? `profile-post-${post.id}` : undefined}
-                onClick={() => setOpenId(post.id)}
+                onClick={() => {
+                  // Si se toca mientras se cerraba, se cancela el cierre y se vuelve a abrir
+                  setClosingId(null)
+                  setOpenId(post.id)
+                  setOpenCount((count) => count + 1)
+                }}
                 aria-label={`Ver publicacion de ${post.author.username}`}
                 // Al presionarla se encoge un poquito para sentir que el toque se registro
                 whileTap={{ scale: 0.97 }}
@@ -68,7 +75,7 @@ export function PostGrid({ posts, emptyText }: { posts: Post[]; emptyText: strin
       </ul>
       <AnimatePresence onExitComplete={() => setClosingId(null)}>
         {openPost && (
-          <PostDetail key={openPost.id} post={openPost} onClose={close} />
+          <PostDetail key={`${openPost.id}-${openCount}`} post={openPost} onClose={close} />
         )}
       </AnimatePresence>
     </>
