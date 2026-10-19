@@ -6,7 +6,10 @@ export type FeedUser = {
 export type PostComment = {
   id: string
   author: FeedUser
+  // Puede ir vacio si el comentario solo lleva imagen
   text: string
+  // Foto o GIF adjunto (opcional)
+  imageUrl?: string
   createdAt: Date
   // Si es una respuesta: el comentario principal bajo el que se muestra y a quien le responde
   reply?: { parentId: string; toUsername: string }
