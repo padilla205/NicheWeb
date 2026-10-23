@@ -3,13 +3,13 @@ import { type ReactNode, useRef } from 'react'
 import { cn } from '@/lib/utils'
 
 type ImageInputProps = {
-  onPick: (url: string) => void
+  onPick: (file: File) => void
   className: string
   // La foto actual; si no hay, se ve el icono de agregar
   children: ReactNode
 }
 
-// Area que abre el selector de archivos y devuelve una direccion temporal para ver la foto
+// Area que abre el selector de archivos y devuelve la foto elegida
 export function ImageInput({ onPick, className, children }: ImageInputProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -33,7 +33,7 @@ export function ImageInput({ onPick, className, children }: ImageInputProps) {
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0]
-          if (file?.type.startsWith('image/')) onPick(URL.createObjectURL(file))
+          if (file?.type.startsWith('image/')) onPick(file)
           event.target.value = ''
         }}
       />

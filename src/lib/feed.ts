@@ -31,9 +31,6 @@ export type Post = {
   comments: PostComment[]
 }
 
-// El usuario con sesion iniciada; se reemplaza por el perfil real cuando haya login
-export const currentUser: FeedUser = { username: 'tu', name: 'Tu' }
-
 const ana: FeedUser = { username: 'ana.style', name: 'Ana' }
 const leo: FeedUser = { username: 'leo_fits', name: 'Leo' }
 const sofi: FeedUser = { username: 'sofi', name: 'Sofia' }
