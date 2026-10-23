@@ -1,9 +1,9 @@
-import { ArrowLeft, ExternalLink, MapPin, MessageCircle } from 'lucide-react'
+import { ArrowLeft, ExternalLink, LogIn, MapPin, MessageCircle } from 'lucide-react'
 import { lazy, type ReactNode, Suspense } from 'react'
 import { Link, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
+import { useSession } from '@/hooks/useAuth'
 import { useListing } from '@/hooks/useListings'
-import { useProfile } from '@/hooks/useProfile'
 import { getColorInfo, getSeasonLabel } from '@/lib/clothing'
 import { formatTimeAgo } from '@/lib/feed'
 import { formatPrice, getConditionLabel } from '@/lib/marketplace'
@@ -21,9 +21,10 @@ const DeliveryMap = lazy(() => import('@/components/DeliveryMap'))
 
 export function ListingDetailPage() {
   const { id } = useParams()
-  const listing = useListing(id)
-  const { username } = useProfile()
-  const isMine = listing?.seller.username === username
+  const { data: listing, isPending } = useListing(id)
+  // Esta pagina se puede abrir sin cuenta (por ejemplo, desde un link compartido)
+  const session = useSession()
+  const isMine = !!session && listing?.sellerId === session.user.id
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -37,7 +38,9 @@ export function ListingDetailPage() {
         {listing && <ShareButton title={listing.title} />}
       </div>
 
-      {!listing ? (
+      {isPending ? (
+        <DetailSkeleton />
+      ) : !listing ? (
         <p className="py-20 text-center text-sm text-muted-foreground">Esta venta ya no existe.</p>
       ) : (
         // En escritorio la foto va a la izquierda y la informacion a la derecha; en celular una abajo de otra
@@ -137,6 +140,14 @@ export function ListingDetailPage() {
 
             {isMine ? (
               <ListingOwnerActions listing={listing} />
+            ) : !session ? (
+              // Sin cuenta se ve todo, pero para escribirle al vendedor hay que entrar
+              <Button size="lg" asChild>
+                <Link to="/login" state={{ from: `/marketplace/${listing.id}` }}>
+                  <LogIn />
+                  Inicia sesion para escribirle al vendedor
+                </Link>
+              </Button>
             ) : (
               // El chat llega con Supabase; por ahora el boton solo se muestra
               <div className="flex flex-col gap-1.5">
@@ -154,6 +165,21 @@ export function ListingDetailPage() {
           </div>
         </article>
       )}
+    </div>
+  )
+}
+
+// Forma de la pagina mientras llega la venta
+function DetailSkeleton() {
+  return (
+    <div aria-hidden className="grid gap-6 md:grid-cols-2">
+      <div className="aspect-square animate-pulse rounded-2xl bg-muted" />
+      <div className="flex flex-col gap-3">
+        <div className="h-7 w-2/3 animate-pulse rounded bg-muted" />
+        <div className="h-9 w-1/3 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+        <div className="mt-2 h-20 animate-pulse rounded-2xl bg-muted" />
+      </div>
     </div>
   )
 }

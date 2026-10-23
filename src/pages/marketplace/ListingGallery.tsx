@@ -20,6 +20,7 @@ export function ListingGallery({ listing }: { listing: Listing }) {
       <PhotoCarousel
         itemId={`listing-${listing.id}`}
         photos={listing.photoUrls}
+        placeholder={listing.thumbUrl}
         index={index}
         onIndexChange={setIndex}
         alt={listing.title}

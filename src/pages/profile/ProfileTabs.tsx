@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import { useState } from 'react'
 import { ShowMore } from '@/components/ShowMore'
 import { useItems } from '@/hooks/useItems'
-import { useListings } from '@/hooks/useListings'
+import { useMyListings } from '@/hooks/useListings'
 import { useProfile } from '@/hooks/useProfile'
 import { usePosts } from '@/hooks/usePosts'
 import { cn } from '@/lib/utils'
@@ -21,19 +21,17 @@ export function ProfileTabs() {
   const { username, closetPublic } = useProfile()
   const posts = usePosts()
   const { items, total: itemsTotal, isPending: itemsPending, loadMore: loadMoreItems } = useItems()
-  const listings = useListings()
+  // Incluye las vendidas: en el marketplace ya no salen, pero aqui las sigues viendo con su etiqueta
+  const { listings: myListings, total: listingsTotal, isPending: listingsPending, loadMore: loadMoreListings } = useMyListings()
 
   const myPosts = posts.filter((post) => post.author.username === username)
   const sharedPosts = posts.filter((post) => post.sharedByMe)
-  const myListings = listings.filter(
-    (listing) => listing.seller.username === username && listing.status !== 'vendida',
-  )
 
   const tabs: { value: Tab; label: string; icon: LucideIcon; count: number }[] = [
     { value: 'posts', label: 'Publicaciones', icon: SquareUser, count: myPosts.length },
     { value: 'closet', label: 'Closet', icon: Shirt, count: itemsTotal },
     { value: 'shared', label: 'Compartidos', icon: Repeat2, count: sharedPosts.length },
-    { value: 'selling', label: 'En venta', icon: Tag, count: myListings.length },
+    { value: 'selling', label: 'En venta', icon: Tag, count: listingsTotal },
   ]
 
   function select(value: Tab) {
@@ -120,16 +118,19 @@ export function ProfileTabs() {
           />
         )}
         {tab === 'selling' &&
-          (myListings.length === 0 ? (
+          (listingsPending ? null : myListings.length === 0 ? (
             <EmptyTab>No tienes prendas en venta. Publica una desde el Marketplace.</EmptyTab>
           ) : (
-            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {myListings.map((listing) => (
-                <li key={listing.id}>
-                  <ListingCard listing={listing} />
-                </li>
-              ))}
-            </ul>
+            <div className="flex flex-col">
+              <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {myListings.map((listing) => (
+                  <li key={listing.id}>
+                    <ListingCard listing={listing} />
+                  </li>
+                ))}
+              </ul>
+              <ShowMore shown={myListings.length} total={listingsTotal} onClick={loadMoreListings} />
+            </div>
           ))}
       </motion.div>
     </section>

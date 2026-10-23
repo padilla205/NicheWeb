@@ -30,7 +30,7 @@ export function ListingOwnerActions({ listing }: { listing: Listing }) {
   function remove() {
     // Primero sale de la pagina, para no mostrar "Esta venta ya no existe" ni un instante
     navigate('/marketplace')
-    deleteListing(listing.id)
+    deleteListing.mutate(listing)
   }
 
   return (
@@ -42,7 +42,7 @@ export function ListingOwnerActions({ listing }: { listing: Listing }) {
           <ChoicePill
             key={status.value}
             active={listing.status === status.value}
-            onClick={() => setStatus(listing.id, status.value)}
+            onClick={() => setStatus.mutate({ id: listing.id, status: status.value })}
           >
             {status.label}
           </ChoicePill>

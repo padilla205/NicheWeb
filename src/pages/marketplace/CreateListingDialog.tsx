@@ -11,6 +11,7 @@ import { useCreateListing, useUpdateListing } from '@/hooks/useListings'
 import { useUserLocation } from '@/hooks/useUserLocation'
 import { type ClosetItem, getTypeInfo, type Season } from '@/lib/clothing'
 import { toLocation } from '@/lib/locations'
+import { fileFromPhoto } from '@/lib/photos'
 import { type Delivery, isJerseyType, type Listing, type ListingCondition, listingConditions } from '@/lib/marketplace'
 import { ColorPicker } from '@/pages/closet/ColorPicker'
 import { PhotoPicker } from '@/pages/closet/PhotoPicker'
@@ -50,17 +51,6 @@ export function CreateListingDialog({ origin, onClose, listing, fromItem, onPubl
   )
 }
 
-// Convierte las fotos ya guardadas en archivos para mostrarlas en el selector al editar
-// ponytail: las vuelve a subir al guardar; con Supabase Storage conviene conservar las direcciones existentes
-async function urlsToFiles(urls: string[]) {
-  return Promise.all(
-    urls.map(async (url, i) => {
-      const blob = await fetch(url).then((response) => response.blob())
-      return new File([blob], `foto-${i + 1}`, { type: blob.type })
-    }),
-  )
-}
-
 type CreateListingFormProps = Pick<CreateListingDialogProps, 'listing' | 'fromItem' | 'onPublished'> & {
   onDone: () => void
 }
@@ -85,17 +75,19 @@ function CreateListingForm({ onDone, listing, fromItem, onPublished }: CreateLis
   const location = toLocation(place.country, place.city)
   const createListing = useCreateListing()
   const updateListing = useUpdateListing()
+  const saving = createListing.isPending || updateListing.isPending
+  const [saveError, setSaveError] = useState('')
 
-  // Al editar (o al vender una prenda del closet), carga sus fotos en el selector
+  // Al editar (o al vender una prenda del closet), carga sus fotos en el selector.
+  // Al guardar no se vuelven a comprimir: se conservan o se copian tal cual
   useEffect(() => {
-    const urls = listing?.photoUrls ?? fromItem?.photoUrls ?? []
-    if (urls.length > 0) urlsToFiles(urls).then(setPhotos)
+    const paths = listing?.photoPaths ?? fromItem?.photoPaths ?? []
+    if (paths.length > 0) Promise.all(paths.map(fileFromPhoto)).then(setPhotos)
   }, [listing, fromItem])
 
   const priceNumber = Number(price)
   const isJersey = isJerseyType(type)
-  // Las ventas de ejemplo no tienen fotos: al editarlas no se exige agregar una
-  const hasPhotos = photos.length > 0 || (listing !== undefined && listing.photoUrls.length === 0)
+  const hasPhotos = photos.length > 0
   const canPublish =
     hasPhotos &&
     title.trim() !== '' &&
@@ -112,9 +104,11 @@ function CreateListingForm({ onDone, listing, fromItem, onPublished }: CreateLis
     if (!isJerseyType(newType)) setTeam('')
   }
 
-  function handleSubmit(event: FormEvent) {
+  // Espera a que se guarde para cerrar; si falla, la ventana sigue abierta con todo lo escrito
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!canPublish) return
+    setSaveError('')
     const data = {
       photos,
       title,
@@ -129,12 +123,16 @@ function CreateListingForm({ onDone, listing, fromItem, onPublished }: CreateLis
       team: isJersey && team ? team : undefined,
       description,
     }
-    if (listing) updateListing(listing.id, data)
-    else {
-      createListing(data)
-      onPublished?.()
+    try {
+      if (listing) await updateListing.mutateAsync({ listing, data })
+      else {
+        await createListing.mutateAsync(data)
+        onPublished?.()
+      }
+      onDone()
+    } catch {
+      setSaveError('No se pudo guardar la venta. Revisa tu conexion e intenta de nuevo.')
     }
-    onDone()
   }
 
   return (
@@ -253,12 +251,18 @@ function CreateListingForm({ onDone, listing, fromItem, onPublished }: CreateLis
         />
       </div>
 
+      {saveError && (
+        <p role="alert" className="text-sm text-destructive">
+          {saveError}
+        </p>
+      )}
+
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={!canPublish}>
-          {listing ? 'Guardar cambios' : 'Publicar venta'}
+        <Button type="submit" disabled={!canPublish || saving}>
+          {saving ? 'Guardando' : listing ? 'Guardar cambios' : 'Publicar venta'}
         </Button>
       </DialogFooter>
     </form>
