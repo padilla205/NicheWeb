@@ -30,7 +30,7 @@ Disponible en web y celular (PWA).
 ## Reglas de código
 - Siempre TypeScript, sin `any` salvo justificación en un comentario.
 - Componentes pequeños y con una sola responsabilidad.
-- Sin emojis en la interfaz: solo iconos de lucide-react.
+- Sin emojis en la interfaz: solo iconos de lucide-react. Unica excepcion: las 4 reacciones del chat (😂 👍 👎 😢), que usan los emojis del sistema.
 - Textos de la interfaz sin acentos ni caracteres especiales (nada de á, é, í, ó, ú, ñ, ¿, ¡ ni …). Ejemplo: "Closet", "Aqui veras tus prendas".
 - Las consultas a Supabase van en hooks dentro de src/hooks, nunca directo en los componentes.
 - Variables de entorno en .env.local (nunca se suben a git). Mantener un .env.example sin valores reales.

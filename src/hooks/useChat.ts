@@ -1,10 +1,10 @@
 import { type InfiniteData, type QueryClient, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useSession } from '@/hooks/useAuth'
-import type { ChatMessage, Conversation } from '@/lib/chat'
+import type { ChatMessage, Conversation, ReactionEmoji } from '@/lib/chat'
 import type { Tables } from '@/lib/database.types'
 import type { Listing, ListingStatus } from '@/lib/marketplace'
-import { photoUrl, uploadPhoto } from '@/lib/photos'
+import { deletePhotos, photoUrl, uploadPhoto } from '@/lib/photos'
 import { supabase } from '@/lib/supabase'
 
 // Mensajes por bloque; al subir en el chat se piden los anteriores
@@ -20,16 +20,32 @@ const CHAT_COLUMNS = `id, buyer_id, last_message, last_message_at,
 
 type MessagePages = InfiniteData<ChatMessage[], string | null>
 
-function fromMessageRow(row: Tables<'messages'>): ChatMessage {
+type MessageRow = Tables<'messages'> & { reactions?: { user_id: string; emoji: string }[] }
+
+// Las reacciones solo vienen al pedir los mensajes; lo que llega por Realtime no las trae y no las borra
+function fromMessageRow(row: MessageRow): ChatMessage {
   return {
     id: row.id,
     conversationId: row.conversation_id,
     senderId: row.sender_id,
     body: row.body,
+    imagePath: row.image_path ?? undefined,
     imageUrl: row.image_path ? photoUrl(row.image_path) : undefined,
     thumbUrl: row.image_path ? photoUrl(row.image_path, true) : undefined,
     createdAt: row.created_at,
+    editedAt: row.edited_at ?? undefined,
+    deleted: !!row.deleted_at,
+    ...(row.reactions && {
+      reactions: row.reactions.map((r) => ({ userId: r.user_id, emoji: r.emoji as ReactionEmoji })),
+    }),
   }
+}
+
+// Cambia un mensaje donde este (no se sabe de que chat es cuando llega una reaccion por Realtime)
+function updateMessage(queryClient: QueryClient, id: string, change: (message: ChatMessage) => ChatMessage) {
+  queryClient.setQueriesData<MessagePages>({ queryKey: ['messages'] }, (data) =>
+    data && { ...data, pages: data.pages.map((page) => page.map((m) => (m.id === id ? change(m) : m))) },
+  )
 }
 
 // Agrega un mensaje al chat que ya esta en pantalla, o actualiza el que ya estaba (mismo id).
@@ -43,7 +59,8 @@ function putMessage(queryClient: QueryClient, message: ChatMessage) {
           page.map((m) => {
             if (m.id !== message.id) return m
             // La foto local ya se ve: se conserva para que no parpadee al cambiar a la de Supabase
-            const local = m.thumbUrl?.startsWith('blob:') ? { imageUrl: m.imageUrl, thumbUrl: m.thumbUrl } : {}
+            const local =
+              m.thumbUrl?.startsWith('blob:') && !message.deleted ? { imageUrl: m.imageUrl, thumbUrl: m.thumbUrl } : {}
             return { ...m, ...message, ...local }
           }),
         )
@@ -103,7 +120,7 @@ export function useMessages(conversationId: string) {
     queryFn: async ({ pageParam }) => {
       let request = supabase
         .from('messages')
-        .select('*')
+        .select('*, reactions:message_reactions(user_id, emoji)')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: false })
         .limit(PAGE_SIZE)
@@ -140,6 +157,22 @@ export function useChatRealtime() {
         putMessage(queryClient, { ...fromMessageRow(row as Tables<'messages'>), isNew: true })
         queryClient.invalidateQueries({ queryKey: ['chats'] })
         queryClient.invalidateQueries({ queryKey: ['unread'] })
+      })
+      // Mensajes editados o borrados
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, ({ new: row }) => {
+        putMessage(queryClient, fromMessageRow(row as Tables<'messages'>))
+        queryClient.invalidateQueries({ queryKey: ['chats'] })
+      })
+      // Reacciones puestas, cambiadas o quitadas
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, (change) => {
+        const row = (change.eventType === 'DELETE' ? change.old : change.new) as Tables<'message_reactions'>
+        updateMessage(queryClient, row.message_id, (m) => ({
+          ...m,
+          reactions: [
+            ...(m.reactions ?? []).filter((r) => r.userId !== row.user_id),
+            ...(change.eventType === 'DELETE' ? [] : [{ userId: row.user_id, emoji: row.emoji as ReactionEmoji }]),
+          ],
+        }))
       })
       .subscribe()
     return () => {
@@ -349,5 +382,78 @@ export function useToggleBlock() {
     },
     onError: (_error, _vars, context) => queryClient.setQueryData(key, context?.previous),
     onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+  }).mutate
+}
+
+// Pone, cambia o quita tu reaccion: tocar la misma la quita. Se ve al instante
+export function useToggleReaction() {
+  const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
+
+  return useMutation({
+    mutationFn: async ({ message, emoji }: { message: ChatMessage; emoji: ReactionEmoji }) => {
+      const mine = message.reactions?.find((r) => r.userId === userId)
+      const { error } =
+        mine?.emoji === emoji
+          ? await supabase.from('message_reactions').delete().eq('message_id', message.id).eq('user_id', userId!)
+          : await supabase.from('message_reactions').upsert({ message_id: message.id, emoji })
+      if (error) throw error
+    },
+    onMutate: ({ message, emoji }) => {
+      const mine = message.reactions?.find((r) => r.userId === userId)
+      const others = (message.reactions ?? []).filter((r) => r.userId !== userId)
+      updateMessage(queryClient, message.id, (m) => ({
+        ...m,
+        reactions: mine?.emoji === emoji ? others : [...others, { userId: userId!, emoji }],
+      }))
+    },
+    onError: (_error, { message }) => queryClient.invalidateQueries({ queryKey: ['messages', message.conversationId] }),
+  }).mutate
+}
+
+// Cambia el texto de tu mensaje (solo en los primeros 10 minutos)
+export function useEditMessage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ message, body }: { message: ChatMessage; body: string }) => {
+      // Pasados los 10 minutos la base de datos no cambia nada (y no da error): se revisa que si cambio
+      const { data, error } = await supabase.from('messages').update({ body }).eq('id', message.id).select('id')
+      if (error) throw error
+      if (data.length === 0) throw new Error('Ya no se puede editar')
+    },
+    onMutate: ({ message, body }) =>
+      updateMessage(queryClient, message.id, (m) => ({ ...m, body, editedAt: new Date().toISOString() })),
+    onError: (_error, { message }) => queryClient.invalidateQueries({ queryKey: ['messages', message.conversationId] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chats'] }),
+  }).mutate
+}
+
+// Borra tu mensaje para los dos (solo en los primeros 10 minutos); su foto tambien se borra
+export function useDeleteMessage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (message: ChatMessage) => {
+      const { data, error } = await supabase
+        .from('messages')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', message.id)
+        .select('id')
+      if (error) throw error
+      if (data.length === 0) throw new Error('Ya no se puede borrar')
+      if (message.imagePath) deletePhotos([message.imagePath]).catch(() => {})
+    },
+    onMutate: (message) =>
+      updateMessage(queryClient, message.id, (m) => ({
+        ...m,
+        deleted: true,
+        body: '',
+        imageUrl: undefined,
+        thumbUrl: undefined,
+        reactions: [],
+      })),
+    onError: (_error, message) => queryClient.invalidateQueries({ queryKey: ['messages', message.conversationId] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chats'] }),
   }).mutate
 }

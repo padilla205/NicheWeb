@@ -32,14 +32,34 @@ export type ChatMessage = {
   // Foto o GIF: completa y en miniatura (mientras se sube, las dos son la foto local)
   imageUrl?: string
   thumbUrl?: string
+  // Ruta en Storage, para borrar la foto si se borra el mensaje
+  imagePath?: string
   // La foto elegida, guardada mientras se sube para poder reintentar
   file?: File
+  editedAt?: string
+  // Borrado: se ve como "Mensaje eliminado"
+  deleted?: boolean
+  // Una por persona; sin cargar todavia si llego por Realtime
+  reactions?: Reaction[]
   // Tal cual llega de la base de datos, para pedir los mensajes anteriores sin perder precision
   createdAt: string
   // Sin estado = ya llego a la base de datos
   status?: 'sending' | 'failed'
   // Llego o se envio con el chat abierto: entra con animacion
   isNew?: boolean
+}
+
+export type Reaction = { userId: string; emoji: ReactionEmoji }
+
+// Las 4 reacciones; se ven con los emojis del sistema de cada quien
+export const reactionEmojis = ['😂', '👍', '👎', '😢'] as const
+export type ReactionEmoji = (typeof reactionEmojis)[number]
+
+// Minutos para editar o borrar un mensaje (la base de datos aplica el mismo limite)
+export const EDIT_MINUTES = 10
+
+export function canChangeMessage(message: ChatMessage) {
+  return !message.deleted && !message.status && Date.now() - new Date(message.createdAt).getTime() < EDIT_MINUTES * 60_000
 }
 
 // Mensajes listos para tocar en un chat nuevo

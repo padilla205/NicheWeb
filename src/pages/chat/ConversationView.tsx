@@ -1,11 +1,18 @@
 import { ArrowLeft, ChevronUp } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
-import { Fragment, useEffect } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/hooks/useAuth'
-import { useBlockState, useMarkChatRead, useMessages, useSendMessage, useToggleBlock } from '@/hooks/useChat'
-import { type Conversation, formatMessageDay } from '@/lib/chat'
+import {
+  useBlockState,
+  useEditMessage,
+  useMarkChatRead,
+  useMessages,
+  useSendMessage,
+  useToggleBlock,
+} from '@/hooks/useChat'
+import { type ChatMessage, type Conversation, formatMessageDay } from '@/lib/chat'
 import { ChatListingCard } from './ChatListingCard'
 import { ChatUserMenu } from './ChatUserMenu'
 import { MessageBubble } from './MessageBubble'
@@ -25,6 +32,9 @@ export function ConversationView({ id, conversation }: ConversationViewProps) {
   const markRead = useMarkChatRead()
   const blockState = useBlockState(conversation?.otherId)
   const toggleBlock = useToggleBlock()
+  const editMessage = useEditMessage()
+  // Mensaje tuyo que se esta editando en la caja de texto
+  const [editing, setEditing] = useState<ChatMessage | null>(null)
 
   // Con el chat abierto todo queda leido, tambien lo que llega mientras lo ves
   const newest = messages[0]?.id
@@ -63,6 +73,7 @@ export function ConversationView({ id, conversation }: ConversationViewProps) {
                     message={message}
                     mine={message.senderId === userId}
                     onRetry={() => send({ conversationId: id, body: message.body, file: message.file, id: message.id })}
+                    onEdit={() => setEditing(message)}
                   />
                   {(!older || formatMessageDay(older.createdAt) !== day) && <DaySeparator label={day} />}
                 </Fragment>
@@ -83,6 +94,14 @@ export function ConversationView({ id, conversation }: ConversationViewProps) {
 
       {blockState === 'none' ? (
         <MessageComposer
+          // Al empezar o terminar de editar, la caja vuelve a empezar con el texto que toca
+          key={editing?.id ?? 'new'}
+          editing={editing}
+          onCancelEdit={() => setEditing(null)}
+          onEdit={(body) => {
+            if (editing && body !== editing.body) editMessage({ message: editing, body })
+            setEditing(null)
+          }}
           showQuickReplies={!isPending && messages.length === 0 && !!conversation?.isBuyer}
           onSend={(body, file) => send({ conversationId: id, body, file })}
         />

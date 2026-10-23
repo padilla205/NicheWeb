@@ -1,21 +1,20 @@
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { PhotoCarousel } from '@/pages/closet/PhotoCarousel'
 
 type ChatImageProps = {
   id: string
   imageUrl: string
   thumbUrl: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-// Foto o GIF de un mensaje: completa segun sus proporciones y, al tocarla, en pantalla completa con zoom
-export function ChatImage({ id, imageUrl, thumbUrl }: ChatImageProps) {
+// Foto o GIF de un mensaje en pantalla completa, con zoom
+export function ChatImage({ id, imageUrl, thumbUrl, open, onOpenChange }: ChatImageProps) {
   return (
-    <Dialog>
-      <DialogTrigger className="overflow-hidden rounded-2xl border bg-muted outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-        <img src={thumbUrl} alt="Imagen del mensaje" loading="lazy" className="max-h-72 max-w-full object-contain" />
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         aria-describedby={undefined}
         showCloseButton={false}

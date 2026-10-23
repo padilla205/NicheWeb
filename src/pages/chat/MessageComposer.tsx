@@ -1,8 +1,9 @@
-import { ImagePlus, SendHorizontal, X } from 'lucide-react'
+import { Check, ImagePlus, Pencil, SendHorizontal, X } from 'lucide-react'
 import { type FormEvent, type KeyboardEvent, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { quickReplies } from '@/lib/chat'
+import { type ChatMessage, quickReplies } from '@/lib/chat'
+import { cn } from '@/lib/utils'
 
 // Los GIF se suben sin comprimir y el bucket acepta hasta 2 MB
 const MAX_GIF_BYTES = 2 * 1024 * 1024
@@ -11,12 +12,16 @@ type MessageComposerProps = {
   // Respuestas rapidas para empezar la platica
   showQuickReplies: boolean
   onSend: (body: string, file?: File) => void
+  // Mensaje tuyo que se esta editando: la caja empieza con su texto y al enviar se guarda el cambio
+  editing: ChatMessage | null
+  onEdit: (body: string) => void
+  onCancelEdit: () => void
 }
 
 // Caja para escribir: Enter envia y Shift+Enter hace un salto de linea. Se puede mandar
 // solo texto, solo una foto o GIF, o las dos cosas
-export function MessageComposer({ showQuickReplies, onSend }: MessageComposerProps) {
-  const [text, setText] = useState('')
+export function MessageComposer({ showQuickReplies, onSend, editing, onEdit, onCancelEdit }: MessageComposerProps) {
+  const [text, setText] = useState(editing?.body ?? '')
   const [image, setImage] = useState<File>()
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
@@ -27,6 +32,11 @@ export function MessageComposer({ showQuickReplies, onSend }: MessageComposerPro
 
   function send(event?: FormEvent) {
     event?.preventDefault()
+    if (editing) {
+      // Un mensaje con foto puede quedar sin texto; uno de solo texto no
+      if (body || editing.imageUrl) onEdit(body)
+      return
+    }
     if (!body && !image) return
     onSend(body, image)
     setText('')
@@ -34,6 +44,7 @@ export function MessageComposer({ showQuickReplies, onSend }: MessageComposerPro
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === 'Escape' && editing) onCancelEdit()
     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) send(event)
   }
 
@@ -49,7 +60,18 @@ export function MessageComposer({ showQuickReplies, onSend }: MessageComposerPro
 
   return (
     <div className="flex flex-col gap-2 border-t-2 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-      {showQuickReplies && (
+      {editing && (
+        <div className="flex items-center justify-between gap-2 pl-1 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <Pencil className="size-3.5" />
+            Editando mensaje
+          </span>
+          <Button variant="ghost" size="icon-xs" onClick={onCancelEdit} aria-label="Cancelar edicion">
+            <X />
+          </Button>
+        </div>
+      )}
+      {showQuickReplies && !editing && (
         <div className="flex gap-2 overflow-x-auto">
           {quickReplies.map((reply) => (
             <Button
@@ -86,7 +108,7 @@ export function MessageComposer({ showQuickReplies, onSend }: MessageComposerPro
           type="button"
           variant="ghost"
           size="icon"
-          className="size-10 shrink-0 rounded-full"
+          className={cn('size-10 shrink-0 rounded-full', editing && 'invisible')}
           onClick={() => fileRef.current?.click()}
           aria-label="Agregar imagen o GIF"
         >
@@ -107,6 +129,7 @@ export function MessageComposer({ showQuickReplies, onSend }: MessageComposerPro
           value={text}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={onKeyDown}
+          autoFocus={!!editing}
           placeholder="Escribe un mensaje"
           aria-label="Mensaje"
           rows={1}
@@ -116,11 +139,11 @@ export function MessageComposer({ showQuickReplies, onSend }: MessageComposerPro
         <Button
           type="submit"
           size="icon"
-          disabled={!body && !image}
-          aria-label="Enviar"
+          disabled={editing ? !body && !editing.imageUrl : !body && !image}
+          aria-label={editing ? 'Guardar cambio' : 'Enviar'}
           className="size-10 shrink-0 rounded-full"
         >
-          <SendHorizontal />
+          {editing ? <Check /> : <SendHorizontal />}
         </Button>
       </form>
     </div>
