@@ -1,9 +1,20 @@
+import { Navigate, useLocation } from 'react-router'
+import { useSession } from '@/hooks/useAuth'
 import { AuthForm } from './AuthForm'
 import { LoginShowcase } from './LoginShowcase'
 
 // Pantalla dividida: en escritorio la tarjeta a la izquierda y el formulario a la derecha;
 // en celular la tarjeta queda arriba como encabezado
 export function LoginPage() {
+  const session = useSession()
+  const location = useLocation()
+
+  // Con sesion iniciada (al cargar o justo al entrar) regresa a donde ibas, o al closet
+  if (session) {
+    const from = (location.state as { from?: string } | null)?.from
+    return <Navigate to={from ?? '/closet'} replace />
+  }
+
   return (
     <div className="grid min-h-dvh content-start gap-6 bg-background p-4 text-foreground md:content-normal md:grid-cols-2 md:p-6">
       <LoginShowcase />

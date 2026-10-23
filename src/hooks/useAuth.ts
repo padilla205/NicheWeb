@@ -1,0 +1,84 @@
+import type { AuthError, Session } from '@supabase/supabase-js'
+import { useMutation } from '@tanstack/react-query'
+import { useSyncExternalStore } from 'react'
+import { supabase } from '@/lib/supabase'
+
+// undefined: todavia se esta leyendo la sesion guardada; null: no hay sesion
+let session: Session | null | undefined
+const listeners = new Set<() => void>()
+
+// Supabase avisa al cargar (con la sesion guardada en el navegador), al entrar y al salir
+supabase.auth.onAuthStateChange((_event, next) => {
+  session = next
+  listeners.forEach((listener) => listener())
+})
+
+function subscribe(listener: () => void) {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+export function useSession() {
+  return useSyncExternalStore(subscribe, () => session)
+}
+
+// Mensajes de Supabase traducidos para mostrarlos en el formulario
+const messages: Record<string, string> = {
+  invalid_credentials: 'Correo o contrasena incorrectos',
+  user_already_exists: 'Ya hay una cuenta con ese correo',
+  email_exists: 'Ya hay una cuenta con ese correo',
+  weak_password: 'La contrasena es muy debil',
+  email_address_invalid: 'Correo no valido',
+  over_request_rate_limit: 'Demasiados intentos, espera un momento',
+  over_email_send_rate_limit: 'Demasiados intentos, espera un momento',
+}
+
+function friendly(error: AuthError) {
+  return new Error((error.code && messages[error.code]) || 'Algo salio mal, intenta de nuevo')
+}
+
+type Credentials = { email: string; password: string }
+
+export function useSignIn() {
+  return useMutation({
+    mutationFn: async ({ email, password }: Credentials) => {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw friendly(error)
+    },
+  })
+}
+
+export class UsernameTakenError extends Error {}
+
+export function useSignUp() {
+  return useMutation({
+    mutationFn: async ({ email, password, username }: Credentials & { username: string }) => {
+      // Se revisa antes porque si el usuario ya existe Supabase solo devuelve un error generico
+      const { count, error: lookupError } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('username', username)
+      if (lookupError) throw new Error('Algo salio mal, intenta de nuevo')
+      if (count) throw new UsernameTakenError('Ese usuario ya esta ocupado')
+
+      // El trigger de la base de datos crea el perfil con estos datos
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { username, name: username } },
+      })
+      if (error) throw friendly(error)
+      // Sin sesion significa que Supabase pide confirmar el correo antes de entrar
+      return { needsConfirmation: !data.session }
+    },
+  })
+}
+
+export function useSignOut() {
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw friendly(error)
+    },
+  })
+}

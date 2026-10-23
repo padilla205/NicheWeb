@@ -1,9 +1,9 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { type FormEvent, type ReactNode, useState } from 'react'
-import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { UsernameTakenError, useSignIn, useSignUp } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { PasswordInput } from './PasswordInput'
 
@@ -36,20 +36,43 @@ export function AuthForm() {
   const [mode, setMode] = useState<Mode>('login')
   const [errors, setErrors] = useState<Errors>({})
   const [notice, setNotice] = useState('')
-  const navigate = useNavigate()
+  // Error que devuelve Supabase (contrasena incorrecta, correo ya usado...)
+  const [formError, setFormError] = useState('')
+  const signIn = useSignIn()
+  const signUp = useSignUp()
+  const pending = signIn.isPending || signUp.isPending
 
   function changeMode(next: Mode) {
     setMode(next)
     setErrors({})
     setNotice('')
+    setFormError('')
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  // Al entrar, LoginPage ve la sesion nueva y te lleva al closet
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const found = validate(mode, new FormData(event.currentTarget))
+    const data = new FormData(event.currentTarget)
+    const found = validate(mode, data)
     setErrors(found)
-    // ponytail: aun no hay cuentas reales; con Supabase aqui se inicia sesion o se registra
-    if (Object.keys(found).length === 0) navigate('/closet')
+    setFormError('')
+    setNotice('')
+    if (Object.keys(found).length > 0) return
+
+    const email = String(data.get('email')).trim()
+    const password = String(data.get('password'))
+    try {
+      if (mode === 'login') {
+        await signIn.mutateAsync({ email, password })
+        return
+      }
+      const username = String(data.get('username')).trim().toLowerCase()
+      const { needsConfirmation } = await signUp.mutateAsync({ email, password, username })
+      if (needsConfirmation) setNotice('Te enviamos un correo para confirmar tu cuenta.')
+    } catch (error) {
+      if (error instanceof UsernameTakenError) setErrors({ username: error.message })
+      else setFormError(error instanceof Error ? error.message : 'Algo salio mal, intenta de nuevo')
+    }
   }
 
   return (
@@ -149,9 +172,14 @@ export function AuthForm() {
         </AnimatePresence>
 
         {notice && <p className="pb-4 text-sm text-muted-foreground">{notice}</p>}
+        {formError && (
+          <p role="alert" className="pb-4 text-sm text-destructive">
+            {formError}
+          </p>
+        )}
 
-        <Button type="submit" className="h-11 w-full">
-          {mode === 'login' ? 'Iniciar sesion' : 'Crear cuenta'}
+        <Button type="submit" disabled={pending} className="h-11 w-full">
+          {pending ? 'Un momento' : mode === 'login' ? 'Iniciar sesion' : 'Crear cuenta'}
         </Button>
       </form>
     </div>
