@@ -20,7 +20,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
       <ListingPhoto listing={listing} iconClassName="size-10" />
       {listing.status !== 'disponible' && <StatusBadge listing={listing} className="absolute top-2 left-2" />}
       {isNew && (
-        <span className="absolute top-2 left-2 rounded-full bg-emerald-500/90 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+        <span className="absolute top-2 left-2 rounded-full bg-editorial px-2.5 py-1 text-xs font-medium text-editorial-foreground">
           Recien publicada
         </span>
       )}

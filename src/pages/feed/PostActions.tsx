@@ -59,7 +59,7 @@ function RepostButton({ shared, onClick }: { shared: boolean; onClick: () => voi
       aria-label={label}
       title={label}
       onClick={onClick}
-      className={cn('gap-1.5', shared && 'text-green-600 hover:text-green-600 dark:text-green-500')}
+      className={cn('gap-1.5', shared && 'text-primary hover:text-primary')}
     >
       <span className="relative flex size-5">
         <AnimatePresence mode="popLayout" initial={false}>

@@ -23,10 +23,10 @@ export function ChoicePill({ active, disabled, onClick, children }: ChoicePillPr
       className={cn(
         'touch-target relative rounded-full',
         // Seleccionado: en modo claro borde marcado y fondo apenas iluminado; en modo oscuro
-        // fondo blanco con letras negras. Las variantes dark: van completas porque las del
+        // fondo del color del texto con letras del color del fondo (casi blanco y casi negro). Las variantes dark: van completas porque las del
         // boton outline pesan mas
         active &&
-          'border-primary bg-primary/10 hover:bg-primary/15 dark:border-white dark:bg-white dark:text-black dark:hover:bg-white/90 dark:hover:text-black',
+          'border-primary bg-primary/10 hover:bg-primary/15 dark:border-foreground dark:bg-foreground dark:text-background dark:hover:bg-foreground/90 dark:hover:text-background',
       )}
     >
       {active && <Check />}

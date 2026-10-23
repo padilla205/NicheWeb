@@ -19,7 +19,7 @@ export function FeaturedPosts({ featured, secondsRemaining, onOpen }: FeaturedPo
     <section aria-labelledby="featured-title" className="mb-6">
       <div className="mb-2 flex items-center gap-3 text-sm">
         <h2 id="featured-title" className="flex items-center gap-1.5 font-medium">
-          <Flame aria-hidden="true" className="size-4 text-orange-500" />
+          <Flame aria-hidden="true" className="size-4 text-editorial" />
           Destacados
         </h2>
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -53,12 +53,12 @@ function FeaturedCircle({ post, rank, onOpen }: { post: Post; rank: number; onOp
       aria-label={`Ver publicacion de ${post.author.username}, lugar ${rank} en destacados`}
       className="group flex w-18 flex-col items-center gap-1.5 rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
-      {/* Aro naranja como el de las historias, con el lugar en la esquina */}
-      <span className="relative rounded-full bg-gradient-to-tr from-orange-500 to-amber-300 p-0.5">
+      {/* Aro de color como el de las historias, con el lugar en la esquina */}
+      <span className="relative rounded-full bg-editorial p-0.5">
         <span className="relative flex size-16 items-center justify-center overflow-hidden rounded-full border-2 border-background bg-muted">
           <PostPhoto post={post} iconClassName="size-6" />
         </span>
-        <span className="absolute -right-0.5 -bottom-0.5 flex size-5 items-center justify-center rounded-full border-2 border-background bg-orange-500 text-[10px] font-semibold text-white tabular-nums">
+        <span className="absolute -right-0.5 -bottom-0.5 flex size-5 items-center justify-center rounded-full border-2 border-background bg-editorial text-[10px] font-semibold text-editorial-foreground tabular-nums">
           {rank}
         </span>
       </span>

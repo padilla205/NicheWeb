@@ -76,7 +76,7 @@ export function MobileNav() {
     <motion.nav
       ref={navRef}
       aria-label="Secciones"
-      className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-10 touch-none rounded-full border border-white/10 bg-neutral-900 p-2 text-white shadow-lg md:hidden"
+      className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-10 touch-none rounded-full border border-white/10 bg-foreground p-2 text-background shadow-lg dark:bg-muted dark:text-foreground md:hidden"
       onPointerDown={() => (dragged.current = false)}
       onPanStart={() => (dragged.current = true)}
       // La pastilla sigue al dedo; fuera de los extremos se queda en el borde
