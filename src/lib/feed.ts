@@ -1,3 +1,4 @@
+import type { Season } from '@/lib/clothing'
 export type FeedUser = {
   username: string
   name: string
@@ -7,6 +8,7 @@ export type FeedUser = {
 
 export type PostComment = {
   id: string
+  authorId: string
   author: FeedUser
   // Puede ir vacio si el comentario solo lleva imagen
   text: string
@@ -14,111 +16,28 @@ export type PostComment = {
   imageUrl?: string
   createdAt: Date
   // Si es una respuesta: el comentario principal bajo el que se muestra y a quien le responde
-  reply?: { parentId: string; toUsername: string }
+  reply?: { parentId: string; toUserId: string; toUsername: string }
 }
 
 export type Post = {
   id: string
+  authorId: string
   author: FeedUser
   caption: string
-  // TEMPORAL: mientras no hay fotos reales, cada publicacion se dibuja con un degradado
-  gradient: [string, string]
-  // Fotos subidas por el usuario (la primera es la portada); sin fotos se ve el degradado
+  // Rutas en Storage (para borrarlas) y sus direcciones; la primera es la portada
+  photoPaths: string[]
   photoUrls: string[]
+  // Ancho entre alto de la portada; en la cuadricula cada publicacion conserva su forma
+  aspect: number
+  seasons: Season[]
+  // Nombres de las prendas del outfit; llegan cuando existan los outfits guardados
+  outfitItems: string[]
   createdAt: Date
   likes: number
   likedByMe: boolean
-  // Si la republicaste en tu perfil
+  // Si la republicaste en tu perfil (pestana Compartidos)
   sharedByMe: boolean
-  comments: PostComment[]
-}
-
-const ana: FeedUser = { username: 'ana.style', name: 'Ana' }
-const leo: FeedUser = { username: 'leo_fits', name: 'Leo' }
-const sofi: FeedUser = { username: 'sofi', name: 'Sofia' }
-
-function hoursAgo(hours: number) {
-  return new Date(Date.now() - hours * 60 * 60 * 1000)
-}
-
-// Publicaciones de ejemplo para ver el diseno sin base de datos
-export const samplePosts: Post[] = [
-  {
-    id: 'p1',
-    author: ana,
-    caption: 'Outfit para el fin de semana',
-    gradient: ['#f6d365', '#fda085'],
-    photoUrls: [],
-    createdAt: hoursAgo(2),
-    likes: 24,
-    likedByMe: false,
-    sharedByMe: false,
-    comments: [
-      { id: 'c1', author: leo, text: 'Me encanta la chamarra', createdAt: hoursAgo(1) },
-      { id: 'c2', author: sofi, text: 'Donde compraste los tenis?', createdAt: hoursAgo(0.5) },
-      {
-        id: 'c4',
-        author: ana,
-        text: 'En una tienda del centro',
-        createdAt: hoursAgo(0.2),
-        reply: { parentId: 'c2', toUsername: 'sofi' },
-      },
-    ],
-  },
-  {
-    id: 'p2',
-    author: leo,
-    caption: 'Dia de partido',
-    gradient: ['#4facfe', '#00f2fe'],
-    photoUrls: [],
-    createdAt: hoursAgo(5),
-    likes: 51,
-    likedByMe: true,
-    sharedByMe: false,
-    comments: [{ id: 'c3', author: ana, text: 'Que buen jersey', createdAt: hoursAgo(4) }],
-  },
-  {
-    id: 'p3',
-    author: sofi,
-    caption: 'Todo negro para la oficina',
-    gradient: ['#434343', '#000000'],
-    photoUrls: [],
-    createdAt: hoursAgo(26),
-    likes: 8,
-    likedByMe: false,
-    sharedByMe: false,
-    comments: [],
-  },
-  {
-    id: 'p4',
-    author: ana,
-    caption: 'Colores de otono',
-    gradient: ['#c79081', '#dfa579'],
-    photoUrls: [],
-    createdAt: hoursAgo(30),
-    likes: 37,
-    likedByMe: false,
-    sharedByMe: false,
-    comments: [{ id: 'c5', author: sofi, text: 'Esa combinacion queda increible', createdAt: hoursAgo(29) }],
-  },
-  {
-    id: 'p5',
-    author: leo,
-    caption: 'Basicos que nunca fallan',
-    gradient: ['#a1c4fd', '#c2e9fb'],
-    photoUrls: [],
-    createdAt: hoursAgo(48),
-    likes: 15,
-    likedByMe: false,
-    sharedByMe: false,
-    comments: [],
-  },
-]
-
-// Puntaje para decidir que publicaciones se destacan: un comentario vale mas que un like
-// porque cuesta mas esfuerzo escribirlo
-export function engagementScore(post: Post) {
-  return post.likes + post.comments.length * 2
+  commentCount: number
 }
 
 // "hace 5 min", "hace 2 h", "hace 3 d"

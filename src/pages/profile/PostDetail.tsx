@@ -1,14 +1,15 @@
-import { X } from 'lucide-react'
+import { Shirt, Trash2, X } from 'lucide-react'
 import { motion, useIsPresent } from 'motion/react'
 import { useState } from 'react'
 import { SwipeHandle } from '@/components/SwipeHandle'
 import { Button } from '@/components/ui/button'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { useSwipeToClose } from '@/hooks/useSwipeToClose'
-import { useToggleLike, useToggleShare } from '@/hooks/usePosts'
+import { useSession } from '@/hooks/useAuth'
+import { useDeletePost, useToggleLike, useToggleShare } from '@/hooks/usePosts'
 import { formatTimeAgo, type Post } from '@/lib/feed'
 import { cn } from '@/lib/utils'
-import { CommentsThread } from '@/pages/feed/CommentsDialog'
+import { CommentsThread } from '@/pages/feed/CommentsThread'
 import { PostActions } from '@/pages/feed/PostActions'
 import { PostPhotos } from '@/pages/feed/PostPhotos'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
@@ -28,6 +29,10 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
   const [isDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches)
   const toggleLike = useToggleLike()
   const toggleShare = useToggleShare()
+  const isMine = useSession()?.user.id === post.authorId
+  const deletePost = useDeletePost()
+  // Eliminar pide un segundo toque para confirmar
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useModalBehavior(onClose)
   // Mientras se esta quitando al cerrarse deja pasar los toques al cuadro de abajo
@@ -64,8 +69,7 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
           <SwipeHandle onPointerDown={swipe.startDrag} />
           <motion.div
             layoutId={`profile-post-photo-${post.id}`}
-            className="relative flex aspect-[4/5] shrink-0 items-center justify-center md:aspect-auto md:h-full md:w-1/2"
-            style={{ backgroundImage: `linear-gradient(135deg, ${post.gradient[0]}, ${post.gradient[1]})` }}
+            className="relative flex aspect-[4/5] shrink-0 items-center justify-center bg-muted md:aspect-auto md:h-full md:w-1/2"
           >
             <PostPhotos post={post} carouselId={`profile-post-detail-${post.id}`} iconClassName="size-16" />
           </motion.div>
@@ -83,6 +87,22 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
                 <span className="font-medium">{post.author.username}</span>
                 <span className="text-muted-foreground"> · {formatTimeAgo(post.createdAt)}</span>
               </div>
+              {isMine && (
+                <Button
+                  variant={confirmDelete ? 'destructive' : 'ghost'}
+                  size="sm"
+                  className={cn('ml-auto shrink-0', !confirmDelete && 'text-destructive hover:text-destructive')}
+                  disabled={deletePost.isPending}
+                  onClick={() => {
+                    if (!confirmDelete) return setConfirmDelete(true)
+                    deletePost.mutate(post, { onSuccess: onClose })
+                  }}
+                  onBlur={() => setConfirmDelete(false)}
+                >
+                  <Trash2 />
+                  {deletePost.isPending ? 'Eliminando' : confirmDelete ? 'Toca otra vez' : 'Eliminar'}
+                </Button>
+              )}
             </header>
 
             {post.caption && (
@@ -91,13 +111,27 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
               </p>
             )}
 
+            {post.outfitItems.length > 0 && (
+              <section aria-label="Prendas del outfit" className="flex flex-col gap-2 border-b p-4">
+                <h3 className="text-xs font-medium text-muted-foreground">Prendas del outfit</h3>
+                <ul className="flex flex-wrap gap-1.5">
+                  {post.outfitItems.map((item) => (
+                    <li key={item} className="flex items-center gap-1.5 rounded-full border bg-muted/40 px-2.5 py-1 text-xs">
+                      <Shirt className="size-3.5 text-muted-foreground" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
             <div className="border-b p-2.5">
               {/* El boton de comentar lleva al cuadro de texto de abajo */}
               <PostActions
                 post={post}
-                onLike={() => toggleLike(post.id)}
+                onLike={() => toggleLike(post)}
                 onComment={() => document.getElementById(`comment-input-${post.id}`)?.focus()}
-                onShareToProfile={() => toggleShare(post.id)}
+                onShareToProfile={() => toggleShare(post)}
               />
             </div>
 

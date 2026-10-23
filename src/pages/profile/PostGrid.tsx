@@ -55,8 +55,7 @@ export function PostGrid({ posts, emptyText }: { posts: Post[]; emptyText: strin
               >
                 <motion.div
                   layoutId={linked ? `profile-post-photo-${post.id}` : undefined}
-                  className="absolute inset-0 flex items-center justify-center"
-                  style={{ backgroundImage: `linear-gradient(135deg, ${post.gradient[0]}, ${post.gradient[1]})` }}
+                  className="absolute inset-0 flex items-center justify-center bg-muted"
                 >
                   <PostPhoto post={post} iconClassName="size-10" />
                 </motion.div>

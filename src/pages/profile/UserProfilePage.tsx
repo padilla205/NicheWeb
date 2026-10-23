@@ -4,6 +4,7 @@ import { Navigate, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { useProfile, useUserProfile } from '@/hooks/useProfile'
 import { EmptyTab } from './EmptyTab'
+import { FollowButton, FollowStats } from './FollowStats'
 import { ProfileSummary } from './ProfileSummary'
 import { ProfileTabs } from './ProfileTabs'
 
@@ -35,6 +36,8 @@ export function UserProfilePage() {
           <>
             <header className="flex flex-col items-center gap-3 text-center">
               <ProfileSummary profile={profile} />
+              <FollowStats userId={profile.id} />
+              <FollowButton userId={profile.id} />
             </header>
             <ProfileTabs user={profile} />
           </>

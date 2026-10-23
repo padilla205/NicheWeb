@@ -1,97 +1,29 @@
 import { ArrowUp, ImagePlus, X } from 'lucide-react'
-import { motion } from 'motion/react'
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
-import { SwipeHandle } from '@/components/SwipeHandle'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useModalBehavior } from '@/hooks/useModalBehavior'
-import { useSwipeToClose } from '@/hooks/useSwipeToClose'
-import { useAddComment } from '@/hooks/usePosts'
+import { useAddComment, useComments } from '@/hooks/usePosts'
 import { formatTimeAgo, type Post, type PostComment } from '@/lib/feed'
 import { UserAvatar } from './UserAvatar'
 
 type Reply = NonNullable<PostComment['reply']>
 
-type CommentsDialogProps = {
-  post: Post
-  onClose: () => void
-}
-
-// El cuadro se ve solido desde el primer instante (sin desvanecerse): solo se mueve y crece.
-// En escritorio sube un poco mientras crece; en el celular sube desde abajo de la pantalla
-const openSpring = { type: 'spring', visualDuration: 0.3, bounce: 0.15 } as const
-const desktopMotion = {
-  initial: { y: 24, scale: 0.95 },
-  animate: { y: 0, scale: 1, transition: openSpring },
-  // Al cerrar basta algo corto y suave
-  exit: { y: 8, opacity: 0, transition: { duration: 0.15, ease: 'easeOut' } },
-} as const
-const mobileMotion = {
-  initial: { y: '100%' },
-  animate: { y: 0, transition: openSpring },
-  exit: { y: '100%', transition: { duration: 0.2, ease: 'easeOut' } },
-} as const
-
-export function CommentsDialog({ post, onClose }: CommentsDialogProps) {
-  // Se decide una sola vez al abrir; no hace falta seguir el tamano de la ventana mientras esta abierto
-  const [isDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches)
-  const count = post.comments.length
-
-  useModalBehavior(onClose)
-  const swipe = useSwipeToClose(onClose)
-
-  return (
-    <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        onClick={onClose}
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs"
-      />
-      <div className="pointer-events-none fixed inset-0 z-50 flex items-end justify-center p-2 md:items-center md:p-4">
-        <motion.div
-          {...(isDesktop ? desktopMotion : mobileMotion)}
-          {...swipe.panelProps}
-          role="dialog"
-          aria-modal
-          aria-labelledby={`comments-title-${post.id}`}
-          className="pointer-events-auto relative flex max-h-[85dvh] w-full flex-col overflow-hidden rounded-2xl border bg-popover text-popover-foreground md:max-h-[70dvh] md:max-w-md"
-        >
-          <SwipeHandle onPointerDown={swipe.startDrag} barClassName="bg-muted-foreground/40" />
-          {/* En el celular deja espacio arriba para la agarradera */}
-          <header className="flex items-center justify-between border-b pt-5 pr-2 pb-2 pl-4 md:pt-2">
-            <h2 id={`comments-title-${post.id}`} className="text-sm font-medium">
-              Comentarios <span className="text-muted-foreground tabular-nums">{count}</span>
-            </h2>
-            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Cerrar comentarios">
-              <X />
-            </Button>
-          </header>
-
-          {/* En el celular no se enfoca solo, para que el teclado no tape los comentarios al abrir */}
-          <CommentsThread post={post} autoFocus={isDesktop} />
-        </motion.div>
-      </div>
-    </>
-  )
-}
-
 // Lista de comentarios con sus respuestas y el cuadro para escribir; el que la usa pone el contenedor
 // (flex en columna) para que la lista se desplace y el cuadro quede abajo
 export function CommentsThread({ post, autoFocus }: { post: Post; autoFocus: boolean }) {
-  const count = post.comments.length
+  const { data: comments, isPending } = useComments(post.id)
   const [replyingTo, setReplyingTo] = useState<Reply | null>(null)
 
   // Las respuestas se muestran debajo de su comentario principal, no en la lista general
-  const topLevel = post.comments.filter((comment) => !comment.reply)
-  const repliesOf = (parentId: string) => post.comments.filter((comment) => comment.reply?.parentId === parentId)
+  const topLevel = comments?.filter((comment) => !comment.reply) ?? []
+  const repliesOf = (parentId: string) => comments?.filter((comment) => comment.reply?.parentId === parentId) ?? []
 
   return (
     <>
       <div className="flex-1 overflow-y-auto p-4">
-        {count === 0 ? (
+        {isPending ? (
+          <CommentsSkeleton />
+        ) : topLevel.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             Aun no hay comentarios. Se el primero.
           </p>
@@ -103,7 +35,13 @@ export function CommentsThread({ post, autoFocus }: { post: Post; autoFocus: boo
                 <li key={comment.id}>
                   <CommentItem
                     comment={comment}
-                    onReply={() => setReplyingTo({ parentId: comment.id, toUsername: comment.author.username })}
+                    onReply={() =>
+                      setReplyingTo({
+                        parentId: comment.id,
+                        toUserId: comment.authorId,
+                        toUsername: comment.author.username,
+                      })
+                    }
                   />
                   {replies.length > 0 && (
                     <ul className="mt-3 flex flex-col gap-3 pl-11">
@@ -114,7 +52,11 @@ export function CommentsThread({ post, autoFocus }: { post: Post; autoFocus: boo
                             comment={reply}
                             small
                             onReply={() =>
-                              setReplyingTo({ parentId: comment.id, toUsername: reply.author.username })
+                              setReplyingTo({
+                                parentId: comment.id,
+                                toUserId: reply.authorId,
+                                toUsername: reply.author.username,
+                              })
                             }
                           />
                         </li>
@@ -213,7 +155,7 @@ function CommentForm({ postId, autoFocus, replyingTo, onCancelReply }: CommentFo
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!canSend) return
-    addComment(postId, text, replyingTo ?? undefined, image)
+    addComment({ postId, text, reply: replyingTo ?? undefined, image })
     setText('')
     setImage(undefined)
     onCancelReply()
@@ -282,6 +224,23 @@ function CommentForm({ postId, autoFocus, replyingTo, onCancelReply }: CommentFo
           <ArrowUp />
         </Button>
       </form>
+    </div>
+  )
+}
+
+// Renglones grises con la forma de los comentarios mientras llegan
+function CommentsSkeleton() {
+  return (
+    <div aria-hidden className="flex flex-col gap-4">
+      {['w-2/3', 'w-1/2', 'w-3/5'].map((width) => (
+        <div key={width} className="flex gap-3">
+          <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
+          <div className="flex flex-1 flex-col gap-2 pt-1">
+            <div className="h-3 w-1/4 animate-pulse rounded bg-muted" />
+            <div className={`h-3 animate-pulse rounded bg-muted ${width}`} />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

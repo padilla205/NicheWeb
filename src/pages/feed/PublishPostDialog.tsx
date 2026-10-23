@@ -5,7 +5,9 @@ import { DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreatePost } from '@/hooks/usePosts'
+import type { Season } from '@/lib/clothing'
 import { PhotoPicker } from '@/pages/closet/PhotoPicker'
+import { SeasonPicker } from '@/pages/closet/SeasonPicker'
 
 type PublishPostDialogProps = {
   // Boton que abrio la ventana (crece desde ahi y regresa a el); null si esta cerrada
@@ -29,13 +31,14 @@ export function PublishPostDialog({ origin, onClose }: PublishPostDialogProps) {
 function PublishPostForm({ onDone }: { onDone: () => void }) {
   const [photos, setPhotos] = useState<File[]>([])
   const [caption, setCaption] = useState('')
+  const [seasons, setSeasons] = useState<Season[]>([])
   const createPost = useCreatePost()
 
+  // La ventana se cierra hasta que las fotos se subieron y la publicacion quedo guardada
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (photos.length === 0) return
-    createPost(photos, caption)
-    onDone()
+    if (photos.length === 0 || createPost.isPending) return
+    createPost.mutate({ photos, caption, seasons }, { onSuccess: onDone })
   }
 
   return (
@@ -57,12 +60,25 @@ function PublishPostForm({ onDone }: { onDone: () => void }) {
         />
       </div>
 
+      <div className="flex flex-col gap-2">
+        <Label>
+          Temporada <span className="font-normal text-muted-foreground">(opcional, hasta 2)</span>
+        </Label>
+        <SeasonPicker value={seasons} onChange={setSeasons} />
+      </div>
+
+      {createPost.isError && (
+        <p role="alert" className="text-sm text-destructive">
+          No se pudo publicar. Intenta de nuevo.
+        </p>
+      )}
+
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={photos.length === 0}>
-          Publicar
+        <Button type="submit" disabled={photos.length === 0 || createPost.isPending}>
+          {createPost.isPending ? 'Publicando' : 'Publicar'}
         </Button>
       </DialogFooter>
     </form>

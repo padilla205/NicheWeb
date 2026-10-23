@@ -1,136 +1,368 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { useProfile } from '@/hooks/useProfile'
-import { engagementScore, type Post, type PostComment, samplePosts } from '@/lib/feed'
+import {
+  type InfiniteData,
+  type QueryClient,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useSession } from '@/hooks/useAuth'
+import type { Season } from '@/lib/clothing'
+import type { Tables } from '@/lib/database.types'
+import type { FeedUser, Post, PostComment } from '@/lib/feed'
+import { deletePhotos, photoUrl, savePhotos, uploadPhoto } from '@/lib/photos'
+import { supabase } from '@/lib/supabase'
 
-// TEMPORAL: el feed usa publicaciones de ejemplo en la memoria del navegador hasta que conectemos
-// Supabase. Los likes y comentarios se conservan al cambiar de seccion, pero se borran al recargar.
-// Cuando llegue la base de datos, estos hooks se reemplazan por TanStack Query sin tocar las pantallas.
-
-let posts: Post[] = samplePosts
-const listeners = new Set<() => void>()
+// Publicaciones por bloque antes de "Ver mas"
+const PAGE_SIZE = 12
 const HOUR_MS = 60 * 60 * 1000
 
-function rankFeaturedPosts() {
-  return posts
-    .filter((post) => engagementScore(post) > 0)
-    .sort((a, b) => engagementScore(b) - engagementScore(a))
-    .map((post) => post.id)
+type ProfileBits = Pick<Tables<'profiles'>, 'username' | 'name' | 'avatar_path'>
+type PostRow = Tables<'posts'> & {
+  author: ProfileBits
+  likes: { count: number }[]
+  comments: { count: number }[]
+}
+type PostsPage = { items: Post[]; total: number }
+
+// Columnas de la publicacion con su autor y sus contadores. Se nombra la llave del autor porque
+// publicaciones y perfiles tambien se conectan por likes, comentarios y compartidos
+const POST_COLUMNS = '*, author:profiles!posts_author_id_fkey(username, name, avatar_path), likes(count), comments(count)'
+
+export function feedUserFromRow(row: ProfileBits): FeedUser {
+  return {
+    username: row.username,
+    name: row.name,
+    avatarUrl: row.avatar_path ? photoUrl(row.avatar_path, true) : undefined,
+  }
 }
 
-// Conserva el orden durante la hora, incluso al salir del feed y volver.
-let featuredHour = Math.floor(Date.now() / HOUR_MS)
-let featuredIds = rankFeaturedPosts()
+// Filas de la base de datos -> lo que usan las pantallas, con tus likes y compartidos
+async function toPosts(rows: PostRow[], userId: string | undefined): Promise<Post[]> {
+  const ids = rows.map((row) => row.id)
+  let liked = new Set<string>()
+  let shared = new Set<string>()
+  if (userId && ids.length > 0) {
+    const [likes, shares] = await Promise.all([
+      supabase.from('likes').select('post_id').eq('user_id', userId).in('post_id', ids),
+      supabase.from('shares').select('post_id').eq('user_id', userId).in('post_id', ids),
+    ])
+    if (likes.error) throw likes.error
+    if (shares.error) throw shares.error
+    liked = new Set(likes.data.map((row) => row.post_id))
+    shared = new Set(shares.data.map((row) => row.post_id))
+  }
 
-function subscribe(listener: () => void) {
-  listeners.add(listener)
-  return () => listeners.delete(listener)
+  return rows.map((row) => ({
+    id: row.id,
+    authorId: row.author_id,
+    author: feedUserFromRow(row.author),
+    caption: row.caption,
+    photoPaths: row.photos,
+    photoUrls: row.photos.map((path) => photoUrl(path)),
+    aspect: row.aspect,
+    seasons: row.seasons as Season[],
+    outfitItems: [],
+    createdAt: new Date(row.created_at),
+    likes: row.likes[0]?.count ?? 0,
+    likedByMe: liked.has(row.id),
+    sharedByMe: shared.has(row.id),
+    commentCount: row.comments[0]?.count ?? 0,
+  }))
 }
 
-function updatePost(id: string, change: (post: Post) => Post) {
-  posts = posts.map((post) => (post.id === id ? change(post) : post))
-  listeners.forEach((listener) => listener())
+function nextOffset(last: PostsPage, pages: PostsPage[]) {
+  const loaded = pages.reduce((sum, page) => sum + page.items.length, 0)
+  return loaded < last.total ? loaded : undefined
 }
 
-export function usePosts() {
-  return useSyncExternalStore(subscribe, () => posts)
+function paged(query: { data?: InfiniteData<PostsPage>; isPending: boolean; isFetchingNextPage: boolean; fetchNextPage: () => unknown }) {
+  return {
+    posts: query.data?.pages.flatMap((page) => page.items) ?? [],
+    total: query.data?.pages[0]?.total ?? 0,
+    isPending: query.isPending,
+    loadMore: () => {
+      if (!query.isFetchingNextPage) query.fetchNextPage()
+    },
+  }
 }
 
-// Los contadores de las tarjetas siguen en vivo; la seleccion solo cambia cada hora.
-export function useFeaturedPosts(limit = 4) {
-  const all = usePosts()
-  const [now, setNow] = useState(Date.now)
-
-  useEffect(() => {
-    function tick() {
-      const time = Date.now()
-      const hour = Math.floor(time / HOUR_MS)
-      if (hour !== featuredHour) {
-        featuredIds = rankFeaturedPosts()
-        featuredHour = hour
-      }
-      setNow(time)
+// Cambia una publicacion en todas las listas donde aparezca (feed, destacados, perfiles)
+function updatePost(queryClient: QueryClient, id: string, change: (post: Post) => Post) {
+  queryClient.setQueriesData<InfiniteData<PostsPage> | Post[]>({ queryKey: ['posts'] }, (data) => {
+    if (!data) return data
+    if (Array.isArray(data)) return data.map((post) => (post.id === id ? change(post) : post))
+    return {
+      ...data,
+      pages: data.pages.map((page) => ({
+        ...page,
+        items: page.items.map((post) => (post.id === id ? change(post) : post)),
+      })),
     }
+  })
+}
 
-    // Lee el reloj real para recuperar el tiempo al volver de una pestana suspendida.
-    tick()
+type FeedFilters = { following: boolean; seasons: Season[] }
+
+// Feed: lo mas nuevo primero, de 12 en 12. "Siguiendo" solo trae a quienes sigues
+export function useFeed({ following, seasons }: FeedFilters) {
+  const userId = useSession()?.user.id
+  const query = useInfiniteQuery({
+    queryKey: ['posts', 'feed', userId, following, [...seasons].sort()],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }): Promise<PostsPage> => {
+      let request = supabase
+        .from('posts')
+        .select(POST_COLUMNS, { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(pageParam, pageParam + PAGE_SIZE - 1)
+      if (seasons.length > 0) request = request.overlaps('seasons', seasons)
+      if (following) {
+        const { data: follows, error } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', userId!)
+        if (error) throw error
+        if (follows.length === 0) return { items: [], total: 0 }
+        request = request.in(
+          'author_id',
+          follows.map((row) => row.following_id),
+        )
+      }
+      const { data, error, count } = await request
+      if (error) throw error
+      return { items: await toPosts(data as PostRow[], userId), total: count ?? 0 }
+    },
+    getNextPageParam: nextOffset,
+  })
+  return paged(query)
+}
+
+// Publicaciones de una persona para su perfil
+export function useUserPosts(authorId: string) {
+  const userId = useSession()?.user.id
+  const query = useInfiniteQuery({
+    queryKey: ['posts', 'user', authorId, userId],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }): Promise<PostsPage> => {
+      const { data, error, count } = await supabase
+        .from('posts')
+        .select(POST_COLUMNS, { count: 'exact' })
+        .eq('author_id', authorId)
+        .order('created_at', { ascending: false })
+        .range(pageParam, pageParam + PAGE_SIZE - 1)
+      if (error) throw error
+      return { items: await toPosts(data as PostRow[], userId), total: count ?? 0 }
+    },
+    getNextPageParam: nextOffset,
+  })
+  return paged(query)
+}
+
+// Lo que una persona compartio en su perfil, lo ultimo que compartio primero
+export function useSharedPosts(sharerId: string) {
+  const userId = useSession()?.user.id
+  const query = useInfiniteQuery({
+    queryKey: ['posts', 'shared', sharerId, userId],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }): Promise<PostsPage> => {
+      const { data, error, count } = await supabase
+        .from('shares')
+        .select(`post:posts(${POST_COLUMNS})`, { count: 'exact' })
+        .eq('user_id', sharerId)
+        .order('created_at', { ascending: false })
+        .range(pageParam, pageParam + PAGE_SIZE - 1)
+      if (error) throw error
+      const rows = (data as unknown as { post: PostRow }[]).map((row) => row.post)
+      return { items: await toPosts(rows, userId), total: count ?? 0 }
+    },
+    getNextPageParam: nextOffset,
+  })
+  return paged(query)
+}
+
+// Las 4 publicaciones con mas likes y comentarios; la seleccion cambia cada hora
+export function useFeaturedPosts() {
+  const userId = useSession()?.user.id
+  const [now, setNow] = useState(Date.now)
+  const hour = Math.floor(now / HOUR_MS)
+
+  // Lee el reloj real cada segundo (y al volver a la pestana) para el contador de renovacion
+  useEffect(() => {
+    const tick = () => setNow(Date.now())
     const interval = window.setInterval(tick, 1000)
     document.addEventListener('visibilitychange', tick)
-    window.addEventListener('focus', tick)
     return () => {
       window.clearInterval(interval)
       document.removeEventListener('visibilitychange', tick)
-      window.removeEventListener('focus', tick)
     }
   }, [])
 
-  const hour = Math.floor(now / HOUR_MS)
-  const ids = featuredIds
-  const featured = useMemo(
-    () =>
-      ids
-        .slice(0, limit)
-        .map((id) => all.find((post) => post.id === id))
-        .filter((post): post is Post => post !== undefined),
-    [all, limit, ids],
-  )
+  const { data } = useQuery({
+    queryKey: ['posts', 'featured', userId, hour],
+    staleTime: HOUR_MS,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('featured_posts', { how_many: 4 }).select(POST_COLUMNS)
+      if (error) throw error
+      const posts = await toPosts(data as unknown as PostRow[], userId)
+      // Solo las que tienen al menos un like o comentario
+      return posts.filter((post) => post.likes + post.commentCount > 0)
+    },
+  })
 
   return {
-    featured,
-    refreshAt: (hour + 1) * HOUR_MS,
+    featured: data ?? [],
     secondsRemaining: Math.ceil(((hour + 1) * HOUR_MS - now) / 1000),
   }
 }
 
+// Like optimista: el corazon cambia al instante en todas las listas y regresa si falla
 export function useToggleLike() {
-  return (id: string) =>
-    updatePost(id, (post) => ({
-      ...post,
-      likedByMe: !post.likedByMe,
-      likes: post.likes + (post.likedByMe ? -1 : 1),
-    }))
+  const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
+
+  return useMutation({
+    mutationFn: async (post: Post) => {
+      const { error } = post.likedByMe
+        ? await supabase.from('likes').delete().eq('post_id', post.id).eq('user_id', userId!)
+        : await supabase.from('likes').insert({ post_id: post.id })
+      if (error) throw error
+    },
+    onMutate: (post) =>
+      updatePost(queryClient, post.id, (p) => ({
+        ...p,
+        likedByMe: !post.likedByMe,
+        likes: p.likes + (post.likedByMe ? -1 : 1),
+      })),
+    onError: (_error, post) =>
+      updatePost(queryClient, post.id, (p) => ({ ...p, likedByMe: post.likedByMe, likes: post.likes })),
+  }).mutate
 }
 
-export function useAddComment() {
-  const { username, name } = useProfile()
-  return (id: string, text: string, reply?: PostComment['reply'], image?: File) =>
-    updatePost(id, (post) => ({
-      ...post,
-      comments: [
-        ...post.comments,
-        {
-          id: crypto.randomUUID(),
-          author: { username, name },
-          text: text.trim(),
-          // Un GIF se guarda tal cual para que siga animado
-          imageUrl: image ? URL.createObjectURL(image) : undefined,
-          createdAt: new Date(),
-          reply,
-        },
-      ],
-    }))
-}
-
+// Compartir en tu perfil (o quitarlo): se marca al instante y la pestana Compartidos se actualiza
 export function useToggleShare() {
-  return (id: string) => updatePost(id, (post) => ({ ...post, sharedByMe: !post.sharedByMe }))
+  const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
+
+  return useMutation({
+    mutationFn: async (post: Post) => {
+      const { error } = post.sharedByMe
+        ? await supabase.from('shares').delete().eq('post_id', post.id).eq('user_id', userId!)
+        : await supabase.from('shares').insert({ post_id: post.id })
+      if (error) throw error
+    },
+    onMutate: (post) => updatePost(queryClient, post.id, (p) => ({ ...p, sharedByMe: !post.sharedByMe })),
+    onError: (_error, post) => updatePost(queryClient, post.id, (p) => ({ ...p, sharedByMe: post.sharedByMe })),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['posts', 'shared'] }),
+  }).mutate
 }
+
+// Ancho entre alto de una foto, para que la cuadricula respete su forma
+async function photoAspect(file: File) {
+  try {
+    const bitmap = await createImageBitmap(file)
+    const aspect = bitmap.width / bitmap.height
+    bitmap.close()
+    return Math.min(5, Math.max(0.2, aspect))
+  } catch {
+    return 0.8
+  }
+}
+
+export type NewPost = { photos: File[]; caption: string; seasons: Season[] }
 
 export function useCreatePost() {
-  const { username, name } = useProfile()
-  return (photos: File[], caption: string) => {
-    const post: Post = {
-      id: crypto.randomUUID(),
-      author: { username, name },
-      caption: caption.trim(),
-      gradient: ['#d4d4d8', '#71717a'],
-      photoUrls: photos.map((photo) => URL.createObjectURL(photo)),
-      createdAt: new Date(),
-      likes: 0,
-      likedByMe: false,
-      sharedByMe: false,
-      comments: [],
-    }
-    // Las mas nuevas van primero
-    posts = [post, ...posts]
-    listeners.forEach((listener) => listener())
-  }
+  const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
+
+  return useMutation({
+    mutationFn: async ({ photos, caption, seasons }: NewPost) => {
+      const [paths, aspect] = await Promise.all([savePhotos(photos, userId!), photoAspect(photos[0])])
+      const { error } = await supabase
+        .from('posts')
+        .insert({ photos: paths, caption: caption.trim(), seasons, aspect })
+      if (error) {
+        deletePhotos(paths).catch(() => {})
+        throw error
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
+  })
+}
+
+// Borra tu publicacion con sus fotos; sus likes, comentarios y compartidos se van con ella
+export function useDeletePost() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (post: Post) => {
+      const { error } = await supabase.from('posts').delete().eq('id', post.id)
+      if (error) throw error
+      deletePhotos(post.photoPaths).catch(() => {})
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
+  })
+}
+
+type CommentRow = Tables<'comments'> & { author: ProfileBits; reply_to: { username: string } | null }
+
+// Comentarios de una publicacion, del mas viejo al mas nuevo.
+// ponytail: se traen todos al abrir la publicacion; paginar si un post junta cientos
+export function useComments(postId: string) {
+  return useQuery({
+    queryKey: ['comments', postId],
+    queryFn: async (): Promise<PostComment[]> => {
+      const { data, error } = await supabase
+        .from('comments')
+        .select(
+          '*, author:profiles!comments_author_id_fkey(username, name, avatar_path), reply_to:profiles!comments_reply_to_id_fkey(username)',
+        )
+        .eq('post_id', postId)
+        .order('created_at')
+      if (error) throw error
+      return (data as CommentRow[]).map((row) => ({
+        id: row.id,
+        authorId: row.author_id,
+        author: feedUserFromRow(row.author),
+        text: row.text,
+        imageUrl: row.image_path ? photoUrl(row.image_path) : undefined,
+        createdAt: new Date(row.created_at),
+        reply:
+          row.parent_id && row.reply_to_id
+            ? { parentId: row.parent_id, toUserId: row.reply_to_id, toUsername: row.reply_to?.username ?? '' }
+            : undefined,
+      }))
+    },
+  })
+}
+
+type NewComment = { postId: string; text: string; reply?: PostComment['reply']; image?: File }
+
+export function useAddComment() {
+  const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
+
+  return useMutation({
+    mutationFn: async ({ postId, text, reply, image }: NewComment) => {
+      // La foto se comprime y sube primero (los GIF van tal cual)
+      const imagePath = image ? await uploadPhoto(image, userId!) : null
+      const { error } = await supabase.from('comments').insert({
+        post_id: postId,
+        text: text.trim(),
+        image_path: imagePath,
+        parent_id: reply?.parentId ?? null,
+        reply_to_id: reply?.toUserId ?? null,
+      })
+      if (error) {
+        if (imagePath) deletePhotos([imagePath]).catch(() => {})
+        throw error
+      }
+    },
+    // El contador sube al instante; la lista se vuelve a pedir al terminar
+    onMutate: ({ postId }) => updatePost(queryClient, postId, (p) => ({ ...p, commentCount: p.commentCount + 1 })),
+    onError: (_error, { postId }) =>
+      updatePost(queryClient, postId, (p) => ({ ...p, commentCount: p.commentCount - 1 })),
+    onSettled: (_data, _error, { postId }) => queryClient.invalidateQueries({ queryKey: ['comments', postId] }),
+  }).mutate
 }

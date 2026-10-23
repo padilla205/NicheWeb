@@ -5,7 +5,7 @@ import { ShowMore } from '@/components/ShowMore'
 import { useItems } from '@/hooks/useItems'
 import { useMyListings } from '@/hooks/useListings'
 import { useProfile } from '@/hooks/useProfile'
-import { usePosts } from '@/hooks/usePosts'
+import { useSharedPosts, useUserPosts } from '@/hooks/usePosts'
 import { cn } from '@/lib/utils'
 import { ClosetGrid } from '@/pages/closet/ClosetGrid'
 import { ListingCard } from '@/pages/marketplace/ListingCard'
@@ -23,20 +23,17 @@ export function ProfileTabs({ user }: { user?: OtherUser }) {
   const [direction, setDirection] = useState(1)
   const me = useProfile()
   const isMine = !user
-  const { username, closetPublic } = user ?? me
-  const posts = usePosts()
+  const { id: userId, closetPublic } = user ?? me
+  const posts = useUserPosts(userId)
+  const shared = useSharedPosts(userId)
   const { items, total: itemsTotal, isPending: itemsPending, loadMore: loadMoreItems } = useItems([], user?.id)
   // En tu perfil incluye las vendidas: en el marketplace ya no salen, pero aqui las sigues viendo con su etiqueta
   const { listings: myListings, total: listingsTotal, isPending: listingsPending, loadMore: loadMoreListings } = useMyListings(user?.id)
 
-  const myPosts = posts.filter((post) => post.author.username === username)
-  // ponytail: los compartidos de otra persona llegan cuando el feed este en Supabase; por ahora solo los tuyos
-  const sharedPosts = isMine ? posts.filter((post) => post.sharedByMe) : []
-
   const tabs: { value: Tab; label: string; icon: LucideIcon; count: number }[] = [
-    { value: 'posts', label: 'Publicaciones', icon: SquareUser, count: myPosts.length },
+    { value: 'posts', label: 'Publicaciones', icon: SquareUser, count: posts.total },
     { value: 'closet', label: 'Closet', icon: Shirt, count: itemsTotal },
-    { value: 'shared', label: 'Compartidos', icon: Repeat2, count: sharedPosts.length },
+    { value: 'shared', label: 'Compartidos', icon: Repeat2, count: shared.total },
     { value: 'selling', label: 'En venta', icon: Tag, count: listingsTotal },
   ]
 
@@ -91,13 +88,16 @@ export function ProfileTabs({ user }: { user?: OtherUser }) {
         animate={{ opacity: 1, x: 0 }}
         transition={{ type: 'spring', visualDuration: 0.25, bounce: 0 }}
       >
-        {tab === 'posts' && (
-          <PostGrid
-            posts={myPosts}
-            emptyText={
-              isMine ? 'Aun no publicas outfits. Cuando lo hagas apareceran aqui.' : 'Aun no publica outfits.'
-            }
-          />
+        {tab === 'posts' && !posts.isPending && (
+          <div className="flex flex-col">
+            <PostGrid
+              posts={posts.posts}
+              emptyText={
+                isMine ? 'Aun no publicas outfits. Cuando lo hagas apareceran aqui.' : 'Aun no publica outfits.'
+              }
+            />
+            <ShowMore shown={posts.posts.length} total={posts.total} onClick={posts.loadMore} />
+          </div>
         )}
         {tab === 'closet' &&
           (!isMine && !closetPublic ? (
@@ -138,15 +138,18 @@ export function ProfileTabs({ user }: { user?: OtherUser }) {
               <ShowMore shown={items.length} total={itemsTotal} onClick={loadMoreItems} />
             </div>
           ))}
-        {tab === 'shared' && (
-          <PostGrid
-            posts={sharedPosts}
-            emptyText={
-              isMine
-                ? 'Aun no compartes publicaciones. Usa el boton de compartir en el feed para traerlas aqui.'
-                : 'Aun no comparte publicaciones.'
-            }
-          />
+        {tab === 'shared' && !shared.isPending && (
+          <div className="flex flex-col">
+            <PostGrid
+              posts={shared.posts}
+              emptyText={
+                isMine
+                  ? 'Aun no compartes publicaciones. Usa el boton de compartir en el feed para traerlas aqui.'
+                  : 'Aun no comparte publicaciones.'
+              }
+            />
+            <ShowMore shown={shared.posts.length} total={shared.total} onClick={shared.loadMore} />
+          </div>
         )}
         {tab === 'selling' &&
           (listingsPending ? null : myListings.length === 0 ? (

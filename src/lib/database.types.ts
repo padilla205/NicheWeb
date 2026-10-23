@@ -567,28 +567,34 @@ export type Database = {
       }
       posts: {
         Row: {
+          aspect: number
           author_id: string
           caption: string
           created_at: string
           id: string
           outfit_id: string | null
           photos: string[]
+          seasons: string[]
         }
         Insert: {
+          aspect?: number
           author_id?: string
           caption?: string
           created_at?: string
           id?: string
           outfit_id?: string | null
           photos: string[]
+          seasons?: string[]
         }
         Update: {
+          aspect?: number
           author_id?: string
           caption?: string
           created_at?: string
           id?: string
           outfit_id?: string | null
           photos?: string[]
+          seasons?: string[]
         }
         Relationships: [
           {
@@ -681,6 +687,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      featured_posts: {
+        Args: { how_many?: number }
+        Returns: Database["public"]["Tables"]["posts"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "posts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       listing_sizes: {
         Args: never
         Returns: string[]

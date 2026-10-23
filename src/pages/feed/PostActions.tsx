@@ -38,7 +38,7 @@ export function PostActions({ post, onLike, onComment, onShareToProfile }: PostA
       </Button>
       <Button variant="ghost" size="sm" aria-label="Comentar" onClick={onComment} className="gap-1.5">
         <MessageCircle className="size-5" />
-        <span className="tabular-nums">{post.comments.length}</span>
+        <span className="tabular-nums">{post.commentCount}</span>
       </Button>
       <RepostButton shared={post.sharedByMe} onClick={onShareToProfile} />
       <ShareButton post={post} />

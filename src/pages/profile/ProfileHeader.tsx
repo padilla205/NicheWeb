@@ -6,6 +6,7 @@ import { useSignOut } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 import { PublishPostDialog } from '@/pages/feed/PublishPostDialog'
 import { EditProfileDialog } from './EditProfileDialog'
+import { FollowStats } from './FollowStats'
 import { ProfileSummary } from './ProfileSummary'
 
 // Portada, foto, nombre, descripcion y redes del usuario
@@ -22,6 +23,7 @@ export function ProfileHeader() {
     <>
       <header className="flex flex-col items-center gap-3 text-center">
         <ProfileSummary profile={profile} />
+        <FollowStats userId={profile.id} />
 
         <div className="flex gap-2">
           <MorphButton hidden={publishOrigin !== null} onOpen={setPublishOrigin}>
