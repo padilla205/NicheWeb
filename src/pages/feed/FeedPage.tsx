@@ -1,11 +1,14 @@
-import { Plus, Users } from 'lucide-react'
+import { EyeOff, Plus, Users } from 'lucide-react'
 import { MotionConfig } from 'motion/react'
 import { useCallback, useState } from 'react'
 import { ChoicePill } from '@/components/ChoicePill'
 import { MorphButton } from '@/components/MorphButton'
 import { PageTitle } from '@/components/PageTitle'
 import { ShowMore } from '@/components/ShowMore'
-import { useFeaturedPosts, useFeed } from '@/hooks/usePosts'
+import { Button } from '@/components/ui/button'
+import { useKeepScroll } from '@/hooks/useKeepScroll'
+import { useFeaturedPosts, useFeed, useToggleHiddenAuthor } from '@/hooks/usePosts'
+import type { Post } from '@/lib/feed'
 import { type Season, seasons } from '@/lib/clothing'
 import { EmptyTab } from '@/pages/profile/EmptyTab'
 import { PostDetail } from '@/pages/profile/PostDetail'
@@ -22,7 +25,24 @@ export function FeedPage() {
   // Boton que abrio "Crear publicacion"; null si la ventana esta cerrada
   const [publishOrigin, setPublishOrigin] = useState<HTMLElement | null>(null)
   const closePublish = useCallback(() => setPublishOrigin(null), [])
+  const toggleHidden = useToggleHiddenAuthor()
+  // Ultima persona ocultada, para poder deshacerlo
+  const [hiddenAuthor, setHiddenAuthor] = useState<Post | null>(null)
+
+  // El menu del autor ya lo oculto; aqui solo se muestra el aviso y se cierra la publicacion abierta
+  function onAuthorHidden(post: Post) {
+    setHiddenAuthor(post)
+    setOpenId(null)
+  }
+
+  function undoHide() {
+    if (!hiddenAuthor) return
+    toggleHidden.mutate({ authorId: hiddenAuthor.authorId, hidden: false })
+    setHiddenAuthor(null)
+  }
   const feed = useFeed({ following: tab === 'following', seasons: selectedSeasons })
+  // La pagina no sube al cambiar de pestana o temporada
+  const keep = useKeepScroll(`${tab}-${selectedSeasons.join()}`)
   const { featured, secondsRemaining } = useFeaturedPosts()
   // Se busca en las dos listas para que la publicacion abierta refleje likes al instante
   const openPost = [...feed.posts, ...featured].find((post) => post.id === openId)
@@ -62,32 +82,46 @@ export function FeedPage() {
           ))}
         </div>
 
-        {feed.isPending ? (
-          <FeedSkeleton />
-        ) : feed.posts.length === 0 ? (
-          <EmptyTab>
-            {tab === 'following' ? (
-              <span className="flex items-center justify-center gap-2">
-                <Users className="size-4 shrink-0" />
-                Cuando sigas a alguien, sus outfits apareceran aqui.
-              </span>
-            ) : selectedSeasons.length > 0 ? (
-              'No hay outfits de esa temporada todavia.'
-            ) : (
-              'Aun no hay outfits. Publica el primero con Crear publicacion.'
-            )}
-          </EmptyTab>
-        ) : (
-          // ponytail: columnas de CSS (tipo Pinterest); el orden va de arriba hacia abajo por columna
-          <div className="columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4">
-            {feed.posts.map((post) => (
-              <FeedCard key={post.id} post={post} onOpen={() => setOpenId(post.id)} />
-            ))}
+        {hiddenAuthor && (
+          <div role="status" className="mb-4 flex items-center gap-3 rounded-2xl border bg-card px-4 py-2.5 text-sm">
+            <EyeOff className="size-4 shrink-0 text-muted-foreground" />
+            <span className="flex-1">Ya no veras publicaciones de @{hiddenAuthor.author.username}.</span>
+            <Button variant="ghost" size="sm" onClick={undoHide}>
+              Deshacer
+            </Button>
           </div>
         )}
-        <ShowMore shown={feed.posts.length} total={feed.total} onClick={feed.loadMore} />
+
+        <div ref={keep.ref} style={keep.style}>
+          {feed.isPending ? (
+            <FeedSkeleton />
+          ) : feed.posts.length === 0 ? (
+            <EmptyTab>
+              {tab === 'following' ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Users className="size-4 shrink-0" />
+                  Cuando sigas a alguien, sus outfits apareceran aqui.
+                </span>
+              ) : selectedSeasons.length > 0 ? (
+                'No hay outfits de esa temporada todavia.'
+              ) : (
+                'Aun no hay outfits. Publica el primero con Crear publicacion.'
+              )}
+            </EmptyTab>
+          ) : (
+            // ponytail: columnas de CSS (tipo Pinterest); el orden va de arriba hacia abajo por columna
+            <div className="columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4">
+              {feed.posts.map((post) => (
+                <FeedCard key={post.id} post={post} onOpen={() => setOpenId(post.id)} onAuthorHidden={() => onAuthorHidden(post)} />
+              ))}
+            </div>
+          )}
+          <ShowMore shown={feed.posts.length} total={feed.total} onClick={feed.loadMore} />
+        </div>
       </div>
-      {openPost && <PostDetail post={openPost} onClose={() => setOpenId(null)} />}
+      {openPost && (
+        <PostDetail post={openPost} onClose={() => setOpenId(null)} onAuthorHidden={() => onAuthorHidden(openPost)} />
+      )}
       <PublishPostDialog origin={publishOrigin} onClose={closePublish} />
     </MotionConfig>
   )

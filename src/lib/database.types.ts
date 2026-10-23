@@ -232,6 +232,39 @@ export type Database = {
           },
         ]
       }
+      feed_hidden_users: {
+        Row: {
+          created_at: string
+          hidden_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hidden_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          hidden_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_hidden_users_hidden_id_fkey"
+            columns: ["hidden_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_hidden_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string
@@ -464,7 +497,10 @@ export type Database = {
           edited_at: string | null
           id: string
           image_path: string | null
+          item_id: string | null
+          post_id: string | null
           sender_id: string
+          shared_type: string | null
         }
         Insert: {
           body?: string
@@ -474,7 +510,10 @@ export type Database = {
           edited_at?: string | null
           id?: string
           image_path?: string | null
+          item_id?: string | null
+          post_id?: string | null
           sender_id?: string
+          shared_type?: string | null
         }
         Update: {
           body?: string
@@ -484,9 +523,26 @@ export type Database = {
           edited_at?: string | null
           id?: string
           image_path?: string | null
+          item_id?: string | null
+          post_id?: string | null
           sender_id?: string
+          shared_type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_conversation_id_fkey"
             columns: ["conversation_id"]

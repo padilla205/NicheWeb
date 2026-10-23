@@ -1,7 +1,8 @@
-import { Tag, Trash2, X } from 'lucide-react'
+import { MessageSquareShare, Tag, Trash2, X } from 'lucide-react'
 import { motion } from 'motion/react'
 import { type ReactNode, useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { FullscreenPhotos } from '@/components/FullscreenPhotos'
 import { MorphButton } from '@/components/MorphButton'
 import { SwipeHandle } from '@/components/SwipeHandle'
 import { ChoicePill } from '@/components/ChoicePill'
@@ -12,6 +13,7 @@ import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { useSwipeToClose } from '@/hooks/useSwipeToClose'
 import { type ClosetItem, getColorInfo, getSeasonLabel, getTypeInfo } from '@/lib/clothing'
 import { getTeamLabel } from '@/lib/teams'
+import { ShareToChatDialog } from '@/pages/chat/ShareToChatDialog'
 import { CreateListingDialog } from '@/pages/marketplace/CreateListingDialog'
 import { PhotoCarousel } from './PhotoCarousel'
 
@@ -41,6 +43,9 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
   const deleteItem = useDeleteItem()
   // Eliminar pide un segundo toque para confirmar
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [sharing, setSharing] = useState(false)
+  // Se comparte lo que se ve en un perfil: prendas de otros, o las tuyas visibles en tu closet publico
+  const shareable = readOnly || (!item.private && closetPublic)
 
   return (
     <>
@@ -75,6 +80,17 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
             alt={title}
             fit="contain"
             className="aspect-square w-full md:aspect-auto md:h-full md:min-h-96"
+            topRightControl={
+              item.photoUrls.length > 0 && (
+                <FullscreenPhotos
+                  itemId={`item-${item.id}`}
+                  photos={item.photoUrls}
+                  index={photoIndex}
+                  onIndexChange={setPhotoIndex}
+                  alt={title}
+                />
+              )
+            }
           />
 
           {/* "layout" hace que Motion dibuje el texto a su tamano real mientras la ventana crece
@@ -180,6 +196,13 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
               </>
             )}
 
+            {shareable && (
+              <Button variant="outline" className="self-start" onClick={() => setSharing(true)}>
+                <MessageSquareShare />
+                Enviar por chat
+              </Button>
+            )}
+
             <DetailSection title="Agregada">
               <p className="text-sm">
                 {item.createdAt.toLocaleDateString('es-MX', { dateStyle: 'long' })}
@@ -201,6 +224,11 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
           </motion.div>
         </motion.div>
       </div>
+      <ShareToChatDialog
+        open={sharing}
+        onClose={() => setSharing(false)}
+        shared={{ type: 'item', id: item.id, title, subtitle: typeLabel, thumbUrl: item.thumbUrl || undefined }}
+      />
       <CreateListingDialog
         origin={sellOrigin}
         onClose={closeSell}

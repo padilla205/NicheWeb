@@ -2,6 +2,7 @@ import { MotionConfig } from 'motion/react'
 import { useCallback, useState } from 'react'
 import { PageTitle } from '@/components/PageTitle'
 import { ShowMore } from '@/components/ShowMore'
+import { useKeepScroll } from '@/hooks/useKeepScroll'
 import type { ClothingType } from '@/lib/clothing'
 import { useItems } from '@/hooks/useItems'
 import { AddItemButton } from './AddItemButton'
@@ -21,6 +22,8 @@ export function ClosetPage() {
   const closeAdd = useCallback(() => setAddOrigin(null), [])
   // Supabase filtra por tipo y manda de 20 en 20
   const { items, total, isPending, loadMore } = useItems(selectedTypes)
+  // La pagina no sube al cambiar de filtro
+  const keep = useKeepScroll(selectedTypes.join())
 
   return (
     // Aperturas con un ligero rebote en unos 300 ms; si el sistema pide menos movimiento, se respeta
@@ -37,23 +40,25 @@ export function ClosetPage() {
           />
         </div>
       </div>
-      {isPending ? (
-        <ClosetSkeleton />
-      ) : items.length === 0 && selectedTypes.length === 0 ? (
-        <ClosetEmpty
-          addOpen={addOrigin?.from === 'empty'}
-          onAdd={(button) => setAddOrigin({ from: 'empty', button })}
-        />
-      ) : items.length === 0 ? (
-        <p className="py-20 text-center text-sm text-muted-foreground">
-          Ninguna prenda coincide con los filtros.
-        </p>
-      ) : (
-        <>
-          <ClosetGrid items={items} />
-          <ShowMore shown={items.length} total={total} onClick={loadMore} />
-        </>
-      )}
+      <div ref={keep.ref} style={keep.style}>
+        {isPending ? (
+          <ClosetSkeleton />
+        ) : items.length === 0 && selectedTypes.length === 0 ? (
+          <ClosetEmpty
+            addOpen={addOrigin?.from === 'empty'}
+            onAdd={(button) => setAddOrigin({ from: 'empty', button })}
+          />
+        ) : items.length === 0 ? (
+          <p className="py-20 text-center text-sm text-muted-foreground">
+            Ninguna prenda coincide con los filtros.
+          </p>
+        ) : (
+          <>
+            <ClosetGrid items={items} />
+            <ShowMore shown={items.length} total={total} onClick={loadMore} />
+          </>
+        )}
+      </div>
       <AddItemDialog origin={addOrigin?.button ?? null} onClose={closeAdd} />
     </MotionConfig>
   )

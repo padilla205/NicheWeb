@@ -87,6 +87,19 @@ export function useAllItems() {
   })
 }
 
+// Una prenda por su id (tarjeta de un chat); null si ya no existe o no se puede ver
+export function useItem(id: string | undefined) {
+  return useQuery({
+    queryKey: ['items', 'one', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('items').select('*').eq('id', id!).maybeSingle()
+      if (error) throw error
+      return data ? { item: itemFromRow(data), ownerId: data.owner_id } : null
+    },
+  })
+}
+
 export function useAddItem() {
   const queryClient = useQueryClient()
   const { id: userId } = useProfile()

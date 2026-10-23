@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 // Ventanas abiertas, de la mas vieja a la mas nueva: Escape solo cierra la de encima
 const openModals: symbol[] = []
@@ -8,6 +8,14 @@ let savedOverflow = ''
 // Comportamiento comun de las ventanas que se abren encima de la pagina:
 // Escape cierra, la pagina de atras no se mueve y al cerrar el foco regresa a donde estaba
 export function useModalBehavior(onClose: () => void) {
+  // Se guarda la funcion mas reciente sin reiniciar la ventana: si el efecto dependiera de onClose,
+  // cada vez que la pagina de atras se actualiza (por ejemplo, el reloj de Destacados cada segundo)
+  // la ventana se "reabriria" y regresaria el foco a donde estaba, cerrando menus abiertos adentro
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
+
   useEffect(() => {
     const id = Symbol()
     if (openModals.length === 0) {
@@ -21,7 +29,9 @@ export function useModalBehavior(onClose: () => void) {
       if (event.key !== 'Escape' || openModals.at(-1) !== id) return
       // Si hay una lista desplegable abierta (tipo de prenda, equipo...), Escape solo cierra esa lista
       if (document.querySelector('[data-radix-popper-content-wrapper]')) return
-      onClose()
+      // Si hay una ventana encima (pantalla completa, compartir...), Escape solo cierra esa
+      if (document.querySelector('[data-slot="dialog-content"]')) return
+      onCloseRef.current()
     }
     window.addEventListener('keydown', handleKey)
 
@@ -32,5 +42,5 @@ export function useModalBehavior(onClose: () => void) {
       if (openModals.length === 0) document.body.style.overflow = savedOverflow
       previousFocus?.focus()
     }
-  }, [onClose])
+  }, [])
 }

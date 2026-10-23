@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import { useState } from 'react'
 import { ShowMore } from '@/components/ShowMore'
 import { useItems } from '@/hooks/useItems'
+import { useKeepScroll } from '@/hooks/useKeepScroll'
 import { useMyListings } from '@/hooks/useListings'
 import { useOutfits } from '@/hooks/useOutfits'
 import { useProfile } from '@/hooks/useProfile'
@@ -23,6 +24,7 @@ export function ProfileTabs({ user }: { user?: OtherUser }) {
   const [tab, setTab] = useState<Tab>('posts')
   // Hacia que lado se movio: 1 si la nueva pestana esta a la derecha, -1 si esta a la izquierda
   const [direction, setDirection] = useState(1)
+  const keep = useKeepScroll(tab)
   const me = useProfile()
   const isMine = !user
   const { id: userId, closetPublic } = user ?? me
@@ -85,106 +87,109 @@ export function ProfileTabs({ user }: { user?: OtherUser }) {
       </div>
 
       {/* El contenido entra desde el lado hacia el que te moviste */}
-      <motion.div
-        key={tab}
-        role="tabpanel"
-        initial={{ opacity: 0, x: direction * 24 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ type: 'spring', visualDuration: 0.25, bounce: 0 }}
-      >
-        {tab === 'posts' && !posts.isPending && (
-          <div className="flex flex-col">
-            <PostGrid
-              posts={posts.posts}
-              emptyText={
-                isMine ? 'Aun no publicas outfits. Cuando lo hagas apareceran aqui.' : 'Aun no publica outfits.'
-              }
-            />
-            <ShowMore shown={posts.posts.length} total={posts.total} onClick={posts.loadMore} />
-          </div>
-        )}
-        {tab === 'closet' && closetOutfits.length > 0 && (
-          <section aria-label="Outfits" className="mb-6 flex flex-col gap-3">
-            <h3 className="text-sm font-medium text-muted-foreground">Outfits</h3>
-            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {closetOutfits.map((outfit) => (
-                <li key={outfit.id}>
-                  <OutfitCard outfit={outfit} />
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-        {tab === 'closet' &&
-          (!isMine && !closetPublic ? (
-            <EmptyTab>
-              <span className="flex items-center justify-center gap-2">
-                <Lock className="size-4 shrink-0" />
-                Su closet es privado.
-              </span>
-            </EmptyTab>
-          ) : itemsPending ? null : items.length === 0 ? (
-            !isMine ? (
-              <EmptyTab>Aun no tiene prendas visibles.</EmptyTab>
-            ) : (
-            <EmptyTab>Aun no tienes prendas. Agregalas desde la seccion Closet.</EmptyTab>
-            )
-          ) : !isMine ? (
+      {/* La pagina no sube al cambiar de pestana */}
+      <div ref={keep.ref} style={keep.style}>
+        <motion.div
+          key={tab}
+          role="tabpanel"
+          initial={{ opacity: 0, x: direction * 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ type: 'spring', visualDuration: 0.25, bounce: 0 }}
+        >
+          {tab === 'posts' && !posts.isPending && (
             <div className="flex flex-col">
-              <ClosetGrid items={items} readOnly />
-              <ShowMore shown={items.length} total={itemsTotal} onClick={loadMoreItems} />
+              <PostGrid
+                posts={posts.posts}
+                emptyText={
+                  isMine ? 'Aun no publicas outfits. Cuando lo hagas apareceran aqui.' : 'Aun no publica outfits.'
+                }
+              />
+              <ShowMore shown={posts.posts.length} total={posts.total} onClick={posts.loadMore} />
             </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {/* Por ahora solo tu ves tu propio perfil; esto avisa que los demas no veran tu closet */}
-              {!closetPublic ? (
-                <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Lock className="size-4 shrink-0" />
-                  Tu closet es privado: solo tu lo ves. Puedes hacerlo publico desde la seccion Closet.
-                </p>
-              ) : (
-                items.some((item) => item.private) && (
-                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Lock className="size-4 shrink-0" />
-                    Las prendas con candado son privadas: solo tu las ves.
-                  </p>
-                )
-              )}
-              <ClosetGrid items={items} />
-              <ShowMore shown={items.length} total={itemsTotal} onClick={loadMoreItems} />
-            </div>
-          ))}
-        {tab === 'shared' && !shared.isPending && (
-          <div className="flex flex-col">
-            <PostGrid
-              posts={shared.posts}
-              emptyText={
-                isMine
-                  ? 'Aun no compartes publicaciones. Usa el boton de compartir en el feed para traerlas aqui.'
-                  : 'Aun no comparte publicaciones.'
-              }
-            />
-            <ShowMore shown={shared.posts.length} total={shared.total} onClick={shared.loadMore} />
-          </div>
-        )}
-        {tab === 'selling' &&
-          (listingsPending ? null : myListings.length === 0 ? (
-            <EmptyTab>
-              {isMine ? 'No tienes prendas en venta. Publica una desde el Marketplace.' : 'No tiene prendas en venta.'}
-            </EmptyTab>
-          ) : (
-            <div className="flex flex-col">
+          )}
+          {tab === 'closet' && closetOutfits.length > 0 && (
+            <section aria-label="Outfits" className="mb-6 flex flex-col gap-3">
+              <h3 className="text-sm font-medium text-muted-foreground">Outfits</h3>
               <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {myListings.map((listing) => (
-                  <li key={listing.id}>
-                    <ListingCard listing={listing} />
+                {closetOutfits.map((outfit) => (
+                  <li key={outfit.id}>
+                    <OutfitCard outfit={outfit} />
                   </li>
                 ))}
               </ul>
-              <ShowMore shown={myListings.length} total={listingsTotal} onClick={loadMoreListings} />
+            </section>
+          )}
+          {tab === 'closet' &&
+            (!isMine && !closetPublic ? (
+              <EmptyTab>
+                <span className="flex items-center justify-center gap-2">
+                  <Lock className="size-4 shrink-0" />
+                  Su closet es privado.
+                </span>
+              </EmptyTab>
+            ) : itemsPending ? null : items.length === 0 ? (
+              !isMine ? (
+                <EmptyTab>Aun no tiene prendas visibles.</EmptyTab>
+              ) : (
+              <EmptyTab>Aun no tienes prendas. Agregalas desde la seccion Closet.</EmptyTab>
+              )
+            ) : !isMine ? (
+              <div className="flex flex-col">
+                <ClosetGrid items={items} readOnly />
+                <ShowMore shown={items.length} total={itemsTotal} onClick={loadMoreItems} />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {/* Por ahora solo tu ves tu propio perfil; esto avisa que los demas no veran tu closet */}
+                {!closetPublic ? (
+                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Lock className="size-4 shrink-0" />
+                    Tu closet es privado: solo tu lo ves. Puedes hacerlo publico desde la seccion Closet.
+                  </p>
+                ) : (
+                  items.some((item) => item.private) && (
+                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Lock className="size-4 shrink-0" />
+                      Las prendas con candado son privadas: solo tu las ves.
+                    </p>
+                  )
+                )}
+                <ClosetGrid items={items} />
+                <ShowMore shown={items.length} total={itemsTotal} onClick={loadMoreItems} />
+              </div>
+            ))}
+          {tab === 'shared' && !shared.isPending && (
+            <div className="flex flex-col">
+              <PostGrid
+                posts={shared.posts}
+                emptyText={
+                  isMine
+                    ? 'Aun no compartes publicaciones. Usa el boton de compartir en el feed para traerlas aqui.'
+                    : 'Aun no comparte publicaciones.'
+                }
+              />
+              <ShowMore shown={shared.posts.length} total={shared.total} onClick={shared.loadMore} />
             </div>
-          ))}
-      </motion.div>
+          )}
+          {tab === 'selling' &&
+            (listingsPending ? null : myListings.length === 0 ? (
+              <EmptyTab>
+                {isMine ? 'No tienes prendas en venta. Publica una desde el Marketplace.' : 'No tiene prendas en venta.'}
+              </EmptyTab>
+            ) : (
+              <div className="flex flex-col">
+                <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                  {myListings.map((listing) => (
+                    <li key={listing.id}>
+                      <ListingCard listing={listing} />
+                    </li>
+                  ))}
+                </ul>
+                <ShowMore shown={myListings.length} total={listingsTotal} onClick={loadMoreListings} />
+              </div>
+            ))}
+        </motion.div>
+      </div>
     </section>
   )
 }

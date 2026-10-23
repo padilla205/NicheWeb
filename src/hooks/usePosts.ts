@@ -106,6 +106,13 @@ function updatePost(queryClient: QueryClient, id: string, change: (post: Post) =
   })
 }
 
+// Personas que marcaste con "No me interesa"
+async function fetchHiddenAuthors() {
+  const { data, error } = await supabase.from('feed_hidden_users').select('hidden_id')
+  if (error) throw error
+  return data.map((row) => row.hidden_id)
+}
+
 type FeedFilters = { following: boolean; seasons: Season[] }
 
 // Feed: lo mas nuevo primero, de 12 en 12. "Siguiendo" solo trae a quienes sigues
@@ -121,6 +128,8 @@ export function useFeed({ following, seasons }: FeedFilters) {
         .order('created_at', { ascending: false })
         .range(pageParam, pageParam + PAGE_SIZE - 1)
       if (seasons.length > 0) request = request.overlaps('seasons', seasons)
+      const hidden = userId ? await fetchHiddenAuthors() : []
+      if (hidden.length > 0) request = request.not('author_id', 'in', `(${hidden.join(',')})`)
       if (following) {
         const { data: follows, error } = await supabase
           .from('follows')
@@ -185,6 +194,20 @@ export function useSharedPosts(sharerId: string) {
   return paged(query)
 }
 
+// Una publicacion por su id (link compartido o tarjeta de un chat); null si ya no existe
+export function usePost(id: string | undefined) {
+  const userId = useSession()?.user.id
+  return useQuery({
+    queryKey: ['posts', 'one', id, userId],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('posts').select(POST_COLUMNS).eq('id', id!).maybeSingle()
+      if (error) throw error
+      return data ? (await toPosts([data as unknown as PostRow], userId))[0] : null
+    },
+  })
+}
+
 // Las 4 publicaciones con mas likes y comentarios; la seleccion cambia cada hora
 export function useFeaturedPosts() {
   const userId = useSession()?.user.id
@@ -208,9 +231,12 @@ export function useFeaturedPosts() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc('featured_posts', { how_many: 4 }).select(POST_COLUMNS)
       if (error) throw error
-      const posts = await toPosts(data as unknown as PostRow[], userId)
-      // Solo las que tienen al menos un like o comentario
-      return posts.filter((post) => post.likes + post.commentCount > 0)
+      const [posts, hidden] = await Promise.all([
+        toPosts(data as unknown as PostRow[], userId),
+        userId ? fetchHiddenAuthors() : ([] as string[]),
+      ])
+      // Solo las que tienen al menos un like o comentario, y no de personas que ocultaste
+      return posts.filter((post) => post.likes + post.commentCount > 0 && !hidden.includes(post.authorId))
     },
   })
 
@@ -372,4 +398,23 @@ export function useAddComment() {
       updatePost(queryClient, postId, (p) => ({ ...p, commentCount: p.commentCount - 1 })),
     onSettled: (_data, _error, { postId }) => queryClient.invalidateQueries({ queryKey: ['comments', postId] }),
   }).mutate
+}
+
+// "No me interesa": oculta (o vuelve a mostrar) las publicaciones de una persona en tu feed
+export function useToggleHiddenAuthor() {
+  const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
+
+  return useMutation({
+    mutationFn: async ({ authorId, hidden }: { authorId: string; hidden: boolean }) => {
+      const { error } = hidden
+        ? await supabase.from('feed_hidden_users').insert({ hidden_id: authorId })
+        : await supabase.from('feed_hidden_users').delete().eq('user_id', userId!).eq('hidden_id', authorId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts', 'feed'] })
+      queryClient.invalidateQueries({ queryKey: ['posts', 'featured'] })
+    },
+  })
 }

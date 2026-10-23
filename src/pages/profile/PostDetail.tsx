@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils'
 import { CommentsThread } from '@/pages/feed/CommentsThread'
 import { PostActions } from '@/pages/feed/PostActions'
 import { PostPhotos } from '@/pages/feed/PostPhotos'
-import { UserAvatar } from '@/pages/feed/UserAvatar'
+import { AuthorMenu } from '@/pages/feed/AuthorMenu'
 
 // Al cerrar, el fondo oscuro, la ventana y su foto desaparecen al instante, sin animacion
 const HIDE_NOW = { opacity: 0, transition: { duration: 0 } } as const
@@ -21,10 +21,12 @@ const HIDE_NOW = { opacity: 0, transition: { duration: 0 } } as const
 type PostDetailProps = {
   post: Post
   onClose: () => void
+  // Despues de "No me interesa" en el menu del autor
+  onAuthorHidden?: () => void
 }
 
 // Publicacion completa: foto, autor, descripcion, likes y comentarios
-export function PostDetail({ post, onClose }: PostDetailProps) {
+export function PostDetail({ post, onClose, onAuthorHidden }: PostDetailProps) {
   // Se decide una sola vez al abrir: en el celular el cuadro de comentario no se enfoca solo
   // para que el teclado no tape la publicacion
   const [isDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches)
@@ -83,11 +85,9 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
             className="flex shrink-0 flex-col md:min-h-0 md:flex-1 md:shrink md:border-l"
           >
             <header className="flex items-center gap-3 border-b p-3 pr-14">
-              <UserAvatar user={post.author} />
-              <div className="min-w-0 text-sm">
-                <span className="font-medium">{post.author.username}</span>
-                <span className="text-muted-foreground"> · {formatTimeAgo(post.createdAt)}</span>
-              </div>
+              <AuthorMenu post={post} onHidden={onAuthorHidden ?? onClose} className="text-sm">
+                <span className="shrink-0 font-normal text-muted-foreground">{formatTimeAgo(post.createdAt)}</span>
+              </AuthorMenu>
               {isMine && (
                 <Button
                   variant={confirmDelete ? 'destructive' : 'ghost'}

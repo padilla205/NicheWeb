@@ -1,7 +1,8 @@
 import { type InfiniteData, type QueryClient, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useSession } from '@/hooks/useAuth'
-import type { ChatMessage, Conversation, ReactionEmoji } from '@/lib/chat'
+import type { ChatMessage, Conversation, ReactionEmoji, SharedContent } from '@/lib/chat'
+import { getTypeInfo, type ClothingType } from '@/lib/clothing'
 import type { Tables } from '@/lib/database.types'
 import type { Listing, ListingStatus } from '@/lib/marketplace'
 import { deletePhotos, photoUrl, uploadPhoto } from '@/lib/photos'
@@ -20,7 +21,46 @@ const CHAT_COLUMNS = `id, buyer_id, last_message, last_message_at,
 
 type MessagePages = InfiniteData<ChatMessage[], string | null>
 
-type MessageRow = Tables<'messages'> & { reactions?: { user_id: string; emoji: string }[] }
+type MessageRow = Tables<'messages'> & {
+  reactions?: { user_id: string; emoji: string }[]
+  post?: { id: string; caption: string; photos: string[]; author: { username: string } } | null
+  item?: { id: string; name: string; type: string; photos: string[] } | null
+}
+
+// Columnas de un mensaje con sus reacciones y lo que comparte
+const MESSAGE_COLUMNS = `*, reactions:message_reactions(user_id, emoji),
+  post:posts(id, caption, photos, author:profiles!posts_author_id_fkey(username)),
+  item:items(id, name, type, photos)`
+
+// La tarjeta de lo compartido; si ya no se puede ver (se borro o es privado), sin id
+function sharedFromRow(row: MessageRow): SharedContent | undefined {
+  if (row.shared_type === 'post') {
+    const post = row.post
+    return post
+      ? {
+          type: 'post',
+          id: post.id,
+          title: `Publicacion de @${post.author.username}`,
+          subtitle: post.caption,
+          thumbUrl: post.photos[0] ? photoUrl(post.photos[0], true) : undefined,
+        }
+      : { type: 'post', title: 'Publicacion', subtitle: 'Ya no esta disponible' }
+  }
+  if (row.shared_type === 'item') {
+    const item = row.item
+    const typeLabel = item ? getTypeInfo(item.type as ClothingType).label : ''
+    return item
+      ? {
+          type: 'item',
+          id: item.id,
+          title: item.name || typeLabel,
+          subtitle: typeLabel,
+          thumbUrl: item.photos[0] ? photoUrl(item.photos[0], true) : undefined,
+        }
+      : { type: 'item', title: 'Prenda', subtitle: 'Ya no esta disponible' }
+  }
+  return undefined
+}
 
 // Las reacciones solo vienen al pedir los mensajes; lo que llega por Realtime no las trae y no las borra
 function fromMessageRow(row: MessageRow): ChatMessage {
@@ -38,6 +78,8 @@ function fromMessageRow(row: MessageRow): ChatMessage {
     ...(row.reactions && {
       reactions: row.reactions.map((r) => ({ userId: r.user_id, emoji: r.emoji as ReactionEmoji })),
     }),
+    // Lo compartido solo viene al pedir los mensajes (por Realtime no llega)
+    ...('post' in row || 'item' in row ? { shared: sharedFromRow(row) } : {}),
   }
 }
 
@@ -120,7 +162,7 @@ export function useMessages(conversationId: string) {
     queryFn: async ({ pageParam }) => {
       let request = supabase
         .from('messages')
-        .select('*, reactions:message_reactions(user_id, emoji)')
+        .select(MESSAGE_COLUMNS)
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: false })
         .limit(PAGE_SIZE)
@@ -154,7 +196,10 @@ export function useChatRealtime() {
     const channel = supabase
       .channel('chat')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, ({ new: row }) => {
-        putMessage(queryClient, { ...fromMessageRow(row as Tables<'messages'>), isNew: true })
+        const message = row as Tables<'messages'>
+        // Lo compartido no viene en el aviso de Realtime: se vuelve a pedir el chat para ver su tarjeta
+        if (message.shared_type) queryClient.invalidateQueries({ queryKey: ['messages', message.conversation_id] })
+        else putMessage(queryClient, { ...fromMessageRow(message), isNew: true })
         queryClient.invalidateQueries({ queryKey: ['chats'] })
         queryClient.invalidateQueries({ queryKey: ['unread'] })
       })
@@ -219,7 +264,7 @@ export function useMarkChatRead() {
   return mutation.mutate
 }
 
-type SendMessage = { conversationId: string; body: string; file?: File; id?: string }
+type SendMessage = { conversationId: string; body: string; file?: File; shared?: SharedContent; id?: string }
 
 // Optimista: el mensaje se ve al instante con un reloj; si falla queda marcado para reintentar.
 // El id se crea aqui para reconocer el mismo mensaje cuando regresa por Realtime
@@ -235,7 +280,15 @@ export function useSendMessage() {
       const imagePath = message.file ? await uploadPhoto(message.file, userId!) : null
       const { error } = await supabase
         .from('messages')
-        .insert({ id: message.id, conversation_id: message.conversationId, body: message.body, image_path: imagePath })
+        .insert({
+          id: message.id,
+          conversation_id: message.conversationId,
+          body: message.body,
+          image_path: imagePath,
+          shared_type: message.shared?.type ?? null,
+          post_id: message.shared?.type === 'post' ? message.shared.id : null,
+          item_id: message.shared?.type === 'item' ? message.shared.id : null,
+        })
       // 23505: ese id ya existe, o sea que el intento anterior si llego
       if (error && error.code !== '23505') throw error
     },
@@ -251,13 +304,14 @@ export function useSendMessage() {
     },
   })
 
-  return ({ conversationId, body, file, id = crypto.randomUUID() }: SendMessage) => {
+  return ({ conversationId, body, file, shared, id = crypto.randomUUID() }: SendMessage) => {
     const preview = file && URL.createObjectURL(file)
     mutation.mutate({
       id,
       conversationId,
       body,
       file,
+      shared,
       imageUrl: preview,
       thumbUrl: preview,
       senderId: userId!,

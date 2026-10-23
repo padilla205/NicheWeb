@@ -3,7 +3,9 @@ import { AppLayout } from '@/components/AppLayout'
 import { RequireAuth } from '@/components/RequireAuth'
 import { ChatPage } from '@/pages/chat/ChatPage'
 import { ClosetPage } from '@/pages/closet/ClosetPage'
+import { ItemPage } from '@/pages/closet/ItemPage'
 import { FeedPage } from '@/pages/feed/FeedPage'
+import { PostPage } from '@/pages/feed/PostPage'
 import { LoginPage } from '@/pages/login/LoginPage'
 import { ListingDetailPage } from '@/pages/marketplace/ListingDetailPage'
 import { MarketplacePage } from '@/pages/marketplace/MarketplacePage'
@@ -32,6 +34,8 @@ function App() {
             <Route path="chat/:id?" element={<ChatPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="u/:username" element={<UserProfilePage />} />
+            <Route path="p/:id" element={<PostPage />} />
+            <Route path="prenda/:id" element={<ItemPage />} />
             <Route path="*" element={<Navigate to="/closet" replace />} />
           </Route>
         </Route>

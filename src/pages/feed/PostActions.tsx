@@ -1,10 +1,11 @@
-import { Check, Heart, MessageCircle, Repeat2, Send } from 'lucide-react'
+import { Check, Heart, MessageCircle, MessageSquareShare, Repeat2, Send } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { Post } from '@/lib/feed'
 import { popIn } from '@/lib/motion'
 import { cn } from '@/lib/utils'
+import { ShareToChatDialog } from '@/pages/chat/ShareToChatDialog'
 
 type PostActionsProps = {
   post: Post
@@ -42,6 +43,7 @@ export function PostActions({ post, onLike, onComment, onShareToProfile }: PostA
       </Button>
       <RepostButton shared={post.sharedByMe} onClick={onShareToProfile} />
       <ShareButton post={post} />
+      <SendToChatButton post={post} />
     </div>
   )
 }
@@ -81,7 +83,7 @@ function ShareButton({ post }: { post: Post }) {
   }, [copied])
 
   async function share() {
-    const url = `${window.location.origin}/feed?post=${post.id}`
+    const url = `${window.location.origin}/p/${post.id}`
     // En el celular se abre el menu de compartir del sistema; en la computadora se copia el link
     if (navigator.share && window.matchMedia('(pointer: coarse)').matches) {
       try {
@@ -104,5 +106,28 @@ function ShareButton({ post }: { post: Post }) {
       {copied ? <Check className="size-5" /> : <Send className="size-5" />}
       {copied ? 'Link copiado' : <span className="sr-only">Compartir</span>}
     </Button>
+  )
+}
+
+// Enviar la publicacion a uno de tus chats
+function SendToChatButton({ post }: { post: Post }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)} aria-label="Enviar por chat" title="Enviar por chat">
+        <MessageSquareShare className="size-5" />
+      </Button>
+      <ShareToChatDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        shared={{
+          type: 'post',
+          id: post.id,
+          title: `Publicacion de @${post.author.username}`,
+          subtitle: post.caption,
+          thumbUrl: post.photoUrls[0] ?? post.outfit?.items.find((item) => item.thumbUrl)?.thumbUrl,
+        }}
+      />
+    </>
   )
 }

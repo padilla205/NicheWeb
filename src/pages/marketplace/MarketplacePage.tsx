@@ -15,6 +15,7 @@ import { countActiveFilters, emptyFilters, type ListingSort } from '@/lib/market
 import { CreateListingDialog } from './CreateListingDialog'
 import { ListingCard } from './ListingCard'
 import { ListingsSkeleton } from './ListingsSkeleton'
+import { useKeepScroll } from '@/hooks/useKeepScroll'
 import { LocationButton } from './LocationButton'
 import { MarketplaceFilters } from './MarketplaceFilters'
 import { SortSelect } from './SortSelect'
@@ -51,6 +52,8 @@ export function MarketplacePage() {
     center: activeSort === 'cercanos' ? center : null,
   })
   const sizes = useListingSizes()
+  // La pagina no sube al cambiar la busqueda, los filtros o el orden
+  const keep = useKeepScroll(JSON.stringify([debouncedQuery, filters, activeSort, onlyMyCity]))
 
   function clearSearch() {
     setQuery('')
@@ -102,38 +105,40 @@ export function MarketplacePage() {
         </div>
       </div>
 
-      {isPending ? (
-        <ListingsSkeleton />
-      ) : listings.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-20 text-center text-sm text-muted-foreground">
-          {searching ? (
-            <>
-              <p>Ninguna venta coincide con tu busqueda.</p>
-              <Button variant="outline" size="sm" onClick={clearSearch}>
-                Limpiar busqueda y filtros
-              </Button>
-            </>
-          ) : onlyMyCity ? (
-            <>
-              <p>Aun no hay ventas en {getCityLabel(location)}.</p>
-              <Button variant="outline" size="sm" onClick={() => setShowAll(true)}>
-                Ver todas las ventas
-              </Button>
-            </>
-          ) : (
-            <p>Aun no hay ventas publicadas.</p>
-          )}
-        </div>
-      ) : (
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-          {listings.map((listing) => (
-            <li key={listing.id}>
-              <ListingCard listing={listing} />
-            </li>
-          ))}
-        </ul>
-      )}
-      <ShowMore shown={listings.length} total={total} onClick={loadMore} />
+      <div ref={keep.ref} style={keep.style}>
+        {isPending ? (
+          <ListingsSkeleton />
+        ) : listings.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-20 text-center text-sm text-muted-foreground">
+            {searching ? (
+              <>
+                <p>Ninguna venta coincide con tu busqueda.</p>
+                <Button variant="outline" size="sm" onClick={clearSearch}>
+                  Limpiar busqueda y filtros
+                </Button>
+              </>
+            ) : onlyMyCity ? (
+              <>
+                <p>Aun no hay ventas en {getCityLabel(location)}.</p>
+                <Button variant="outline" size="sm" onClick={() => setShowAll(true)}>
+                  Ver todas las ventas
+                </Button>
+              </>
+            ) : (
+              <p>Aun no hay ventas publicadas.</p>
+            )}
+          </div>
+        ) : (
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+            {listings.map((listing) => (
+              <li key={listing.id}>
+                <ListingCard listing={listing} />
+              </li>
+            ))}
+          </ul>
+        )}
+        <ShowMore shown={listings.length} total={total} onClick={loadMore} />
+      </div>
       <CreateListingDialog origin={createOrigin} onClose={closeCreate} />
     </MotionConfig>
   )

@@ -41,6 +41,8 @@ export type ChatMessage = {
   deleted?: boolean
   // Una por persona; sin cargar todavia si llego por Realtime
   reactions?: Reaction[]
+  // Publicacion o prenda compartida en el mensaje
+  shared?: SharedContent
   // Tal cual llega de la base de datos, para pedir los mensajes anteriores sin perder precision
   createdAt: string
   // Sin estado = ya llego a la base de datos
@@ -50,6 +52,19 @@ export type ChatMessage = {
 }
 
 export type Reaction = { userId: string; emoji: ReactionEmoji }
+
+// Lo que se ve de una publicacion o prenda compartida en un chat. Sin id: ya no esta disponible
+export type SharedContent = {
+  type: 'post' | 'item'
+  id?: string
+  title: string
+  subtitle: string
+  thumbUrl?: string
+}
+
+export function sharedLink(shared: SharedContent) {
+  return shared.type === 'post' ? `/p/${shared.id}` : `/prenda/${shared.id}`
+}
 
 // Las 4 reacciones; se ven con los emojis del sistema de cada quien
 export const reactionEmojis = ['😂', '👍', '👎', '😢'] as const

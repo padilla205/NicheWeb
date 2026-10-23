@@ -72,7 +72,7 @@ export function ConversationView({ id, conversation }: ConversationViewProps) {
                   <MessageBubble
                     message={message}
                     mine={message.senderId === userId}
-                    onRetry={() => send({ conversationId: id, body: message.body, file: message.file, id: message.id })}
+                    onRetry={() => send({ conversationId: id, body: message.body, file: message.file, shared: message.shared, id: message.id })}
                     onEdit={() => setEditing(message)}
                   />
                   {(!older || formatMessageDay(older.createdAt) !== day) && <DaySeparator label={day} />}

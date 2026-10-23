@@ -1,11 +1,10 @@
 import { Heart, MessageCircle } from 'lucide-react'
 import { type MouseEvent, type PointerEvent, useRef } from 'react'
-import { Link } from 'react-router'
 import { useToggleLike } from '@/hooks/usePosts'
 import type { Post } from '@/lib/feed'
 import { cn } from '@/lib/utils'
 import { PostPhotos } from './PostPhotos'
-import { UserAvatar } from './UserAvatar'
+import { AuthorMenu } from './AuthorMenu'
 
 // Pixeles que se puede mover el dedo y que aun cuente como toque (no como deslizar las fotos)
 const TAP_SLOP = 10
@@ -13,10 +12,12 @@ const TAP_SLOP = 10
 type FeedCardProps = {
   post: Post
   onOpen: () => void
+  // Despues de "No me interesa" en el menu del autor
+  onAuthorHidden: () => void
 }
 
 // Publicacion en la cuadricula: la foto con su forma, y abajo el autor, likes y comentarios
-export function FeedCard({ post, onOpen }: FeedCardProps) {
+export function FeedCard({ post, onOpen, onAuthorHidden }: FeedCardProps) {
   const toggleLike = useToggleLike()
   const start = useRef({ x: 0, y: 0 })
 
@@ -47,10 +48,12 @@ export function FeedCard({ post, onOpen }: FeedCardProps) {
       </div>
       {/* En celular la tarjeta es angosta: el autor va en su propio renglon y los contadores abajo */}
       <footer className="flex flex-wrap items-center gap-x-2 gap-y-1 p-2.5 text-sm">
-        <Link to={`/u/${post.author.username}`} className="flex min-w-0 basis-full items-center gap-2 hover:underline sm:flex-1 sm:basis-0">
-          <UserAvatar user={post.author} className="size-6 text-[10px]" />
-          <span className="truncate font-medium">{post.author.username}</span>
-        </Link>
+        <AuthorMenu
+          post={post}
+          onHidden={onAuthorHidden}
+          className="basis-full sm:flex-1 sm:basis-0"
+          avatarClassName="size-6 text-[10px]"
+        />
         <button
           type="button"
           onClick={() => toggleLike(post)}

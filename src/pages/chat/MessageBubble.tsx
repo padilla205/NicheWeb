@@ -1,11 +1,19 @@
-import { Ban, Check, Clock, Expand, Pencil, RotateCw, Trash2 } from 'lucide-react'
+import { Ban, Check, Clock, Expand, Pencil, RotateCw, Shirt, Trash2 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useSession } from '@/hooks/useAuth'
 import { useDeleteMessage, useToggleReaction } from '@/hooks/useChat'
-import { canChangeMessage, type ChatMessage, formatMessageTime, reactionEmojis } from '@/lib/chat'
+import {
+  canChangeMessage,
+  type ChatMessage,
+  formatMessageTime,
+  reactionEmojis,
+  type SharedContent,
+  sharedLink,
+} from '@/lib/chat'
 import { cn } from '@/lib/utils'
 import { ChatImage } from './ChatImage'
 
@@ -38,6 +46,8 @@ export function MessageBubble({ message, mine, onRetry, onEdit }: MessageBubbleP
           Mensaje eliminado
         </p>
       ) : (
+        <>
+        {message.shared && <SharedCard shared={message.shared} />}
         <Popover open={menuOpen} onOpenChange={setMenuOpen}>
           {/* Mientras se envia (o si fallo) todavia no existe en la base de datos: no hay menu */}
           <PopoverTrigger
@@ -75,6 +85,7 @@ export function MessageBubble({ message, mine, onRetry, onEdit }: MessageBubbleP
             onClose={() => setMenuOpen(false)}
           />
         </Popover>
+        </>
       )}
 
       {!message.deleted && <Reactions message={message} />}
@@ -230,5 +241,33 @@ function Reactions({ message }: { message: ChatMessage }) {
         </span>
       ))}
     </motion.span>
+  )
+}
+
+// Publicacion o prenda compartida: al tocarla se abre; si ya no existe, solo lo avisa
+function SharedCard({ shared }: { shared: SharedContent }) {
+  const content = (
+    <>
+      {shared.thumbUrl ? (
+        <img src={shared.thumbUrl} alt="" loading="lazy" className="size-14 shrink-0 rounded-xl object-cover" />
+      ) : (
+        <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-muted">
+          <Shirt className="size-5 text-muted-foreground" strokeWidth={1.5} />
+        </span>
+      )}
+      <span className="flex min-w-0 flex-col text-sm">
+        <span className="truncate font-medium">{shared.title}</span>
+        <span className="truncate text-muted-foreground">{shared.subtitle}</span>
+      </span>
+    </>
+  )
+  const className = 'flex w-64 max-w-full items-center gap-3 rounded-2xl border bg-card p-2 text-left'
+
+  return shared.id ? (
+    <Link to={sharedLink(shared)} className={cn(className, 'transition-colors duration-150 hover:bg-accent')}>
+      {content}
+    </Link>
+  ) : (
+    <div className={cn(className, 'opacity-70')}>{content}</div>
   )
 }

@@ -4,6 +4,7 @@ import { NavLink } from 'react-router'
 import { ChoicePill } from '@/components/ChoicePill'
 import { UnreadBadge } from '@/components/UnreadBadge'
 import { useChatMutes, useUnreadCounts } from '@/hooks/useChat'
+import { useKeepScroll } from '@/hooks/useKeepScroll'
 import type { Conversation } from '@/lib/chat'
 import { formatTimeAgo } from '@/lib/feed'
 import { cn } from '@/lib/utils'
@@ -39,6 +40,8 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
   }
 
   const shown = conversations?.filter((conversation) => inTab(conversation, tab))
+  // La pagina no sube al cambiar de pestana
+  const keep = useKeepScroll(tab)
   // Sin leer en cada pestana (sin los silenciados), para notar los de la pestana que no estas viendo
   const tabUnread = (value: Tab) =>
     conversations?.reduce(
@@ -57,26 +60,28 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
         ))}
       </div>
 
-      {!shown ? (
-        <ListSkeleton />
-      ) : shown.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 px-6 py-12 text-center text-sm text-muted-foreground">
-          <MessageCircle className="size-8" strokeWidth={1.5} />
-          {tabs.find((option) => option.value === tab)?.empty}
-        </div>
-      ) : (
-        <ul className="flex flex-col md:overflow-y-auto">
-          {shown.map((conversation) => (
-            <li key={conversation.id}>
-              <ConversationRow
-                conversation={conversation}
-                unread={unread[conversation.id] ?? 0}
-                muted={mutes.has(conversation.id)}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <div ref={keep.ref} style={keep.style} className="flex min-h-0 flex-col">
+        {!shown ? (
+          <ListSkeleton />
+        ) : shown.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 px-6 py-12 text-center text-sm text-muted-foreground">
+            <MessageCircle className="size-8" strokeWidth={1.5} />
+            {tabs.find((option) => option.value === tab)?.empty}
+          </div>
+        ) : (
+          <ul className="flex flex-col md:overflow-y-auto">
+            {shown.map((conversation) => (
+              <li key={conversation.id}>
+                <ConversationRow
+                  conversation={conversation}
+                  unread={unread[conversation.id] ?? 0}
+                  muted={mutes.has(conversation.id)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }
