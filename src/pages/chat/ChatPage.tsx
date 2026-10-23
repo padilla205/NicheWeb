@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams } from 'react-router'
 import { PageTitle } from '@/components/PageTitle'
-import { useChatRealtime, useConversations } from '@/hooks/useChat'
+import { useConversations } from '@/hooks/useChat'
 import { cn } from '@/lib/utils'
 import { ConversationList } from './ConversationList'
 import { ConversationView } from './ConversationView'
@@ -17,7 +17,6 @@ export function ChatPage() {
   const { id } = useParams()
   const { data: conversations } = useConversations()
   const [isDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches)
-  useChatRealtime()
 
   const view = (
     <AnimatePresence initial={isDesktop}>

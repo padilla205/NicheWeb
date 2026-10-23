@@ -1,10 +1,15 @@
 import { MessageCircle, Search } from 'lucide-react'
 import { Link, NavLink } from 'react-router'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { UnreadBadge } from '@/components/UnreadBadge'
 import { Input } from '@/components/ui/input'
+import { useChatRealtime, useUnreadCounts } from '@/hooks/useChat'
 import { cn } from '@/lib/utils'
 
 export function TopBar() {
+  useChatRealtime()
+  const unread = Object.values(useUnreadCounts()).reduce((sum, count) => sum + count, 0)
+
   return (
     <header className="sticky top-0 z-10 grid h-[calc(4rem+env(safe-area-inset-top))] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b-2 bg-background px-4 pt-[env(safe-area-inset-top)] md:grid-cols-[1fr_minmax(0,36rem)_1fr] md:gap-6 md:px-6">
       <Link to="/" className="justify-self-start text-xl font-semibold tracking-tight">
@@ -22,16 +27,17 @@ export function TopBar() {
       <div className="flex items-center gap-2 justify-self-end">
         <NavLink
           to="/chat"
-          aria-label="Mensajes"
+          aria-label={unread ? `Mensajes, ${unread} sin leer` : 'Mensajes'}
           title="Mensajes"
           className={({ isActive }) =>
             cn(
-              'flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 hover:bg-accent hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-safe:active:scale-[0.96] motion-reduce:transition-none',
+              'relative flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 hover:bg-accent hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-safe:active:scale-[0.96] motion-reduce:transition-none',
               isActive && 'bg-accent text-foreground',
             )
           }
         >
           <MessageCircle aria-hidden="true" className="size-5" />
+          <UnreadBadge count={unread} className="absolute top-1 right-1" />
         </NavLink>
         <ThemeToggle />
       </div>

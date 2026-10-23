@@ -78,30 +78,36 @@ export type Database = {
       conversations: {
         Row: {
           buyer_id: string
+          buyer_read_at: string
           created_at: string
           id: string
           last_message: string | null
           last_message_at: string | null
           listing_id: string
           seller_id: string
+          seller_read_at: string
         }
         Insert: {
           buyer_id?: string
+          buyer_read_at?: string
           created_at?: string
           id?: string
           last_message?: string | null
           last_message_at?: string | null
           listing_id: string
           seller_id: string
+          seller_read_at?: string
         }
         Update: {
           buyer_id?: string
+          buyer_read_at?: string
           created_at?: string
           id?: string
           last_message?: string | null
           last_message_at?: string | null
           listing_id?: string
           seller_id?: string
+          seller_read_at?: string
         }
         Relationships: [
           {
@@ -568,6 +574,10 @@ export type Database = {
         Args: never
         Returns: string[]
       }
+      mark_chat_read: {
+        Args: { chat: string }
+        Returns: undefined
+      }
       normalize_text: {
         Args: { value: string }
         Returns: string
@@ -592,6 +602,13 @@ export type Database = {
           sort?: string
         }
         Returns: Json
+      }
+      unread_counts: {
+        Args: never
+        Returns: {
+          conversation_id: string
+          unread: number
+        }[]
       }
     }
     Enums: {

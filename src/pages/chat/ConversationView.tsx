@@ -1,10 +1,10 @@
 import { ArrowLeft, ChevronUp } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
-import { Fragment } from 'react'
+import { Fragment, useEffect } from 'react'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/hooks/useAuth'
-import { useMessages, useSendMessage } from '@/hooks/useChat'
+import { useMarkChatRead, useMessages, useSendMessage } from '@/hooks/useChat'
 import { type Conversation, formatMessageDay } from '@/lib/chat'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
 import { ChatListingCard } from './ChatListingCard'
@@ -22,6 +22,13 @@ export function ConversationView({ id, conversation }: ConversationViewProps) {
   const userId = useSession()?.user.id
   const { messages, isPending, hasOlder, loadOlder } = useMessages(id)
   const send = useSendMessage()
+  const markRead = useMarkChatRead()
+
+  // Con el chat abierto todo queda leido, tambien lo que llega mientras lo ves
+  const newest = messages[0]?.id
+  useEffect(() => {
+    if (!isPending) markRead(id)
+  }, [id, newest, isPending, markRead])
 
   return (
     <section aria-label="Conversacion" className="flex h-full min-h-0 flex-col bg-background">

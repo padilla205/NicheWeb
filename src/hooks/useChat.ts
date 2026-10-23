@@ -112,22 +112,63 @@ export function useMessages(conversationId: string) {
 }
 
 // Escucha los mensajes nuevos de todos tus chats (Supabase solo manda los que puedes ver).
-// Se usa una vez, en la pantalla de mensajes
+// Se usa una vez, en la barra de arriba, para que el contador de no leidos cambie en cualquier seccion
 export function useChatRealtime() {
   const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
 
   useEffect(() => {
+    if (!userId) return
     const channel = supabase
       .channel('chat')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, ({ new: row }) => {
         putMessage(queryClient, { ...fromMessageRow(row as Tables<'messages'>), isNew: true })
         queryClient.invalidateQueries({ queryKey: ['chats'] })
+        queryClient.invalidateQueries({ queryKey: ['unread'] })
       })
       .subscribe()
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [queryClient])
+  }, [queryClient, userId])
+}
+
+// Mensajes sin leer por chat: { idDelChat: cantidad }. Solo trae los chats que tienen alguno
+export function useUnreadCounts() {
+  const userId = useSession()?.user.id
+
+  return (
+    useQuery({
+      queryKey: ['unread', userId],
+      enabled: !!userId,
+      queryFn: async () => {
+        const { data, error } = await supabase.rpc('unread_counts')
+        if (error) throw error
+        return Object.fromEntries(data.map((row) => [row.conversation_id, row.unread])) as Record<string, number>
+      },
+    }).data ?? {}
+  )
+}
+
+// Marca el chat como leido; el contador se borra al instante, sin esperar a Supabase
+export function useMarkChatRead() {
+  const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
+
+  const mutation = useMutation({
+    mutationFn: async (chat: string) => {
+      const { error } = await supabase.rpc('mark_chat_read', { chat })
+      if (error) throw error
+    },
+    onMutate: async (chat) => {
+      const key = ['unread', userId]
+      await queryClient.cancelQueries({ queryKey: key })
+      queryClient.setQueryData<Record<string, number>>(key, (counts) => counts && { ...counts, [chat]: 0 })
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['unread'] }),
+  })
+
+  return mutation.mutate
 }
 
 type SendMessage = { conversationId: string; body: string; id?: string }

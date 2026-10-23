@@ -2,6 +2,8 @@ import { MessageCircle, Shirt } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink } from 'react-router'
 import { ChoicePill } from '@/components/ChoicePill'
+import { UnreadBadge } from '@/components/UnreadBadge'
+import { useUnreadCounts } from '@/hooks/useChat'
 import type { Conversation } from '@/lib/chat'
 import { formatTimeAgo } from '@/lib/feed'
 import { cn } from '@/lib/utils'
@@ -18,15 +20,21 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
   const [chosen, setBuying] = useState<boolean>()
   const buying = chosen ?? conversations?.find((conversation) => conversation.id === activeId)?.isBuyer ?? true
   const shown = conversations?.filter((conversation) => conversation.isBuyer === buying)
+  const unread = useUnreadCounts()
+  // Sin leer en cada pestana, para notar los de la pestana que no estas viendo
+  const tabUnread = (isBuyer: boolean) =>
+    conversations?.reduce((sum, c) => sum + (c.isBuyer === isBuyer ? (unread[c.id] ?? 0) : 0), 0) ?? 0
 
   return (
     <div className="flex min-h-0 flex-col">
       <div className="flex gap-2 pb-3 md:p-3">
         <ChoicePill active={buying} onClick={() => setBuying(true)}>
           Comprando
+          <UnreadBadge count={tabUnread(true)} />
         </ChoicePill>
         <ChoicePill active={!buying} onClick={() => setBuying(false)}>
           Vendiendo
+          <UnreadBadge count={tabUnread(false)} />
         </ChoicePill>
       </div>
 
@@ -43,7 +51,7 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
         <ul className="flex flex-col md:overflow-y-auto">
           {shown.map((conversation) => (
             <li key={conversation.id}>
-              <ConversationRow conversation={conversation} />
+              <ConversationRow conversation={conversation} unread={unread[conversation.id] ?? 0} />
             </li>
           ))}
         </ul>
@@ -52,7 +60,7 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
   )
 }
 
-function ConversationRow({ conversation }: { conversation: Conversation }) {
+function ConversationRow({ conversation, unread }: { conversation: Conversation; unread: number }) {
   const { listing, other, lastMessage, lastMessageAt } = conversation
 
   return (
@@ -81,7 +89,12 @@ function ConversationRow({ conversation }: { conversation: Conversation }) {
           )}
           <span className="truncate">{listing?.title ?? 'Venta no disponible'}</span>
         </div>
-        <p className="truncate text-muted-foreground">{lastMessage ?? 'Chat nuevo, escribe el primer mensaje'}</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className={cn('truncate', unread ? 'font-medium text-foreground' : 'text-muted-foreground')}>
+            {lastMessage ?? 'Chat nuevo, escribe el primer mensaje'}
+          </p>
+          <UnreadBadge count={unread} />
+        </div>
       </div>
     </NavLink>
   )
