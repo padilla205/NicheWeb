@@ -1,26 +1,99 @@
-import { useSyncExternalStore } from 'react'
-import { currentUser } from '@/lib/feed'
-import type { Profile } from '@/lib/profile'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSession } from '@/hooks/useAuth'
+import type { Tables, TablesUpdate } from '@/lib/database.types'
+import { deletePhotos, photoUrl, uploadPhoto } from '@/lib/photos'
+import type { Profile, SocialLink } from '@/lib/profile'
+import { supabase } from '@/lib/supabase'
 
-// TEMPORAL: el perfil vive en la memoria del navegador hasta que conectemos Supabase.
-// Se conserva al cambiar de seccion, pero se borra al recargar la pagina.
-// Cuando llegue la base de datos, estos hooks se reemplazan por TanStack Query sin tocar las pantallas.
+type ProfileData = Profile & { id: string; avatarPath: string | null; coverPath: string | null }
 
-let profile: Profile = { ...currentUser, bio: '', socials: [], closetPublic: false }
-const listeners = new Set<() => void>()
-
-function subscribe(listener: () => void) {
-  listeners.add(listener)
-  return () => listeners.delete(listener)
+// Fila de la base de datos -> lo que usan las pantallas
+function fromRow(row: Tables<'profiles'>): ProfileData {
+  return {
+    id: row.id,
+    name: row.name,
+    username: row.username,
+    bio: row.bio,
+    // La foto de perfil se ve chica, asi que basta la miniatura
+    avatarUrl: row.avatar_path ? photoUrl(row.avatar_path, true) : undefined,
+    coverUrl: row.cover_path ? photoUrl(row.cover_path) : undefined,
+    avatarPath: row.avatar_path,
+    coverPath: row.cover_path,
+    socials: row.socials as SocialLink[],
+    closetPublic: row.closet_public,
+  }
 }
 
+// Perfil de quien tiene la sesion iniciada
+export function useProfileQuery() {
+  const userId = useSession()?.user.id
+  return useQuery({
+    queryKey: ['profile', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId!).single()
+      if (error) throw error
+      return fromRow(data)
+    },
+  })
+}
+
+// RequireAuth espera a que cargue el perfil antes de mostrar la app, asi que aqui siempre existe
 export function useProfile() {
-  return useSyncExternalStore(subscribe, () => profile)
+  const { data } = useProfileQuery()
+  if (!data) throw new Error('useProfile solo se usa dentro de RequireAuth')
+  return data
+}
+
+export type ProfileChanges = Partial<Pick<Profile, 'name' | 'bio' | 'socials' | 'closetPublic'>> & {
+  avatar?: File
+  cover?: File
 }
 
 export function useUpdateProfile() {
-  return (changes: Partial<Profile>) => {
-    profile = { ...profile, ...changes }
-    listeners.forEach((listener) => listener())
-  }
+  const queryClient = useQueryClient()
+  const profile = useProfile()
+  const key = ['profile', profile.id]
+
+  return useMutation({
+    mutationFn: async ({ avatar, cover, name, bio, socials, closetPublic }: ProfileChanges) => {
+      // Las fotos nuevas se comprimen y suben primero; si algo falla, el perfil no cambia
+      const [avatarPath, coverPath] = await Promise.all([
+        avatar && uploadPhoto(avatar, profile.id),
+        cover && uploadPhoto(cover, profile.id),
+      ])
+      const row: TablesUpdate<'profiles'> = {
+        name,
+        bio,
+        socials,
+        closet_public: closetPublic,
+        avatar_path: avatarPath,
+        cover_path: coverPath,
+      }
+      const { data, error } = await supabase.from('profiles').update(row).eq('id', profile.id).select().single()
+      if (error) throw error
+      // Las fotos anteriores ya no se usan; si no se pueden borrar no pasa nada grave
+      const replaced = [avatarPath && profile.avatarPath, coverPath && profile.coverPath].filter(
+        (path): path is string => !!path,
+      )
+      deletePhotos(replaced).catch(() => {})
+      return fromRow(data)
+    },
+    // Optimista: el cambio se ve al instante y se deshace si Supabase lo rechaza
+    onMutate: async ({ avatar, cover, ...changes }) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<ProfileData>(key)
+      queryClient.setQueryData<ProfileData>(key, (current) =>
+        current && {
+          ...current,
+          ...changes,
+          avatarUrl: avatar ? URL.createObjectURL(avatar) : current.avatarUrl,
+          coverUrl: cover ? URL.createObjectURL(cover) : current.coverUrl,
+        },
+      )
+      return { previous }
+    },
+    onError: (_error, _changes, context) => queryClient.setQueryData(key, context?.previous),
+    onSuccess: (saved) => queryClient.setQueryData(key, saved),
+  })
 }

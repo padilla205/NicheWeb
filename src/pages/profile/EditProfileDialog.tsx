@@ -1,5 +1,5 @@
 import { Plus, X } from 'lucide-react'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useMemo, useState } from 'react'
 import { ChoicePill } from '@/components/ChoicePill'
 import { ImageInput } from '@/components/ImageInput'
 import { MorphDialog } from '@/components/MorphDialog'
@@ -33,9 +33,14 @@ export function EditProfileDialog({ origin, onClose }: EditProfileDialogProps) {
 function EditProfileForm({ onDone }: { onDone: () => void }) {
   const profile = useProfile()
   const updateProfile = useUpdateProfile()
-  const [coverUrl, setCoverUrl] = useState(profile.coverUrl)
-  const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl)
+  // Fotos nuevas elegidas; se suben al guardar
+  const [cover, setCover] = useState<File>()
+  const [avatar, setAvatar] = useState<File>()
+  const coverUrl = useMemo(() => (cover ? URL.createObjectURL(cover) : profile.coverUrl), [cover, profile.coverUrl])
+  const avatarUrl = useMemo(() => (avatar ? URL.createObjectURL(avatar) : profile.avatarUrl), [avatar, profile.avatarUrl])
+  const [name, setName] = useState(profile.name)
   const [bio, setBio] = useState(profile.bio)
+  const [saveError, setSaveError] = useState('')
   const [socials, setSocials] = useState<SocialLink[]>(profile.socials)
 
   // Las redes que aun no agregas, para ofrecerlas como opciones
@@ -49,36 +54,54 @@ function EditProfileForm({ onDone }: { onDone: () => void }) {
     setSocials(socials.map((link, i) => (i === index ? { ...link, handle } : link)))
   }
 
-  function handleSubmit(event: FormEvent) {
+  // Espera a que se guarde para cerrar; si falla, la ventana sigue abierta con lo escrito
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (hasInvalid) return
-    updateProfile({
-      coverUrl,
-      avatarUrl,
-      bio: bio.trim(),
-      // Las redes que quedaron vacias no se guardan
-      socials: socials.filter((link) => link.handle.trim() !== ''),
-    })
-    onDone()
+    if (hasInvalid || !name.trim()) return
+    setSaveError('')
+    try {
+      await updateProfile.mutateAsync({
+        cover,
+        avatar,
+        name: name.trim(),
+        bio: bio.trim(),
+        // Las redes que quedaron vacias no se guardan
+        socials: socials.filter((link) => link.handle.trim() !== ''),
+      })
+      onDone()
+    } catch {
+      setSaveError('No se pudo guardar. Revisa tu conexion e intenta de nuevo.')
+    }
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">Portada</span>
-        <ImageInput onPick={setCoverUrl} className="h-28 w-full rounded-lg">
+        <ImageInput onPick={setCover} className="h-28 w-full rounded-lg">
           {coverUrl && <img src={coverUrl} alt="" className="size-full object-cover" />}
         </ImageInput>
       </div>
 
       <div className="flex items-center gap-3">
-        <ImageInput onPick={setAvatarUrl} className="size-20 shrink-0 rounded-full">
+        <ImageInput onPick={setAvatar} className="size-20 shrink-0 rounded-full">
           {avatarUrl && <img src={avatarUrl} alt="" className="size-full object-cover" />}
         </ImageInput>
         <div className="text-sm">
           <p className="font-medium">Foto de perfil</p>
           <p className="text-muted-foreground">Haz clic en el circulo para cambiarla.</p>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="profile-name">Nombre</Label>
+        <Input
+          id="profile-name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          aria-invalid={!name.trim()}
+          maxLength={50}
+        />
       </div>
 
       <div className="flex flex-col gap-2">
@@ -148,12 +171,18 @@ function EditProfileForm({ onDone }: { onDone: () => void }) {
         )}
       </div>
 
+      {saveError && (
+        <p role="alert" className="text-sm text-destructive">
+          {saveError}
+        </p>
+      )}
+
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={hasInvalid}>
-          Guardar
+        <Button type="submit" disabled={hasInvalid || !name.trim() || updateProfile.isPending}>
+          {updateProfile.isPending ? 'Guardando' : 'Guardar'}
         </Button>
       </DialogFooter>
     </form>

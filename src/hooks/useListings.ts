@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { Season } from '@/lib/clothing'
-import { currentUser } from '@/lib/feed'
+import { useProfile } from '@/hooks/useProfile'
 import type { UserLocation } from '@/lib/locations'
 import { type Delivery, type Listing, type ListingCondition, type ListingStatus, sampleListings } from '@/lib/marketplace'
 
@@ -59,11 +59,12 @@ function save(next: Listing[]) {
 }
 
 export function useCreateListing() {
+  const { username, name } = useProfile()
   return (data: NewListing) => {
     const listing: Listing = {
       ...fromForm(data),
       id: crypto.randomUUID(),
-      seller: currentUser,
+      seller: { username, name },
       status: 'disponible',
       createdAt: new Date(),
     }
