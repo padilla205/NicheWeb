@@ -13,6 +13,7 @@ import { UserAvatar } from '@/pages/feed/UserAvatar'
 import { ListingGallery } from './ListingGallery'
 import { ListingOwnerActions } from './ListingOwnerActions'
 import { ShareButton } from './ShareButton'
+import { SizeGuide } from './SizeGuide'
 import { StatusBadge } from './StatusBadge'
 
 // El mapa solo se descarga en las ventas que tienen lugar de entrega
@@ -55,11 +56,14 @@ export function ListingDetailPage() {
               </p>
             </div>
 
-            <dl className="grid grid-cols-3 gap-3 rounded-2xl border bg-card p-4 text-sm">
-              <Detail label="Talla" value={listing.size} />
-              <Detail label="Estado" value={getConditionLabel(listing.condition)} />
-              <Detail label="Tipo" value={listing.type} />
-            </dl>
+            <div className="flex flex-col gap-2">
+              <dl className="grid grid-cols-3 gap-3 rounded-2xl border bg-card p-4 text-sm">
+                <Detail label="Talla" value={listing.size} />
+                <Detail label="Estado" value={getConditionLabel(listing.condition)} />
+                <Detail label="Tipo" value={listing.type} />
+              </dl>
+              <SizeGuide size={listing.size} />
+            </div>
 
             {listing.delivery && (
               <DetailSection title="Lugar de entrega">
