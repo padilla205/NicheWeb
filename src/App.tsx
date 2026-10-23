@@ -3,6 +3,7 @@ import { AppLayout } from '@/components/AppLayout'
 import { ChatPage } from '@/pages/chat/ChatPage'
 import { ClosetPage } from '@/pages/closet/ClosetPage'
 import { FeedPage } from '@/pages/feed/FeedPage'
+import { LoginPage } from '@/pages/login/LoginPage'
 import { ListingDetailPage } from '@/pages/marketplace/ListingDetailPage'
 import { MarketplacePage } from '@/pages/marketplace/MarketplacePage'
 import { OutfitsPage } from '@/pages/outfits/OutfitsPage'
@@ -12,6 +13,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="login" element={<LoginPage />} />
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/closet" replace />} />
           <Route path="closet" element={<ClosetPage />} />
