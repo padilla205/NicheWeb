@@ -8,14 +8,23 @@ import { ShowMore } from '@/components/ShowMore'
 import { usePaged } from '@/hooks/usePaged'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useCityCenter } from '@/hooks/useCityCenter'
 import { useListings } from '@/hooks/useListings'
 import { useUserLocation } from '@/hooks/useUserLocation'
 import { getCityLabel, isSameCity } from '@/lib/locations'
-import { countActiveFilters, emptyFilters, matchesListing, normalizeSize } from '@/lib/marketplace'
+import {
+  countActiveFilters,
+  emptyFilters,
+  type ListingSort,
+  matchesListing,
+  normalizeSize,
+  sortListings,
+} from '@/lib/marketplace'
 import { CreateListingDialog } from './CreateListingDialog'
 import { ListingCard } from './ListingCard'
 import { LocationButton } from './LocationButton'
 import { MarketplaceFilters } from './MarketplaceFilters'
+import { SortSelect } from './SortSelect'
 
 // Ventas por bloque antes de "Ver mas"
 const MARKETPLACE_PAGE_SIZE = 12
@@ -36,8 +45,19 @@ export function MarketplacePage() {
   const cityListings = onlyMyCity
     ? listings.filter((listing) => isSameCity(listing.location, location))
     : listings
-  const visibleListings = cityListings.filter((listing) => matchesListing(listing, query, filters))
-  const page = usePaged(visibleListings, MARKETPLACE_PAGE_SIZE, JSON.stringify([query, filters, onlyMyCity]))
+  const [sort, setSort] = useState<ListingSort>('recientes')
+  // Sin ciudad elegida no se puede ordenar por cercania; se vuelve a "recientes"
+  const activeSort = sort === 'cercanos' && !location ? 'recientes' : sort
+  // Solo se busca el centro de tu ciudad cuando ordenas por cercania
+  const center = useCityCenter(activeSort === 'cercanos' ? location : null)
+  const visibleListings = sortListings(
+    cityListings.filter((listing) => matchesListing(listing, query, filters)),
+    activeSort,
+    location,
+    center,
+  )
+  // Al cambiar busqueda, filtros, ciudad u orden se vuelve al primer bloque
+  const page = usePaged(visibleListings, MARKETPLACE_PAGE_SIZE, JSON.stringify([query, filters, onlyMyCity, activeSort]))
   // Tallas que existen en las ventas, sin repetir, para el filtro
   const sizes = useMemo(
     () => [...new Set(listings.map((listing) => normalizeSize(listing.size)))].sort((a, b) => a.localeCompare(b, 'es', { numeric: true })),
@@ -78,16 +98,21 @@ export function MarketplacePage() {
         <MarketplaceFilters value={filters} onChange={setFilters} sizes={sizes} />
       </div>
 
-      {location && (
-        <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Mostrar ventas">
-          <ChoicePill active={onlyMyCity} onClick={() => setShowAll(false)}>
-            En {getCityLabel(location)}
-          </ChoicePill>
-          <ChoicePill active={!onlyMyCity} onClick={() => setShowAll(true)}>
-            Todas
-          </ChoicePill>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        {location && (
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Mostrar ventas">
+            <ChoicePill active={onlyMyCity} onClick={() => setShowAll(false)}>
+              En {getCityLabel(location)}
+            </ChoicePill>
+            <ChoicePill active={!onlyMyCity} onClick={() => setShowAll(true)}>
+              Todas
+            </ChoicePill>
+          </div>
+        )}
+        <div className="ml-auto">
+          <SortSelect value={activeSort} onChange={setSort} canSortByDistance={location !== null} />
         </div>
-      )}
+      </div>
 
       {visibleListings.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-20 text-center text-sm text-muted-foreground">

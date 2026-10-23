@@ -1,6 +1,6 @@
 import type { Season } from '@/lib/clothing'
 import type { FeedUser } from '@/lib/feed'
-import type { UserLocation } from '@/lib/locations'
+import { isSameCity, type UserLocation } from '@/lib/locations'
 import { normalizeText } from '@/lib/text'
 
 export const listingConditions = [
@@ -108,6 +108,54 @@ export function matchesListing(listing: Listing, query: string, filters: Listing
   if (colors.length > 0 && !colors.some((color) => listing.colors.includes(color))) return false
   if (seasons.length > 0 && !seasons.some((season) => listing.seasons.includes(season))) return false
   return true
+}
+
+export const listingSorts = [
+  { value: 'recientes', label: 'Mas recientes' },
+  { value: 'precio-menor', label: 'Menor precio' },
+  { value: 'precio-mayor', label: 'Mayor precio' },
+  { value: 'cercanos', label: 'Mas cercanos' },
+] as const
+
+export type ListingSort = (typeof listingSorts)[number]['value']
+
+// Distancia aproximada en km entre dos puntos (formula de haversine)
+function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const rad = Math.PI / 180
+  const h =
+    Math.sin(((b.lat - a.lat) * rad) / 2) ** 2 +
+    Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(((b.lng - a.lng) * rad) / 2) ** 2
+  return 12742 * Math.asin(Math.sqrt(h))
+}
+
+// "Cercanos": primero tu ciudad, luego tu pais y al final el resto; dentro de cada grupo,
+// las que tienen punto en el mapa van por distancia al centro de tu ciudad
+// ponytail: sin punto de entrega no hay coordenadas por venta; con Supabase se guardaran siempre
+function nearness(listing: Listing, location: UserLocation, center: { lat: number; lng: number } | null) {
+  const group = isSameCity(listing.location, location) ? 0 : listing.location.country === location.country ? 1 : 2
+  const distance = center && listing.delivery ? distanceKm(center, listing.delivery) : Infinity
+  return [group, distance] as const
+}
+
+// Copia ordenada; con "cercanos" sin ubicacion elegida se queda por fecha
+export function sortListings(
+  listings: Listing[],
+  sort: ListingSort,
+  location: UserLocation | null,
+  center: { lat: number; lng: number } | null,
+) {
+  const byDate = (a: Listing, b: Listing) => b.createdAt.getTime() - a.createdAt.getTime()
+  return [...listings].sort((a, b) => {
+    if (sort === 'precio-menor') return a.price - b.price || byDate(a, b)
+    if (sort === 'precio-mayor') return b.price - a.price || byDate(a, b)
+    if (sort === 'cercanos' && location) {
+      const [groupA, distanceA] = nearness(a, location, center)
+      const [groupB, distanceB] = nearness(b, location, center)
+      if (groupA !== groupB) return groupA - groupB
+      if (distanceA !== distanceB) return distanceA - distanceB
+    }
+    return byDate(a, b)
+  })
 }
 
 export function getConditionLabel(condition: ListingCondition) {
