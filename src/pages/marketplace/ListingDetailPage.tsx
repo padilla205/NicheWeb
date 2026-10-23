@@ -1,8 +1,9 @@
 import { ArrowLeft, ExternalLink, LogIn, MapPin, MessageCircle } from 'lucide-react'
 import { lazy, type ReactNode, Suspense } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/hooks/useAuth'
+import { useOpenConversation } from '@/hooks/useChat'
 import { useListing } from '@/hooks/useListings'
 import { getColorInfo, getSeasonLabel } from '@/lib/clothing'
 import { formatTimeAgo } from '@/lib/feed'
@@ -25,6 +26,8 @@ export function ListingDetailPage() {
   // Esta pagina se puede abrir sin cuenta (por ejemplo, desde un link compartido)
   const session = useSession()
   const isMine = !!session && listing?.sellerId === session.user.id
+  const navigate = useNavigate()
+  const openChat = useOpenConversation()
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -149,16 +152,21 @@ export function ListingDetailPage() {
                 </Link>
               </Button>
             ) : (
-              // El chat llega con Supabase; por ahora el boton solo se muestra
               <div className="flex flex-col gap-1.5">
-                <Button size="lg" disabled>
+                <Button
+                  size="lg"
+                  disabled={listing.status === 'vendida' || openChat.isPending}
+                  onClick={() => openChat.mutate(listing, { onSuccess: (chatId) => navigate(`/chat/${chatId}`) })}
+                >
                   <MessageCircle />
-                  Enviar mensaje al vendedor
+                  {openChat.isPending ? 'Abriendo chat' : 'Enviar mensaje al vendedor'}
                 </Button>
                 <p className="text-center text-xs text-muted-foreground">
-                  {listing.status === 'vendida'
-                    ? 'Esta prenda ya se vendio.'
-                    : 'El trato se cierra en persona. Los mensajes llegan pronto.'}
+                  {openChat.isError
+                    ? 'No se pudo abrir el chat, intenta de nuevo.'
+                    : listing.status === 'vendida'
+                      ? 'Esta prenda ya se vendio.'
+                      : 'El trato se cierra en persona.'}
                 </p>
               </div>
             )}

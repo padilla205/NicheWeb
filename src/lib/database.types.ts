@@ -80,6 +80,8 @@ export type Database = {
           buyer_id: string
           created_at: string
           id: string
+          last_message: string | null
+          last_message_at: string | null
           listing_id: string
           seller_id: string
         }
@@ -87,6 +89,8 @@ export type Database = {
           buyer_id?: string
           created_at?: string
           id?: string
+          last_message?: string | null
+          last_message_at?: string | null
           listing_id: string
           seller_id: string
         }
@@ -94,6 +98,8 @@ export type Database = {
           buyer_id?: string
           created_at?: string
           id?: string
+          last_message?: string | null
+          last_message_at?: string | null
           listing_id?: string
           seller_id?: string
         }

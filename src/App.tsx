@@ -26,7 +26,7 @@ function App() {
             <Route path="outfits" element={<OutfitsPage />} />
             <Route path="feed" element={<FeedPage />} />
             <Route path="marketplace" element={<MarketplacePage />} />
-            <Route path="chat" element={<ChatPage />} />
+            <Route path="chat/:id?" element={<ChatPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="*" element={<Navigate to="/closet" replace />} />
           </Route>
