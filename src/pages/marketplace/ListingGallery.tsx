@@ -47,6 +47,7 @@ export function ListingGallery({ listing }: { listing: Listing }) {
           alt={listing.title}
           animation="cards"
           fit="contain"
+          zoomable
           className="size-full min-h-0"
           topRightControl={
             <DialogClose asChild>

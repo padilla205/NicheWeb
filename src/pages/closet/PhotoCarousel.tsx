@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { type ReactNode, useState } from 'react'
+import { usePinchZoom } from '@/hooks/usePinchZoom'
 import { cn } from '@/lib/utils'
 
 type PhotoCarouselProps = {
@@ -13,6 +14,8 @@ type PhotoCarouselProps = {
   animation?: 'slide' | 'cards'
   fit?: 'cover' | 'contain'
   topRightControl?: ReactNode
+  // Pantalla completa: pellizcar, rueda del mouse o doble toque para acercar la foto
+  zoomable?: boolean
 }
 
 // Las flechas aparecen al pasar el mouse; en celular (sin mouse) siempre se ven
@@ -63,7 +66,9 @@ export function PhotoCarousel({
   animation = 'slide',
   fit = 'cover',
   topRightControl,
+  zoomable = false,
 }: PhotoCarouselProps) {
+  const pinch = usePinchZoom()
   const reducedMotion = useReducedMotion()
   const hasMany = photos.length > 1
   // 1 = hacia adelante (la nueva entra por la derecha), -1 = hacia atras (entra por la izquierda)
@@ -72,6 +77,7 @@ export function PhotoCarousel({
   function go(step: 1 | -1) {
     const next = index + step
     if (next < 0 || next >= photos.length) return
+    pinch.reset()
     setDirection(step)
     onIndexChange(next)
   }
@@ -82,6 +88,9 @@ export function PhotoCarousel({
       aria-label={`Fotos de ${alt}`}
       tabIndex={0}
       onKeyDown={(event) => {
+        if (zoomable && ['+', '=', '-'].includes(event.key)) {
+          return pinch.step(event.key === '-' ? 1 / 1.5 : 1.5, event.currentTarget)
+        }
         if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
         event.preventDefault()
         go(event.key === 'ArrowLeft' ? -1 : 1)
@@ -94,15 +103,24 @@ export function PhotoCarousel({
       <motion.div
         layoutId={`item-photo-${itemId}`}
         layoutCrossfade={false}
+        {...(zoomable ? pinch.handlers : {})}
         onPanEnd={(_, { offset, velocity }) => {
+          // Si el gesto fue para acercar o moverse por la foto, no cambia de foto
+          if (zoomable && pinch.wasZoomGesture()) return
           const horizontal = Math.abs(offset.x) > Math.abs(offset.y)
           if (horizontal && (Math.abs(offset.x) > SWIPE_DISTANCE || Math.abs(velocity.x) > SWIPE_VELOCITY)) {
             go(offset.x < 0 ? 1 : -1)
           }
         }}
-        style={{ touchAction: 'pan-y' }}
-        className="relative size-full overflow-hidden"
+        // Con zoom el navegador no mueve la pagina: todos los gestos son para la foto
+        style={{ touchAction: zoomable ? 'none' : 'pan-y' }}
+        className={cn('relative size-full overflow-hidden', zoomable && pinch.zoomed && 'cursor-grab active:cursor-grabbing')}
       >
+        {/* Capa que se acerca y se mueve; la animacion de cambiar de foto va por dentro */}
+        <div
+          className="absolute inset-0 origin-top-left"
+          style={{ transform: `translate(${pinch.zoom.x}px, ${pinch.zoom.y}px) scale(${pinch.zoom.scale})` }}
+        >
         {/* Sin fondo gris propio: si la foto tarda un instante en dibujarse, se ve el color de la
             tarjeta y no un destello mas claro */}
         {/* Al cambiar de foto, la actual sale por un lado mientras la nueva entra por el otro */}
@@ -125,6 +143,7 @@ export function PhotoCarousel({
             className={cn('absolute inset-0 size-full', fit === 'contain' ? 'object-contain' : 'object-cover')}
           />
         </AnimatePresence>
+        </div>
       </motion.div>
 
       {/* Se oculta la flecha que no lleva a ningun lado (en la primera y en la ultima foto) */}
