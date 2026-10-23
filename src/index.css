@@ -149,6 +149,30 @@
     }
   }
 }
+/* Brillo blanco que cruza el texto de izquierda a derecha una sola vez (titulo del login):
+   el texto empieza tenue y al pasar el brillo queda con su color normal (--shine-base) */
+@utility shine-text {
+  background: linear-gradient(
+      110deg,
+      var(--shine-base) 40%,
+      white 50%,
+      color-mix(in oklab, var(--shine-base) 25%, transparent) 60%
+    )
+    0 0 / 250% 100%;
+  background-clip: text;
+  color: transparent;
+  animation: shine 0.8s ease-in-out both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes shine {
+  from {
+    background-position: 100% 0;
+  }
+}
+
 /* Mapa en modo oscuro: invierte los colores de las calles para que no deslumbre */
 .dark .leaflet-tile-pane {
   filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
