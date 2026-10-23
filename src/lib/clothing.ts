@@ -162,8 +162,11 @@ export type ClothingColor = (typeof clothingColors)[number]['value']
 // Una prenda guardada en el closet
 export type ClosetItem = {
   id: string
-  // La primera foto es la portada
+  // Rutas en Storage y direcciones de las fotos; la primera es la portada
+  photoPaths: string[]
   photoUrls: string[]
+  // Version chica de la portada, para la cuadricula
+  thumbUrl: string
   name: string
   type: ClothingType
   seasons: Season[]

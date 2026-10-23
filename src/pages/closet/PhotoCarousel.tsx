@@ -16,6 +16,8 @@ type PhotoCarouselProps = {
   topRightControl?: ReactNode
   // Pantalla completa: pellizcar, rueda del mouse o doble toque para acercar la foto
   zoomable?: boolean
+  // Version chica de la portada (ya cargada en la cuadricula): se ve mientras llega la grande
+  placeholder?: string
 }
 
 // Las flechas aparecen al pasar el mouse; en celular (sin mouse) siempre se ven
@@ -67,7 +69,10 @@ export function PhotoCarousel({
   fit = 'cover',
   topRightControl,
   zoomable = false,
+  placeholder,
 }: PhotoCarouselProps) {
+  // La miniatura se quita en cuanto la portada grande termina de cargar
+  const [coverLoaded, setCoverLoaded] = useState(false)
   const pinch = usePinchZoom()
   const reducedMotion = useReducedMotion()
   const hasMany = photos.length > 1
@@ -124,6 +129,15 @@ export function PhotoCarousel({
         {/* Sin fondo gris propio: si la foto tarda un instante en dibujarse, se ve el color de la
             tarjeta y no un destello mas claro */}
         {/* Al cambiar de foto, la actual sale por un lado mientras la nueva entra por el otro */}
+        {placeholder && !coverLoaded && (
+          <img
+            src={placeholder}
+            alt=""
+            aria-hidden
+            draggable={false}
+            className={cn('absolute inset-0 size-full', fit === 'contain' ? 'object-contain' : 'object-cover')}
+          />
+        )}
         <AnimatePresence initial={false} custom={direction}>
           <motion.img
             key={index}
@@ -138,6 +152,7 @@ export function PhotoCarousel({
             // Pide al navegador tener la foto lista antes de pintar, para que no aparezca vacia al abrir
             decoding="sync"
             loading="lazy"
+            onLoad={index === 0 ? () => setCoverLoaded(true) : undefined}
             draggable={false}
             style={{ transformOrigin: '50% 85%' }}
             className={cn('absolute inset-0 size-full', fit === 'contain' ? 'object-contain' : 'object-cover')}

@@ -1,6 +1,7 @@
 import { Lock, type LucideIcon, Repeat2, Shirt, SquareUser, Tag } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
+import { ShowMore } from '@/components/ShowMore'
 import { useItems } from '@/hooks/useItems'
 import { useListings } from '@/hooks/useListings'
 import { useProfile } from '@/hooks/useProfile'
@@ -19,7 +20,7 @@ export function ProfileTabs() {
   const [direction, setDirection] = useState(1)
   const { username, closetPublic } = useProfile()
   const posts = usePosts()
-  const items = useItems()
+  const { items, total: itemsTotal, isPending: itemsPending, loadMore: loadMoreItems } = useItems()
   const listings = useListings()
 
   const myPosts = posts.filter((post) => post.author.username === username)
@@ -30,7 +31,7 @@ export function ProfileTabs() {
 
   const tabs: { value: Tab; label: string; icon: LucideIcon; count: number }[] = [
     { value: 'posts', label: 'Publicaciones', icon: SquareUser, count: myPosts.length },
-    { value: 'closet', label: 'Closet', icon: Shirt, count: items.length },
+    { value: 'closet', label: 'Closet', icon: Shirt, count: itemsTotal },
     { value: 'shared', label: 'Compartidos', icon: Repeat2, count: sharedPosts.length },
     { value: 'selling', label: 'En venta', icon: Tag, count: myListings.length },
   ]
@@ -90,7 +91,7 @@ export function ProfileTabs() {
           <PostGrid posts={myPosts} emptyText="Aun no publicas outfits. Cuando lo hagas apareceran aqui." />
         )}
         {tab === 'closet' &&
-          (items.length === 0 ? (
+          (itemsPending ? null : items.length === 0 ? (
             <EmptyTab>Aun no tienes prendas. Agregalas desde la seccion Closet.</EmptyTab>
           ) : (
             <div className="flex flex-col gap-3">
@@ -109,6 +110,7 @@ export function ProfileTabs() {
                 )
               )}
               <ClosetGrid items={items} />
+              <ShowMore shown={items.length} total={itemsTotal} onClick={loadMoreItems} />
             </div>
           ))}
         {tab === 'shared' && (

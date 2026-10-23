@@ -2,7 +2,6 @@ import { MotionConfig } from 'motion/react'
 import { useCallback, useState } from 'react'
 import { PageTitle } from '@/components/PageTitle'
 import { ShowMore } from '@/components/ShowMore'
-import { usePaged } from '@/hooks/usePaged'
 import type { ClothingType } from '@/lib/clothing'
 import { useItems } from '@/hooks/useItems'
 import { AddItemButton } from './AddItemButton'
@@ -10,10 +9,8 @@ import { AddItemDialog } from './AddItemDialog'
 import { ClosetEmpty } from './ClosetEmpty'
 import { ClosetFilters } from './ClosetFilters'
 import { ClosetGrid } from './ClosetGrid'
+import { ClosetSkeleton } from './ClosetSkeleton'
 import { ClosetVisibility } from './ClosetVisibility'
-
-// Prendas por bloque antes de "Ver mas"
-const CLOSET_PAGE_SIZE = 20
 
 export function ClosetPage() {
   const [selectedTypes, setSelectedTypes] = useState<ClothingType[]>([])
@@ -22,10 +19,8 @@ export function ClosetPage() {
     null,
   )
   const closeAdd = useCallback(() => setAddOrigin(null), [])
-  const items = useItems()
-  const visibleItems =
-    selectedTypes.length === 0 ? items : items.filter((item) => selectedTypes.includes(item.type))
-  const page = usePaged(visibleItems, CLOSET_PAGE_SIZE, selectedTypes.join())
+  // Supabase filtra por tipo y manda de 20 en 20
+  const { items, total, isPending, loadMore } = useItems(selectedTypes)
 
   return (
     // Aperturas con un ligero rebote en unos 300 ms; si el sistema pide menos movimiento, se respeta
@@ -42,19 +37,21 @@ export function ClosetPage() {
           />
         </div>
       </div>
-      {items.length === 0 ? (
+      {isPending ? (
+        <ClosetSkeleton />
+      ) : items.length === 0 && selectedTypes.length === 0 ? (
         <ClosetEmpty
           addOpen={addOrigin?.from === 'empty'}
           onAdd={(button) => setAddOrigin({ from: 'empty', button })}
         />
-      ) : visibleItems.length === 0 ? (
+      ) : items.length === 0 ? (
         <p className="py-20 text-center text-sm text-muted-foreground">
           Ninguna prenda coincide con los filtros.
         </p>
       ) : (
         <>
-          <ClosetGrid items={page.visible} />
-          <ShowMore shown={page.visible.length} total={page.total} onClick={page.showMore} />
+          <ClosetGrid items={items} />
+          <ShowMore shown={items.length} total={total} onClick={loadMore} />
         </>
       )}
       <AddItemDialog origin={addOrigin?.button ?? null} onClose={closeAdd} />

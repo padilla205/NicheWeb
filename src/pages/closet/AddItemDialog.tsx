@@ -39,6 +39,7 @@ function AddItemForm({ onDone }: { onDone: () => void }) {
   const [colors, setColors] = useState<string[]>([])
   const [team, setTeam] = useState('')
   const addItem = useAddItem()
+  const [saveError, setSaveError] = useState('')
 
   const canSave = photos.length > 0 && type !== ''
   const isJersey = type === 'jerseys-futbol'
@@ -49,18 +50,24 @@ function AddItemForm({ onDone }: { onDone: () => void }) {
     if (newType !== 'jerseys-futbol') setTeam('')
   }
 
-  function handleSubmit(event: FormEvent) {
+  // Espera a que las fotos se suban para cerrar; si falla, la ventana sigue abierta con todo lo elegido
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (photos.length === 0 || type === '') return
-    addItem({
-      photos,
-      name,
-      type,
-      seasons: selectedSeasons,
-      colors,
-      team: isJersey && team ? team : undefined,
-    })
-    onDone()
+    setSaveError('')
+    try {
+      await addItem.mutateAsync({
+        photos,
+        name,
+        type,
+        seasons: selectedSeasons,
+        colors,
+        team: isJersey && team ? team : undefined,
+      })
+      onDone()
+    } catch {
+      setSaveError('No se pudo guardar la prenda. Revisa tu conexion e intenta de nuevo.')
+    }
   }
 
   return (
@@ -107,12 +114,18 @@ function AddItemForm({ onDone }: { onDone: () => void }) {
         <ColorPicker value={colors} onChange={setColors} />
       </div>
 
+      {saveError && (
+        <p role="alert" className="text-sm text-destructive">
+          {saveError}
+        </p>
+      )}
+
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={!canSave}>
-          Guardar prenda
+        <Button type="submit" disabled={!canSave || addItem.isPending}>
+          {addItem.isPending ? 'Guardando' : 'Guardar prenda'}
         </Button>
       </DialogFooter>
     </form>

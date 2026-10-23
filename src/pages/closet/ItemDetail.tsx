@@ -1,4 +1,4 @@
-import { Tag, X } from 'lucide-react'
+import { Tag, Trash2, X } from 'lucide-react'
 import { motion } from 'motion/react'
 import { type ReactNode, useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -6,7 +6,7 @@ import { MorphButton } from '@/components/MorphButton'
 import { SwipeHandle } from '@/components/SwipeHandle'
 import { ChoicePill } from '@/components/ChoicePill'
 import { Button } from '@/components/ui/button'
-import { useSetItemPrivate } from '@/hooks/useItems'
+import { useDeleteItem, useSetItemPrivate } from '@/hooks/useItems'
 import { useProfile } from '@/hooks/useProfile'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { useSwipeToClose } from '@/hooks/useSwipeToClose'
@@ -37,6 +37,9 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
   const [sellOrigin, setSellOrigin] = useState<HTMLElement | null>(null)
   const closeSell = useCallback(() => setSellOrigin(null), [])
   const navigate = useNavigate()
+  const deleteItem = useDeleteItem()
+  // Eliminar pide un segundo toque para confirmar
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   return (
     <>
@@ -65,6 +68,7 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
           <PhotoCarousel
             itemId={item.id}
             photos={item.photoUrls}
+            placeholder={item.thumbUrl}
             index={photoIndex}
             onIndexChange={setPhotoIndex}
             alt={title}
@@ -145,13 +149,30 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
               )}
             </DetailSection>
 
-            {/* Crea una venta con los datos de la prenda; solo falta precio, talla y estado */}
-            <div>
+            <div className="flex flex-wrap gap-2">
+              {/* Crea una venta con los datos de la prenda; solo falta precio, talla y estado */}
               <MorphButton hidden={sellOrigin !== null} onOpen={setSellOrigin} variant="outline">
                 <Tag />
                 Vender esta prenda
               </MorphButton>
+              <Button
+                variant={confirmDelete ? 'destructive' : 'ghost'}
+                disabled={deleteItem.isPending}
+                onClick={() => {
+                  if (!confirmDelete) return setConfirmDelete(true)
+                  deleteItem.mutate(item, { onSuccess: onClose })
+                }}
+                onBlur={() => setConfirmDelete(false)}
+              >
+                <Trash2 />
+                {deleteItem.isPending ? 'Eliminando' : confirmDelete ? 'Toca otra vez para eliminar' : 'Eliminar'}
+              </Button>
             </div>
+            {deleteItem.isError && (
+              <p role="alert" className="text-sm text-destructive">
+                No se pudo eliminar. Intenta de nuevo.
+              </p>
+            )}
 
             <DetailSection title="Agregada">
               <p className="text-sm">

@@ -33,7 +33,7 @@ export function ItemCard({ item, open, raised, onOpen, onLayoutAnimationComplete
       >
         {/* En la cuadricula siempre se ve la portada; las demas fotos se ven al abrir la prenda */}
         <motion.div layoutId={`item-photo-${item.id}`} className="aspect-square overflow-hidden bg-muted">
-          <img src={item.photoUrls[0]} alt={title} loading="lazy" className="size-full object-cover" />
+          <img src={item.thumbUrl} alt={title} loading="lazy" className="size-full object-cover" />
         </motion.div>
         {item.private && (
           <span className="absolute top-2 left-2 flex size-7 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
