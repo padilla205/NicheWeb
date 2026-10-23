@@ -7,6 +7,7 @@ import { FeedPage } from '@/pages/feed/FeedPage'
 import { LoginPage } from '@/pages/login/LoginPage'
 import { ListingDetailPage } from '@/pages/marketplace/ListingDetailPage'
 import { MarketplacePage } from '@/pages/marketplace/MarketplacePage'
+import { OutfitPage } from '@/pages/outfits/OutfitPage'
 import { OutfitsPage } from '@/pages/outfits/OutfitsPage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { UserProfilePage } from '@/pages/profile/UserProfilePage'
@@ -19,6 +20,7 @@ function App() {
         {/* La pagina de una venta se puede ver sin cuenta, para que funcionen los links compartidos */}
         <Route element={<AppLayout />}>
           <Route path="marketplace/:id" element={<ListingDetailPage />} />
+          <Route path="o/:id" element={<OutfitPage />} />
         </Route>
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>

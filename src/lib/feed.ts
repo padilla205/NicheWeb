@@ -1,4 +1,6 @@
 import type { Season } from '@/lib/clothing'
+import type { Outfit } from '@/lib/outfits'
+
 export type FeedUser = {
   username: string
   name: string
@@ -30,8 +32,8 @@ export type Post = {
   // Ancho entre alto de la portada; en la cuadricula cada publicacion conserva su forma
   aspect: number
   seasons: Season[]
-  // Nombres de las prendas del outfit; llegan cuando existan los outfits guardados
-  outfitItems: string[]
+  // El outfit publicado; si no hay fotos propias, la publicacion se ve como el outfit armado
+  outfit?: Outfit
   createdAt: Date
   likes: number
   likedByMe: boolean

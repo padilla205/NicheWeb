@@ -537,6 +537,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          in_closet: boolean
           is_public: boolean
           name: string
           owner_id: string
@@ -544,6 +545,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          in_closet?: boolean
           is_public?: boolean
           name?: string
           owner_id?: string
@@ -551,6 +553,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          in_closet?: boolean
           is_public?: boolean
           name?: string
           owner_id?: string

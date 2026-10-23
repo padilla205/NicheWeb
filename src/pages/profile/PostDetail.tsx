@@ -7,6 +7,7 @@ import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { useSwipeToClose } from '@/hooks/useSwipeToClose'
 import { useSession } from '@/hooks/useAuth'
 import { useDeletePost, useToggleLike, useToggleShare } from '@/hooks/usePosts'
+import { getTypeInfo } from '@/lib/clothing'
 import { formatTimeAgo, type Post } from '@/lib/feed'
 import { cn } from '@/lib/utils'
 import { CommentsThread } from '@/pages/feed/CommentsThread'
@@ -111,14 +112,18 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
               </p>
             )}
 
-            {post.outfitItems.length > 0 && (
+            {post.outfit && post.outfit.items.length > 0 && (
               <section aria-label="Prendas del outfit" className="flex flex-col gap-2 border-b p-4">
                 <h3 className="text-xs font-medium text-muted-foreground">Prendas del outfit</h3>
                 <ul className="flex flex-wrap gap-1.5">
-                  {post.outfitItems.map((item) => (
-                    <li key={item} className="flex items-center gap-1.5 rounded-full border bg-muted/40 px-2.5 py-1 text-xs">
-                      <Shirt className="size-3.5 text-muted-foreground" />
-                      {item}
+                  {post.outfit.items.map((item) => (
+                    <li key={item.id} className="flex items-center gap-1.5 rounded-full border bg-muted/40 py-1 pr-2.5 pl-1 text-xs">
+                      {item.thumbUrl ? (
+                        <img src={item.thumbUrl} alt="" loading="lazy" className="size-6 rounded-full object-cover" />
+                      ) : (
+                        <Shirt className="size-3.5 text-muted-foreground" />
+                      )}
+                      {item.name || getTypeInfo(item.type).label}
                     </li>
                   ))}
                 </ul>

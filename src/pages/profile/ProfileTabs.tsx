@@ -4,11 +4,13 @@ import { useState } from 'react'
 import { ShowMore } from '@/components/ShowMore'
 import { useItems } from '@/hooks/useItems'
 import { useMyListings } from '@/hooks/useListings'
+import { useOutfits } from '@/hooks/useOutfits'
 import { useProfile } from '@/hooks/useProfile'
 import { useSharedPosts, useUserPosts } from '@/hooks/usePosts'
 import { cn } from '@/lib/utils'
 import { ClosetGrid } from '@/pages/closet/ClosetGrid'
 import { ListingCard } from '@/pages/marketplace/ListingCard'
+import { OutfitCard } from '@/pages/outfits/OutfitCard'
 import { EmptyTab } from './EmptyTab'
 import { PostGrid } from './PostGrid'
 
@@ -26,6 +28,8 @@ export function ProfileTabs({ user }: { user?: OtherUser }) {
   const { id: userId, closetPublic } = user ?? me
   const posts = useUserPosts(userId)
   const shared = useSharedPosts(userId)
+  // Outfits que la persona eligio mostrar en su closet
+  const { data: closetOutfits = [] } = useOutfits(userId, true)
   const { items, total: itemsTotal, isPending: itemsPending, loadMore: loadMoreItems } = useItems([], user?.id)
   // En tu perfil incluye las vendidas: en el marketplace ya no salen, pero aqui las sigues viendo con su etiqueta
   const { listings: myListings, total: listingsTotal, isPending: listingsPending, loadMore: loadMoreListings } = useMyListings(user?.id)
@@ -98,6 +102,18 @@ export function ProfileTabs({ user }: { user?: OtherUser }) {
             />
             <ShowMore shown={posts.posts.length} total={posts.total} onClick={posts.loadMore} />
           </div>
+        )}
+        {tab === 'closet' && closetOutfits.length > 0 && (
+          <section aria-label="Outfits" className="mb-6 flex flex-col gap-3">
+            <h3 className="text-sm font-medium text-muted-foreground">Outfits</h3>
+            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {closetOutfits.map((outfit) => (
+                <li key={outfit.id}>
+                  <OutfitCard outfit={outfit} />
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
         {tab === 'closet' &&
           (!isMine && !closetPublic ? (

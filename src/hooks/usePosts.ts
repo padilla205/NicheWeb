@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useSession } from '@/hooks/useAuth'
+import { OUTFIT_COLUMNS, outfitFromRow, type OutfitRow } from '@/hooks/useOutfits'
 import type { Season } from '@/lib/clothing'
 import type { Tables } from '@/lib/database.types'
 import type { FeedUser, Post, PostComment } from '@/lib/feed'
@@ -23,12 +24,14 @@ type PostRow = Tables<'posts'> & {
   author: ProfileBits
   likes: { count: number }[]
   comments: { count: number }[]
+  outfit: OutfitRow | null
 }
 type PostsPage = { items: Post[]; total: number }
 
 // Columnas de la publicacion con su autor y sus contadores. Se nombra la llave del autor porque
 // publicaciones y perfiles tambien se conectan por likes, comentarios y compartidos
-const POST_COLUMNS = '*, author:profiles!posts_author_id_fkey(username, name, avatar_path), likes(count), comments(count)'
+const POST_COLUMNS = `*, author:profiles!posts_author_id_fkey(username, name, avatar_path), likes(count), comments(count),
+  outfit:outfits(${OUTFIT_COLUMNS})`
 
 export function feedUserFromRow(row: ProfileBits): FeedUser {
   return {
@@ -63,7 +66,7 @@ async function toPosts(rows: PostRow[], userId: string | undefined): Promise<Pos
     photoUrls: row.photos.map((path) => photoUrl(path)),
     aspect: row.aspect,
     seasons: row.seasons as Season[],
-    outfitItems: [],
+    outfit: row.outfit ? outfitFromRow(row.outfit) : undefined,
     createdAt: new Date(row.created_at),
     likes: row.likes[0]?.count ?? 0,
     likedByMe: liked.has(row.id),
@@ -270,18 +273,22 @@ async function photoAspect(file: File) {
   }
 }
 
-export type NewPost = { photos: File[]; caption: string; seasons: Season[] }
+export type NewPost = { photos: File[]; caption: string; seasons: Season[]; outfitId?: string }
 
 export function useCreatePost() {
   const queryClient = useQueryClient()
   const userId = useSession()?.user.id
 
   return useMutation({
-    mutationFn: async ({ photos, caption, seasons }: NewPost) => {
-      const [paths, aspect] = await Promise.all([savePhotos(photos, userId!), photoAspect(photos[0])])
+    mutationFn: async ({ photos, caption, seasons, outfitId }: NewPost) => {
+      // Solo el outfit, sin fotos: en la cuadricula se ve con forma vertical, como el tablero
+      const [paths, aspect] = await Promise.all([
+        savePhotos(photos, userId!),
+        photos[0] ? photoAspect(photos[0]) : 0.75,
+      ])
       const { error } = await supabase
         .from('posts')
-        .insert({ photos: paths, caption: caption.trim(), seasons, aspect })
+        .insert({ photos: paths, caption: caption.trim(), seasons, aspect, outfit_id: outfitId ?? null })
       if (error) {
         deletePhotos(paths).catch(() => {})
         throw error

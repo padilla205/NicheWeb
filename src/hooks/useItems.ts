@@ -1,4 +1,4 @@
-import { type InfiniteData, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { type InfiniteData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useProfile } from '@/hooks/useProfile'
 import type { ClosetItem, ClothingType, Season } from '@/lib/clothing'
 import type { Tables } from '@/lib/database.types'
@@ -20,7 +20,7 @@ export type NewItem = {
 type ItemsPage = { items: ClosetItem[]; total: number }
 
 // Fila de la base de datos -> lo que usan las pantallas
-function fromRow(row: Tables<'items'>): ClosetItem {
+export function itemFromRow(row: Tables<'items'>): ClosetItem {
   return {
     id: row.id,
     photoPaths: row.photos,
@@ -55,7 +55,7 @@ export function useItems(types: ClothingType[] = [], ownerId?: string) {
       if (types.length > 0) request = request.in('type', types)
       const { data, error, count } = await request
       if (error) throw error
-      return { items: data.map(fromRow), total: count ?? 0 }
+      return { items: data.map(itemFromRow), total: count ?? 0 }
     },
     getNextPageParam: (last, pages) => {
       const loaded = pages.reduce((sum, page) => sum + page.items.length, 0)
@@ -71,6 +71,20 @@ export function useItems(types: ClothingType[] = [], ownerId?: string) {
       if (!query.isFetchingNextPage) query.fetchNextPage()
     },
   }
+}
+
+// Todas tus prendas de una vez, para el generador de outfits (que necesita ver el closet completo).
+// ponytail: hasta 500 prendas; si alguien junta mas, elegir al azar en la base de datos
+export function useAllItems() {
+  const { id: userId } = useProfile()
+  return useQuery({
+    queryKey: ['items', userId, 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('items').select('*').eq('owner_id', userId).limit(500)
+      if (error) throw error
+      return data.map(itemFromRow)
+    },
+  })
 }
 
 export function useAddItem() {
