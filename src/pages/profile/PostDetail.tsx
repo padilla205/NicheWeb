@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { motion } from 'motion/react'
+import { motion, useIsPresent } from 'motion/react'
 import { useState } from 'react'
 import { SwipeHandle } from '@/components/SwipeHandle'
 import { Button } from '@/components/ui/button'
@@ -7,18 +7,19 @@ import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { useSwipeToClose } from '@/hooks/useSwipeToClose'
 import { useToggleLike, useToggleShare } from '@/hooks/usePosts'
 import { formatTimeAgo, type Post } from '@/lib/feed'
+import { cn } from '@/lib/utils'
 import { CommentsThread } from '@/pages/feed/CommentsDialog'
 import { PostActions } from '@/pages/feed/PostActions'
 import { PostPhotos } from '@/pages/feed/PostPhotos'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
 
+// Al cerrar, el fondo oscuro, la ventana y su foto desaparecen al instante, sin animacion
+const HIDE_NOW = { opacity: 0, transition: { duration: 0 } } as const
+
 type PostDetailProps = {
   post: Post
   onClose: () => void
 }
-
-// Igual que el detalle de una prenda: el texto aparece casi junto con la apertura y frena suave
-const appearTransition = { delay: 0.05, duration: 0.25, ease: [0.32, 0.72, 0, 1] } as const
 
 // Publicacion completa: foto, autor, descripcion, likes y comentarios
 export function PostDetail({ post, onClose }: PostDetailProps) {
@@ -29,6 +30,8 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
   const toggleShare = useToggleShare()
 
   useModalBehavior(onClose)
+  // Mientras se esta quitando al cerrarse deja pasar los toques al cuadro de abajo
+  const isPresent = useIsPresent()
   const swipe = useSwipeToClose(onClose)
 
   return (
@@ -36,22 +39,27 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        exit={HIDE_NOW}
         transition={{ duration: 0.2 }}
         onClick={onClose}
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs"
+        // Solo oscurece el fondo, sin desenfocarlo
+        className={cn('fixed inset-0 z-50 bg-black/40', !isPresent && 'pointer-events-none')}
       />
       <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* layoutCrossfade={false}: se ve solido desde el primer instante, sin parpadear */}
         <motion.div
           layoutId={`profile-post-${post.id}`}
           layoutCrossfade={false}
+          exit={HIDE_NOW}
           {...swipe.panelProps}
           role="dialog"
           aria-modal
           aria-label={`Publicacion de ${post.author.username}`}
           style={{ borderRadius: 16 }}
-          className="pointer-events-auto relative flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-y-auto border bg-popover text-popover-foreground md:h-[min(85dvh,640px)] md:flex-row md:overflow-hidden"
+          className={cn(
+            'relative flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-y-auto border bg-popover text-popover-foreground md:h-[min(85dvh,640px)] md:flex-row md:overflow-hidden',
+            isPresent ? 'pointer-events-auto' : 'pointer-events-none',
+          )}
         >
           <SwipeHandle onPointerDown={swipe.startDrag} />
           <motion.div
@@ -62,12 +70,11 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
             <PostPhotos post={post} carouselId={`profile-post-detail-${post.id}`} iconClassName="size-16" />
           </motion.div>
 
-          {/* "layout" dibuja el texto a su tamano real mientras la ventana crece (sin "letras mini") */}
+          {/* "layout" dibuja el texto nitido y a su tamano real mientras la ventana crece y lo va
+              descubriendo (sin desvanecerse ni "letras mini"); al cerrar desaparece al instante */}
           <motion.div
             layout
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0, transition: appearTransition }}
-            exit={{ opacity: 0, transition: { duration: 0.1 } }}
+            exit={HIDE_NOW}
             className="flex shrink-0 flex-col md:min-h-0 md:flex-1 md:shrink md:border-l"
           >
             <header className="flex items-center gap-3 border-b p-3 pr-14">
@@ -99,9 +106,7 @@ export function PostDetail({ post, onClose }: PostDetailProps) {
 
           <motion.div
             layout
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: appearTransition }}
-            exit={{ opacity: 0, transition: { duration: 0.1 } }}
+            exit={HIDE_NOW}
             className="absolute top-2 right-2"
           >
             <Button variant="secondary" size="icon-sm" onClick={onClose}>
