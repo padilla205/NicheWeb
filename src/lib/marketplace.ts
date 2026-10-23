@@ -1,6 +1,6 @@
 import type { Season } from '@/lib/clothing'
 import type { FeedUser } from '@/lib/feed'
-import { isSameCity, type UserLocation } from '@/lib/locations'
+import type { UserLocation } from '@/lib/locations'
 import { normalizeText } from '@/lib/text'
 
 export const listingConditions = [
@@ -28,6 +28,7 @@ export function getStatusLabel(status: ListingStatus) {
 export type Listing = {
   id: string
   seller: FeedUser
+  sellerId: string
   title: string
   // En pesos, sin centavos
   price: number
@@ -47,10 +48,11 @@ export type Listing = {
   // Solo en jerseys de futbol (valor de la lista de equipos)
   team?: string
   description: string
-  // La primera foto es la portada
+  // Rutas en Storage y direcciones de las fotos; la primera es la portada
+  photoPaths: string[]
   photoUrls: string[]
-  // TEMPORAL: las ventas de ejemplo no tienen fotos y se dibujan con un degradado
-  gradient?: [string, string]
+  // Version chica de la portada, para las tarjetas
+  thumbUrl: string
   createdAt: Date
 }
 
@@ -94,22 +96,6 @@ export function normalizeSize(size: string) {
   return size.trim().toUpperCase()
 }
 
-// Si la venta coincide con lo buscado (todas las palabras, sin importar acentos) y con los filtros
-export function matchesListing(listing: Listing, query: string, filters: ListingFilters) {
-  const text = normalizeText(`${listing.title} ${listing.type} ${listing.description}`)
-  const words = normalizeText(query).split(/\s+/).filter(Boolean)
-  if (!words.every((word) => text.includes(word))) return false
-
-  const { minPrice, maxPrice, sizes, conditions, colors, seasons } = filters
-  if (minPrice !== undefined && listing.price < minPrice) return false
-  if (maxPrice !== undefined && listing.price > maxPrice) return false
-  if (sizes.length > 0 && !sizes.includes(normalizeSize(listing.size))) return false
-  if (conditions.length > 0 && !conditions.includes(listing.condition)) return false
-  if (colors.length > 0 && !colors.some((color) => listing.colors.includes(color))) return false
-  if (seasons.length > 0 && !seasons.some((season) => listing.seasons.includes(season))) return false
-  return true
-}
-
 export const listingSorts = [
   { value: 'recientes', label: 'Mas recientes' },
   { value: 'precio-menor', label: 'Menor precio' },
@@ -118,45 +104,6 @@ export const listingSorts = [
 ] as const
 
 export type ListingSort = (typeof listingSorts)[number]['value']
-
-// Distancia aproximada en km entre dos puntos (formula de haversine)
-function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
-  const rad = Math.PI / 180
-  const h =
-    Math.sin(((b.lat - a.lat) * rad) / 2) ** 2 +
-    Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(((b.lng - a.lng) * rad) / 2) ** 2
-  return 12742 * Math.asin(Math.sqrt(h))
-}
-
-// "Cercanos": primero tu ciudad, luego tu pais y al final el resto; dentro de cada grupo,
-// las que tienen punto en el mapa van por distancia al centro de tu ciudad
-// ponytail: sin punto de entrega no hay coordenadas por venta; con Supabase se guardaran siempre
-function nearness(listing: Listing, location: UserLocation, center: { lat: number; lng: number } | null) {
-  const group = isSameCity(listing.location, location) ? 0 : listing.location.country === location.country ? 1 : 2
-  const distance = center && listing.delivery ? distanceKm(center, listing.delivery) : Infinity
-  return [group, distance] as const
-}
-
-// Copia ordenada; con "cercanos" sin ubicacion elegida se queda por fecha
-export function sortListings(
-  listings: Listing[],
-  sort: ListingSort,
-  location: UserLocation | null,
-  center: { lat: number; lng: number } | null,
-) {
-  const byDate = (a: Listing, b: Listing) => b.createdAt.getTime() - a.createdAt.getTime()
-  return [...listings].sort((a, b) => {
-    if (sort === 'precio-menor') return a.price - b.price || byDate(a, b)
-    if (sort === 'precio-mayor') return b.price - a.price || byDate(a, b)
-    if (sort === 'cercanos' && location) {
-      const [groupA, distanceA] = nearness(a, location, center)
-      const [groupB, distanceB] = nearness(b, location, center)
-      if (groupA !== groupB) return groupA - groupB
-      if (distanceA !== distanceB) return distanceA - distanceB
-    }
-    return byDate(a, b)
-  })
-}
 
 export function getConditionLabel(condition: ListingCondition) {
   return listingConditions.find((c) => c.value === condition)?.label ?? condition
@@ -172,112 +119,3 @@ const priceFormat = new Intl.NumberFormat('es-MX', {
 export function formatPrice(price: number) {
   return priceFormat.format(price)
 }
-
-const ana: FeedUser = { username: 'ana.style', name: 'Ana' }
-const leo: FeedUser = { username: 'leo_fits', name: 'Leo' }
-const sofi: FeedUser = { username: 'sofi', name: 'Sofia' }
-
-function daysAgo(days: number) {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-}
-
-// Ventas de ejemplo para ver el diseno sin base de datos
-export const sampleListings: Listing[] = [
-  {
-    id: 'l1',
-    seller: ana,
-    title: 'Chamarra de mezclilla',
-    price: 450,
-    size: 'M',
-    location: { country: 'mx', city: 'guadalajara' },
-    condition: 'como-nuevo',
-    status: 'disponible',
-    type: 'Chamarra',
-    description: 'La use dos veces. Sin manchas ni rasgaduras. Entrega en el centro.',
-    seasons: ['otono', 'primavera'], colors: ['azul'],
-    photoUrls: [],
-    gradient: ['#6a85b6', '#bac8e0'],
-    createdAt: daysAgo(0.2),
-  },
-  {
-    id: 'l2',
-    seller: leo,
-    title: 'Tenis blancos clasicos',
-    price: 900,
-    size: '27',
-    location: { country: 'mx', city: 'cdmx' },
-    condition: 'usado',
-    status: 'disponible',
-    type: 'Tenis',
-    description: 'Tienen algo de uso pero estan limpios. Incluyen caja.',
-    seasons: ['primavera', 'verano', 'otono', 'invierno'], colors: ['blanco'],
-    photoUrls: [],
-    gradient: ['#e0e0e0', '#bdbdbd'],
-    createdAt: daysAgo(1),
-  },
-  {
-    id: 'l3',
-    seller: sofi,
-    title: 'Vestido negro midi',
-    price: 380,
-    size: 'S',
-    location: { country: 'mx', city: 'guadalajara' },
-    condition: 'nuevo',
-    status: 'disponible',
-    type: 'Vestido',
-    description: 'Nuevo con etiqueta, no me quedo. Tela ligera, ideal para eventos.',
-    seasons: ['primavera', 'verano'], colors: ['negro'],
-    photoUrls: [],
-    gradient: ['#434343', '#000000'],
-    createdAt: daysAgo(2),
-  },
-  {
-    id: 'l4',
-    seller: leo,
-    title: 'Jersey del America',
-    price: 650,
-    size: 'L',
-    location: { country: 'mx', city: 'cdmx' },
-    condition: 'como-nuevo',
-    status: 'disponible',
-    type: 'Jersey de futbol',
-    description: 'Temporada pasada. Lavado a mano, los numeros estan completos.',
-    seasons: ['verano'], colors: ['azul', 'blanco'],
-    team: 'america',
-    photoUrls: [],
-    gradient: ['#4facfe', '#00f2fe'],
-    createdAt: daysAgo(3),
-  },
-  {
-    id: 'l5',
-    seller: ana,
-    title: 'Bolsa de piel cafe',
-    price: 1200,
-    size: 'Unitalla',
-    location: { country: 'mx', city: 'monterrey' },
-    condition: 'usado',
-    status: 'disponible',
-    type: 'Bolsa',
-    description: 'Piel genuina, el broche funciona perfecto. Tiene un pequeno raspon en una esquina.',
-    seasons: ['otono', 'invierno'], colors: ['cafe'],
-    photoUrls: [],
-    gradient: ['#c79081', '#dfa579'],
-    createdAt: daysAgo(5),
-  },
-  {
-    id: 'l6',
-    seller: sofi,
-    title: 'Sudadera oversize',
-    price: 300,
-    size: 'XL',
-    location: { country: 'mx', city: 'cdmx' },
-    condition: 'como-nuevo',
-    status: 'disponible',
-    type: 'Sudadera',
-    description: 'Muy comoda y calientita. Color verde olivo.',
-    seasons: ['otono', 'invierno'], colors: ['verde'],
-    photoUrls: [],
-    gradient: ['#93a5cf', '#e4efe9'],
-    createdAt: daysAgo(6),
-  },
-]

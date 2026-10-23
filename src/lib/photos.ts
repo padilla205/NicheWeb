@@ -65,3 +65,37 @@ export async function deletePhotos(paths: string[]) {
   const { error } = await supabase.storage.from(BUCKET).remove(all)
   if (error) throw error
 }
+
+// Fotos ya guardadas que se cargaron en un formulario (al editar una venta, o al vender una prenda).
+// Se recuerda de que ruta vino cada archivo para no comprimirla ni subirla otra vez
+const storedPaths = new WeakMap<File, string>()
+
+// Descarga una foto guardada como archivo, para mostrarla en el selector de fotos
+export async function fileFromPhoto(path: string) {
+  const blob = await fetch(photoUrl(path)).then((response) => response.blob())
+  const file = new File([blob], path.split('/').pop() ?? 'foto', { type: blob.type })
+  storedPaths.set(file, path)
+  return file
+}
+
+// Ruta de cada foto para guardarla en una tabla:
+// - si ya es de este registro (keep), se deja igual
+// - si ya esta guardada en otro lado (una prenda), se copia dentro de Storage, sin perder calidad
+// - si es nueva, se comprime y se sube
+export async function savePhotos(files: File[], userId: string, keep: string[] = []) {
+  return Promise.all(
+    files.map(async (file) => {
+      const path = storedPaths.get(file)
+      if (!path) return uploadPhoto(file, userId)
+      if (keep.includes(path)) return path
+
+      const copy = `${userId}/${crypto.randomUUID()}.${path.split('.').pop()}`
+      const bucket = supabase.storage.from(BUCKET)
+      const copies = [bucket.copy(path, copy)]
+      if (!path.endsWith('.gif')) copies.push(bucket.copy(thumbPath(path), thumbPath(copy)))
+      const failed = (await Promise.all(copies)).find((result) => result.error)
+      if (failed?.error) throw failed.error
+      return copy
+    }),
+  )
+}

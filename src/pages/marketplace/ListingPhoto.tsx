@@ -8,26 +8,19 @@ type ListingPhotoProps = {
   iconClassName?: string
 }
 
-// Portada de la venta. TEMPORAL: las ventas de ejemplo no tienen foto y muestran un degradado con un icono
+// Portada chica de la venta para las tarjetas; sin foto se ve un icono
 export function ListingPhoto({ listing, className, iconClassName }: ListingPhotoProps) {
-  const cover = listing.photoUrls[0]
-  if (cover) {
+  if (listing.thumbUrl) {
     return (
       <div className={cn('aspect-square overflow-hidden bg-muted', className)}>
-        <img src={cover} alt={listing.title} loading="lazy" className="size-full object-cover" />
+        <img src={listing.thumbUrl} alt={listing.title} loading="lazy" className="size-full object-cover" />
       </div>
     )
   }
 
-  const [from, to] = listing.gradient ?? ['#d4d4d8', '#a1a1aa']
   return (
-    <div
-      role="img"
-      aria-label={listing.title}
-      className={cn('flex aspect-square items-center justify-center', className)}
-      style={{ backgroundImage: `linear-gradient(135deg, ${from}, ${to})` }}
-    >
-      <Shirt className={cn('text-white/70', iconClassName)} strokeWidth={1.5} />
+    <div role="img" aria-label={listing.title} className={cn('flex aspect-square items-center justify-center bg-muted', className)}>
+      <Shirt className={cn('text-muted-foreground', iconClassName)} strokeWidth={1.5} />
     </div>
   )
 }

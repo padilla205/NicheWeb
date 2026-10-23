@@ -15,6 +15,10 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="login" element={<LoginPage />} />
+        {/* La pagina de una venta se puede ver sin cuenta, para que funcionen los links compartidos */}
+        <Route element={<AppLayout />}>
+          <Route path="marketplace/:id" element={<ListingDetailPage />} />
+        </Route>
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
             <Route index element={<Navigate to="/closet" replace />} />
@@ -22,7 +26,6 @@ function App() {
             <Route path="outfits" element={<OutfitsPage />} />
             <Route path="feed" element={<FeedPage />} />
             <Route path="marketplace" element={<MarketplacePage />} />
-            <Route path="marketplace/:id" element={<ListingDetailPage />} />
             <Route path="chat" element={<ChatPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="*" element={<Navigate to="/closet" replace />} />

@@ -558,7 +558,35 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      listing_sizes: {
+        Args: never
+        Returns: string[]
+      }
+      normalize_text: {
+        Args: { value: string }
+        Returns: string
+      }
+      search_listings: {
+        Args: {
+          colors?: string[]
+          conditions?: string[]
+          max_price?: number
+          min_price?: number
+          near_city?: string
+          near_country?: string
+          near_lat?: number
+          near_lng?: number
+          only_city?: string
+          only_country?: string
+          page_limit?: number
+          page_offset?: number
+          search?: string
+          seasons?: string[]
+          sizes?: string[]
+          sort?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
