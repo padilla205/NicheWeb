@@ -5,8 +5,13 @@ import { formatPrice, getConditionLabel, type Listing } from '@/lib/marketplace'
 import { ListingPhoto } from './ListingPhoto'
 import { StatusBadge } from './StatusBadge'
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
 // Tarjeta de la cuadricula; toda la tarjeta es un link a la pagina de la venta
 export function ListingCard({ listing }: { listing: Listing }) {
+  // Publicada hace menos de 24 horas y aun disponible. Dice "Recien publicada" y no "Nuevo"
+  // para no confundirse con el estado de la prenda (Nuevo, Como nuevo, Usado)
+  const isNew = listing.status === 'disponible' && Date.now() - listing.createdAt.getTime() < DAY_MS
   return (
     <Link
       to={`/marketplace/${listing.id}`}
@@ -14,6 +19,11 @@ export function ListingCard({ listing }: { listing: Listing }) {
     >
       <ListingPhoto listing={listing} iconClassName="size-10" />
       {listing.status !== 'disponible' && <StatusBadge listing={listing} className="absolute top-2 left-2" />}
+      {isNew && (
+        <span className="absolute top-2 left-2 rounded-full bg-emerald-500/90 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+          Recien publicada
+        </span>
+      )}
       <div className="flex flex-col gap-0.5 p-3">
         <p className="text-base font-semibold tabular-nums">{formatPrice(listing.price)}</p>
         <p className="truncate text-sm group-hover:underline">{listing.title}</p>
