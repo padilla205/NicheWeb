@@ -1,6 +1,8 @@
 import { MotionConfig } from 'motion/react'
 import { useCallback, useState } from 'react'
 import { PageTitle } from '@/components/PageTitle'
+import { ShowMore } from '@/components/ShowMore'
+import { usePaged } from '@/hooks/usePaged'
 import type { ClothingType } from '@/lib/clothing'
 import { useItems } from '@/hooks/useItems'
 import { AddItemButton } from './AddItemButton'
@@ -9,6 +11,9 @@ import { ClosetEmpty } from './ClosetEmpty'
 import { ClosetFilters } from './ClosetFilters'
 import { ClosetGrid } from './ClosetGrid'
 import { ClosetVisibility } from './ClosetVisibility'
+
+// Prendas por bloque antes de "Ver mas"
+const CLOSET_PAGE_SIZE = 20
 
 export function ClosetPage() {
   const [selectedTypes, setSelectedTypes] = useState<ClothingType[]>([])
@@ -20,6 +25,7 @@ export function ClosetPage() {
   const items = useItems()
   const visibleItems =
     selectedTypes.length === 0 ? items : items.filter((item) => selectedTypes.includes(item.type))
+  const page = usePaged(visibleItems, CLOSET_PAGE_SIZE, selectedTypes.join())
 
   return (
     // Aperturas con un ligero rebote en unos 300 ms; si el sistema pide menos movimiento, se respeta
@@ -46,7 +52,10 @@ export function ClosetPage() {
           Ninguna prenda coincide con los filtros.
         </p>
       ) : (
-        <ClosetGrid items={visibleItems} />
+        <>
+          <ClosetGrid items={page.visible} />
+          <ShowMore shown={page.visible.length} total={page.total} onClick={page.showMore} />
+        </>
       )}
       <AddItemDialog origin={addOrigin?.button ?? null} onClose={closeAdd} />
     </MotionConfig>
