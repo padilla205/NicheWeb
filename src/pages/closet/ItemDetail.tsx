@@ -1,6 +1,8 @@
-import { X } from 'lucide-react'
+import { Tag, X } from 'lucide-react'
 import { motion } from 'motion/react'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useCallback, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { MorphButton } from '@/components/MorphButton'
 import { SwipeHandle } from '@/components/SwipeHandle'
 import { ChoicePill } from '@/components/ChoicePill'
 import { Button } from '@/components/ui/button'
@@ -10,6 +12,7 @@ import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { useSwipeToClose } from '@/hooks/useSwipeToClose'
 import { type ClosetItem, getColorInfo, getSeasonLabel, getTypeInfo } from '@/lib/clothing'
 import { getTeamLabel } from '@/lib/teams'
+import { CreateListingDialog } from '@/pages/marketplace/CreateListingDialog'
 import { PhotoCarousel } from './PhotoCarousel'
 
 type ItemDetailProps = {
@@ -30,6 +33,10 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
   const setItemPrivate = useSetItemPrivate()
   const { closetPublic } = useProfile()
   const swipe = useSwipeToClose(onClose)
+  // Boton que abrio "Vender"; null si esa ventana esta cerrada
+  const [sellOrigin, setSellOrigin] = useState<HTMLElement | null>(null)
+  const closeSell = useCallback(() => setSellOrigin(null), [])
+  const navigate = useNavigate()
 
   return (
     <>
@@ -138,6 +145,14 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
               )}
             </DetailSection>
 
+            {/* Crea una venta con los datos de la prenda; solo falta precio, talla y estado */}
+            <div>
+              <MorphButton hidden={sellOrigin !== null} onOpen={setSellOrigin} variant="outline">
+                <Tag />
+                Vender esta prenda
+              </MorphButton>
+            </div>
+
             <DetailSection title="Agregada">
               <p className="text-sm">
                 {item.createdAt.toLocaleDateString('es-MX', { dateStyle: 'long' })}
@@ -159,6 +174,12 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
           </motion.div>
         </motion.div>
       </div>
+      <CreateListingDialog
+        origin={sellOrigin}
+        onClose={closeSell}
+        fromItem={item}
+        onPublished={() => navigate('/marketplace')}
+      />
     </>
   )
 }
