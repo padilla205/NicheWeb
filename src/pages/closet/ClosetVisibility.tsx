@@ -12,7 +12,7 @@ export function ClosetVisibility() {
       variant="outline"
       className="rounded-full"
       aria-pressed={closetPublic}
-      onClick={() => updateProfile({ closetPublic: !closetPublic })}
+      onClick={() => updateProfile.mutate({ closetPublic: !closetPublic })}
       title={closetPublic ? 'Tu closet se ve en tu perfil. Toca para hacerlo privado.' : 'Solo tu ves tu closet. Toca para mostrarlo en tu perfil.'}
     >
       {closetPublic ? <Globe /> : <Lock />}

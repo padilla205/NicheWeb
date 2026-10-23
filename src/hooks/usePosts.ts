@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { currentUser, engagementScore, type Post, type PostComment, samplePosts } from '@/lib/feed'
+import { useProfile } from '@/hooks/useProfile'
+import { engagementScore, type Post, type PostComment, samplePosts } from '@/lib/feed'
 
 // TEMPORAL: el feed usa publicaciones de ejemplo en la memoria del navegador hasta que conectemos
 // Supabase. Los likes y comentarios se conservan al cambiar de seccion, pero se borran al recargar.
@@ -90,6 +91,7 @@ export function useToggleLike() {
 }
 
 export function useAddComment() {
+  const { username, name } = useProfile()
   return (id: string, text: string, reply?: PostComment['reply'], image?: File) =>
     updatePost(id, (post) => ({
       ...post,
@@ -97,7 +99,7 @@ export function useAddComment() {
         ...post.comments,
         {
           id: crypto.randomUUID(),
-          author: currentUser,
+          author: { username, name },
           text: text.trim(),
           // Un GIF se guarda tal cual para que siga animado
           imageUrl: image ? URL.createObjectURL(image) : undefined,
@@ -113,10 +115,11 @@ export function useToggleShare() {
 }
 
 export function useCreatePost() {
+  const { username, name } = useProfile()
   return (photos: File[], caption: string) => {
     const post: Post = {
       id: crypto.randomUUID(),
-      author: currentUser,
+      author: { username, name },
       caption: caption.trim(),
       gradient: ['#d4d4d8', '#71717a'],
       photoUrls: photos.map((photo) => URL.createObjectURL(photo)),
