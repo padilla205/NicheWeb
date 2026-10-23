@@ -2,6 +2,7 @@ import { Check, Clock, RotateCw } from 'lucide-react'
 import { motion } from 'motion/react'
 import { type ChatMessage, formatMessageTime } from '@/lib/chat'
 import { cn } from '@/lib/utils'
+import { ChatImage } from './ChatImage'
 
 type MessageBubbleProps = {
   message: ChatMessage
@@ -22,15 +23,20 @@ export function MessageBubble({ message, mine, onRetry }: MessageBubbleProps) {
       style={{ originX: mine ? 1 : 0, originY: 1 }}
       className={cn('flex max-w-[80%] flex-col gap-0.5', mine ? 'items-end self-end' : 'items-start self-start')}
     >
-      <p
-        className={cn(
-          'rounded-2xl px-3.5 py-2 text-sm break-words whitespace-pre-wrap',
-          mine ? 'rounded-br-md bg-primary text-primary-foreground' : 'rounded-bl-md bg-muted',
-          failed && 'bg-destructive/15 text-destructive',
-        )}
-      >
-        {message.body}
-      </p>
+      {message.imageUrl && message.thumbUrl && (
+        <ChatImage id={message.id} imageUrl={message.imageUrl} thumbUrl={message.thumbUrl} />
+      )}
+      {message.body && (
+        <p
+          className={cn(
+            'rounded-2xl px-3.5 py-2 text-sm break-words whitespace-pre-wrap',
+            mine ? 'rounded-br-md bg-primary text-primary-foreground' : 'rounded-bl-md bg-muted',
+            failed && 'bg-destructive/15 text-destructive',
+          )}
+        >
+          {message.body}
+        </p>
+      )}
       {failed ? (
         <button
           type="button"

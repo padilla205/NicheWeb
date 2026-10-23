@@ -3,12 +3,14 @@ import { Link, NavLink } from 'react-router'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { UnreadBadge } from '@/components/UnreadBadge'
 import { Input } from '@/components/ui/input'
-import { useChatRealtime, useUnreadCounts } from '@/hooks/useChat'
+import { useChatMutes, useChatRealtime, useUnreadCounts } from '@/hooks/useChat'
 import { cn } from '@/lib/utils'
 
 export function TopBar() {
   useChatRealtime()
-  const unread = Object.values(useUnreadCounts()).reduce((sum, count) => sum + count, 0)
+  // Los chats silenciados no suman
+  const mutes = useChatMutes()
+  const unread = Object.entries(useUnreadCounts()).reduce((sum, [chat, count]) => (mutes.has(chat) ? sum : sum + count), 0)
 
   return (
     <header className="sticky top-0 z-10 grid h-[calc(4rem+env(safe-area-inset-top))] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b-2 bg-background px-4 pt-[env(safe-area-inset-top)] md:grid-cols-[1fr_minmax(0,36rem)_1fr] md:gap-6 md:px-6">

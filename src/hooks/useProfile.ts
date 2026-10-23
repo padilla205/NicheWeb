@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase'
 type ProfileData = Profile & { id: string; avatarPath: string | null; coverPath: string | null }
 
 // Fila de la base de datos -> lo que usan las pantallas
-function fromRow(row: Tables<'profiles'>): ProfileData {
+export function profileFromRow(row: Tables<'profiles'>): ProfileData {
   return {
     id: row.id,
     name: row.name,
@@ -33,7 +33,7 @@ export function useProfileQuery() {
     queryFn: async () => {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId!).single()
       if (error) throw error
-      return fromRow(data)
+      return profileFromRow(data)
     },
   })
 }
@@ -77,7 +77,7 @@ export function useUpdateProfile() {
         (path): path is string => !!path,
       )
       deletePhotos(replaced).catch(() => {})
-      return fromRow(data)
+      return profileFromRow(data)
     },
     // Optimista: el cambio se ve al instante y se deshace si Supabase lo rechaza
     onMutate: async ({ avatar, cover, ...changes }) => {
@@ -95,5 +95,18 @@ export function useUpdateProfile() {
     },
     onError: (_error, _changes, context) => queryClient.setQueryData(key, context?.previous),
     onSuccess: (saved) => queryClient.setQueryData(key, saved),
+  })
+}
+
+// Perfil de otra persona por su usuario; null si no existe
+export function useUserProfile(username: string | undefined) {
+  return useQuery({
+    queryKey: ['profile', 'user', username],
+    enabled: !!username,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('profiles').select('*').eq('username', username!).maybeSingle()
+      if (error) throw error
+      return data ? profileFromRow(data) : null
+    },
   })
 }

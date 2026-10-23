@@ -16,6 +16,7 @@ export type Conversation = {
   listing: ChatListing | null
   // La otra persona del chat
   other: FeedUser
+  otherId: string
   // true si tu eres quien compra
   isBuyer: boolean
   lastMessage: string | null
@@ -26,7 +27,13 @@ export type ChatMessage = {
   id: string
   conversationId: string
   senderId: string
+  // Puede ir vacio si el mensaje solo lleva imagen
   body: string
+  // Foto o GIF: completa y en miniatura (mientras se sube, las dos son la foto local)
+  imageUrl?: string
+  thumbUrl?: string
+  // La foto elegida, guardada mientras se sube para poder reintentar
+  file?: File
   // Tal cual llega de la base de datos, para pedir los mensajes anteriores sin perder precision
   createdAt: string
   // Sin estado = ya llego a la base de datos

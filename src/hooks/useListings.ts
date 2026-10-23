@@ -127,11 +127,12 @@ export function useListings(search: ListingSearch) {
   }
 }
 
-// Tus ventas para el perfil, incluidas las vendidas (solo tu las ves), de 12 en 12
-export function useMyListings() {
-  const { id: userId } = useProfile()
+// Ventas de un perfil, de 12 en 12. Sin sellerId son las tuyas, incluidas las vendidas (solo tu las ves)
+export function useMyListings(sellerId?: string) {
+  const { id: myId } = useProfile()
+  const userId = sellerId ?? myId
   const query = useInfiniteQuery({
-    queryKey: ['listings', 'mine', userId],
+    queryKey: ['listings', 'seller', userId],
     initialPageParam: 0,
     queryFn: async ({ pageParam }): Promise<ListingsPage> => {
       const { data, error, count } = await supabase

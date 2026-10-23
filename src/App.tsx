@@ -9,6 +9,7 @@ import { ListingDetailPage } from '@/pages/marketplace/ListingDetailPage'
 import { MarketplacePage } from '@/pages/marketplace/MarketplacePage'
 import { OutfitsPage } from '@/pages/outfits/OutfitsPage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
+import { UserProfilePage } from '@/pages/profile/UserProfilePage'
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="marketplace" element={<MarketplacePage />} />
             <Route path="chat/:id?" element={<ChatPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="u/:username" element={<UserProfilePage />} />
             <Route path="*" element={<Navigate to="/closet" replace />} />
           </Route>
         </Route>

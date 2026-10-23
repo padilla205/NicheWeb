@@ -4,10 +4,10 @@ import { Fragment, useEffect } from 'react'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/hooks/useAuth'
-import { useMarkChatRead, useMessages, useSendMessage } from '@/hooks/useChat'
+import { useBlockState, useMarkChatRead, useMessages, useSendMessage, useToggleBlock } from '@/hooks/useChat'
 import { type Conversation, formatMessageDay } from '@/lib/chat'
-import { UserAvatar } from '@/pages/feed/UserAvatar'
 import { ChatListingCard } from './ChatListingCard'
+import { ChatUserMenu } from './ChatUserMenu'
 import { MessageBubble } from './MessageBubble'
 import { MessageComposer } from './MessageComposer'
 
@@ -23,6 +23,8 @@ export function ConversationView({ id, conversation }: ConversationViewProps) {
   const { messages, isPending, hasOlder, loadOlder } = useMessages(id)
   const send = useSendMessage()
   const markRead = useMarkChatRead()
+  const blockState = useBlockState(conversation?.otherId)
+  const toggleBlock = useToggleBlock()
 
   // Con el chat abierto todo queda leido, tambien lo que llega mientras lo ves
   const newest = messages[0]?.id
@@ -39,13 +41,7 @@ export function ConversationView({ id, conversation }: ConversationViewProps) {
           </Link>
         </Button>
         {conversation ? (
-          <>
-            <UserAvatar user={conversation.other} className="size-9" />
-            <div className="min-w-0 text-sm">
-              <p className="truncate font-medium">{conversation.other.name}</p>
-              <p className="truncate text-muted-foreground">@{conversation.other.username}</p>
-            </div>
-          </>
+          <ChatUserMenu conversation={conversation} />
         ) : (
           <div aria-hidden className="h-9 w-40 animate-pulse rounded-full bg-muted" />
         )}
@@ -66,7 +62,7 @@ export function ConversationView({ id, conversation }: ConversationViewProps) {
                   <MessageBubble
                     message={message}
                     mine={message.senderId === userId}
-                    onRetry={() => send({ conversationId: id, body: message.body, id: message.id })}
+                    onRetry={() => send({ conversationId: id, body: message.body, file: message.file, id: message.id })}
                   />
                   {(!older || formatMessageDay(older.createdAt) !== day) && <DaySeparator label={day} />}
                 </Fragment>
@@ -85,10 +81,31 @@ export function ConversationView({ id, conversation }: ConversationViewProps) {
           ))}
       </div>
 
-      <MessageComposer
-        showQuickReplies={!isPending && messages.length === 0 && !!conversation?.isBuyer}
-        onSend={(body) => send({ conversationId: id, body })}
-      />
+      {blockState === 'none' ? (
+        <MessageComposer
+          showQuickReplies={!isPending && messages.length === 0 && !!conversation?.isBuyer}
+          onSend={(body, file) => send({ conversationId: id, body, file })}
+        />
+      ) : (
+        // Con un bloqueo de por medio no se puede escribir; a quien bloquearon no se le dice
+        <div className="flex flex-col items-center gap-2 border-t-2 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-center text-sm text-muted-foreground">
+          {blockState === 'blocked-by-me' ? (
+            <>
+              <p>Bloqueaste a @{conversation?.other.username}. Ninguno de los dos puede escribir en este chat.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full"
+                onClick={() => toggleBlock({ otherId: conversation!.otherId, blocked: false })}
+              >
+                Desbloquear
+              </Button>
+            </>
+          ) : (
+            <p>No puedes enviar mensajes en este chat.</p>
+          )}
+        </div>
+      )}
     </section>
   )
 }

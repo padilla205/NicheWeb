@@ -1,6 +1,8 @@
 export type FeedUser = {
   username: string
   name: string
+  // Sin foto de perfil se ve su inicial
+  avatarUrl?: string
 }
 
 export type PostComment = {

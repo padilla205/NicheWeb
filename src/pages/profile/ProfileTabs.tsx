@@ -14,18 +14,24 @@ import { PostGrid } from './PostGrid'
 
 type Tab = 'posts' | 'closet' | 'shared' | 'selling'
 
-export function ProfileTabs() {
+// Perfil de otra persona; sin el, las pestanas son las tuyas
+type OtherUser = { id: string; username: string; closetPublic: boolean }
+
+export function ProfileTabs({ user }: { user?: OtherUser }) {
   const [tab, setTab] = useState<Tab>('posts')
   // Hacia que lado se movio: 1 si la nueva pestana esta a la derecha, -1 si esta a la izquierda
   const [direction, setDirection] = useState(1)
-  const { username, closetPublic } = useProfile()
+  const me = useProfile()
+  const isMine = !user
+  const { username, closetPublic } = user ?? me
   const posts = usePosts()
-  const { items, total: itemsTotal, isPending: itemsPending, loadMore: loadMoreItems } = useItems()
-  // Incluye las vendidas: en el marketplace ya no salen, pero aqui las sigues viendo con su etiqueta
-  const { listings: myListings, total: listingsTotal, isPending: listingsPending, loadMore: loadMoreListings } = useMyListings()
+  const { items, total: itemsTotal, isPending: itemsPending, loadMore: loadMoreItems } = useItems([], user?.id)
+  // En tu perfil incluye las vendidas: en el marketplace ya no salen, pero aqui las sigues viendo con su etiqueta
+  const { listings: myListings, total: listingsTotal, isPending: listingsPending, loadMore: loadMoreListings } = useMyListings(user?.id)
 
   const myPosts = posts.filter((post) => post.author.username === username)
-  const sharedPosts = posts.filter((post) => post.sharedByMe)
+  // ponytail: los compartidos de otra persona llegan cuando el feed este en Supabase; por ahora solo los tuyos
+  const sharedPosts = isMine ? posts.filter((post) => post.sharedByMe) : []
 
   const tabs: { value: Tab; label: string; icon: LucideIcon; count: number }[] = [
     { value: 'posts', label: 'Publicaciones', icon: SquareUser, count: myPosts.length },
@@ -86,11 +92,32 @@ export function ProfileTabs() {
         transition={{ type: 'spring', visualDuration: 0.25, bounce: 0 }}
       >
         {tab === 'posts' && (
-          <PostGrid posts={myPosts} emptyText="Aun no publicas outfits. Cuando lo hagas apareceran aqui." />
+          <PostGrid
+            posts={myPosts}
+            emptyText={
+              isMine ? 'Aun no publicas outfits. Cuando lo hagas apareceran aqui.' : 'Aun no publica outfits.'
+            }
+          />
         )}
         {tab === 'closet' &&
-          (itemsPending ? null : items.length === 0 ? (
+          (!isMine && !closetPublic ? (
+            <EmptyTab>
+              <span className="flex items-center justify-center gap-2">
+                <Lock className="size-4 shrink-0" />
+                Su closet es privado.
+              </span>
+            </EmptyTab>
+          ) : itemsPending ? null : items.length === 0 ? (
+            !isMine ? (
+              <EmptyTab>Aun no tiene prendas visibles.</EmptyTab>
+            ) : (
             <EmptyTab>Aun no tienes prendas. Agregalas desde la seccion Closet.</EmptyTab>
+            )
+          ) : !isMine ? (
+            <div className="flex flex-col">
+              <ClosetGrid items={items} readOnly />
+              <ShowMore shown={items.length} total={itemsTotal} onClick={loadMoreItems} />
+            </div>
           ) : (
             <div className="flex flex-col gap-3">
               {/* Por ahora solo tu ves tu propio perfil; esto avisa que los demas no veran tu closet */}
@@ -114,12 +141,18 @@ export function ProfileTabs() {
         {tab === 'shared' && (
           <PostGrid
             posts={sharedPosts}
-            emptyText="Aun no compartes publicaciones. Usa el boton de compartir en el feed para traerlas aqui."
+            emptyText={
+              isMine
+                ? 'Aun no compartes publicaciones. Usa el boton de compartir en el feed para traerlas aqui.'
+                : 'Aun no comparte publicaciones.'
+            }
           />
         )}
         {tab === 'selling' &&
           (listingsPending ? null : myListings.length === 0 ? (
-            <EmptyTab>No tienes prendas en venta. Publica una desde el Marketplace.</EmptyTab>
+            <EmptyTab>
+              {isMine ? 'No tienes prendas en venta. Publica una desde el Marketplace.' : 'No tiene prendas en venta.'}
+            </EmptyTab>
           ) : (
             <div className="flex flex-col">
               <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">

@@ -4,7 +4,7 @@ import { useSession } from '@/hooks/useAuth'
 import type { ChatMessage, Conversation } from '@/lib/chat'
 import type { Tables } from '@/lib/database.types'
 import type { Listing, ListingStatus } from '@/lib/marketplace'
-import { photoUrl } from '@/lib/photos'
+import { photoUrl, uploadPhoto } from '@/lib/photos'
 import { supabase } from '@/lib/supabase'
 
 // Mensajes por bloque; al subir en el chat se piden los anteriores
@@ -15,8 +15,8 @@ const CHATS_LIMIT = 50
 // Cada persona se nombra por su llave porque los chats se conectan dos veces con perfiles
 const CHAT_COLUMNS = `id, buyer_id, last_message, last_message_at,
   listing:listings(id, title, price, status, photos),
-  buyer:profiles!conversations_buyer_id_fkey(username, name),
-  seller:profiles!conversations_seller_id_fkey(username, name)`
+  buyer:profiles!conversations_buyer_id_fkey(id, username, name, avatar_path),
+  seller:profiles!conversations_seller_id_fkey(id, username, name, avatar_path)`
 
 type MessagePages = InfiniteData<ChatMessage[], string | null>
 
@@ -26,6 +26,8 @@ function fromMessageRow(row: Tables<'messages'>): ChatMessage {
     conversationId: row.conversation_id,
     senderId: row.sender_id,
     body: row.body,
+    imageUrl: row.image_path ? photoUrl(row.image_path) : undefined,
+    thumbUrl: row.image_path ? photoUrl(row.image_path, true) : undefined,
     createdAt: row.created_at,
   }
 }
@@ -37,7 +39,14 @@ function putMessage(queryClient: QueryClient, message: ChatMessage) {
     if (!data) return data
     const exists = data.pages.some((page) => page.some((m) => m.id === message.id))
     const pages = exists
-      ? data.pages.map((page) => page.map((m) => (m.id === message.id ? { ...m, ...message } : m)))
+      ? data.pages.map((page) =>
+          page.map((m) => {
+            if (m.id !== message.id) return m
+            // La foto local ya se ve: se conserva para que no parpadee al cambiar a la de Supabase
+            const local = m.thumbUrl?.startsWith('blob:') ? { imageUrl: m.imageUrl, thumbUrl: m.thumbUrl } : {}
+            return { ...m, ...message, ...local }
+          }),
+        )
       : [[message, ...(data.pages[0] ?? [])], ...data.pages.slice(1)]
     return { ...data, pages }
   })
@@ -61,6 +70,7 @@ export function useConversations() {
       if (error) throw error
       return data.map((row) => {
         const isBuyer = row.buyer_id === userId
+        const other = isBuyer ? row.seller : row.buyer
         return {
           id: row.id,
           listing: row.listing && {
@@ -70,7 +80,12 @@ export function useConversations() {
             status: row.listing.status as ListingStatus,
             thumbUrl: row.listing.photos[0] ? photoUrl(row.listing.photos[0], true) : '',
           },
-          other: isBuyer ? row.seller : row.buyer,
+          other: {
+            username: other.username,
+            name: other.name,
+            avatarUrl: other.avatar_path ? photoUrl(other.avatar_path, true) : undefined,
+          },
+          otherId: other.id,
           isBuyer,
           lastMessage: row.last_message,
           lastMessageAt: row.last_message_at ? new Date(row.last_message_at) : null,
@@ -171,7 +186,7 @@ export function useMarkChatRead() {
   return mutation.mutate
 }
 
-type SendMessage = { conversationId: string; body: string; id?: string }
+type SendMessage = { conversationId: string; body: string; file?: File; id?: string }
 
 // Optimista: el mensaje se ve al instante con un reloj; si falla queda marcado para reintentar.
 // El id se crea aqui para reconocer el mismo mensaje cuando regresa por Realtime
@@ -180,31 +195,44 @@ export function useSendMessage() {
   const userId = useSession()?.user.id
 
   const mutation = useMutation({
+    // En fila: una foto tarda en comprimirse y el mensaje que mandas despues no debe ganarle
+    scope: { id: 'send-message' },
     mutationFn: async (message: ChatMessage) => {
+      // Primero se comprime y sube la foto (los GIF van tal cual)
+      const imagePath = message.file ? await uploadPhoto(message.file, userId!) : null
       const { error } = await supabase
         .from('messages')
-        .insert({ id: message.id, conversation_id: message.conversationId, body: message.body })
+        .insert({ id: message.id, conversation_id: message.conversationId, body: message.body, image_path: imagePath })
       // 23505: ese id ya existe, o sea que el intento anterior si llego
       if (error && error.code !== '23505') throw error
     },
     onMutate: (message) => putMessage(queryClient, message),
     onSuccess: (_data, message) => {
-      putMessage(queryClient, { ...message, status: undefined })
+      putMessage(queryClient, { ...message, status: undefined, file: undefined })
       queryClient.invalidateQueries({ queryKey: ['chats'] })
     },
-    onError: (_error, message) => putMessage(queryClient, { ...message, status: 'failed' }),
+    onError: (_error, message) => {
+      putMessage(queryClient, { ...message, status: 'failed' })
+      // Puede que te hayan bloqueado: se vuelve a revisar para mostrarlo en el chat
+      queryClient.invalidateQueries({ queryKey: ['blocks'] })
+    },
   })
 
-  return ({ conversationId, body, id = crypto.randomUUID() }: SendMessage) =>
+  return ({ conversationId, body, file, id = crypto.randomUUID() }: SendMessage) => {
+    const preview = file && URL.createObjectURL(file)
     mutation.mutate({
       id,
       conversationId,
       body,
+      file,
+      imageUrl: preview,
+      thumbUrl: preview,
       senderId: userId!,
       createdAt: new Date().toISOString(),
       status: 'sending',
       isNew: true,
     })
+  }
 }
 
 // Abre el chat con el vendedor de una venta; si ya existia, regresa ese mismo
@@ -233,4 +261,93 @@ export function useOpenConversation() {
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chats'] }),
   })
+}
+
+// Chats que silenciaste: siguen llegando, pero no suman al numero rojo de arriba
+export function useChatMutes() {
+  const userId = useSession()?.user.id
+
+  return (
+    useQuery({
+      queryKey: ['chat-mutes', userId],
+      enabled: !!userId,
+      queryFn: async () => {
+        const { data, error } = await supabase.from('chat_mutes').select('conversation_id')
+        if (error) throw error
+        return new Set(data.map((row) => row.conversation_id))
+      },
+    }).data ?? new Set<string>()
+  )
+}
+
+// Silencia o quita el silencio; el cambio se ve al instante y regresa si falla
+export function useToggleMute() {
+  const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
+  const key = ['chat-mutes', userId]
+
+  return useMutation({
+    mutationFn: async ({ chat, muted }: { chat: string; muted: boolean }) => {
+      const { error } = muted
+        ? await supabase.from('chat_mutes').insert({ conversation_id: chat })
+        : await supabase.from('chat_mutes').delete().eq('conversation_id', chat)
+      if (error) throw error
+    },
+    onMutate: async ({ chat, muted }) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<Set<string>>(key)
+      const next = new Set(previous)
+      if (muted) next.add(chat)
+      else next.delete(chat)
+      queryClient.setQueryData(key, next)
+      return { previous }
+    },
+    onError: (_error, _vars, context) => queryClient.setQueryData(key, context?.previous),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+  }).mutate
+}
+
+export type BlockState = 'none' | 'blocked-by-me' | 'blocked-me'
+
+// Si tu bloqueaste a esa persona, si ella te bloqueo a ti, o ninguno
+export function useBlockState(otherId: string | undefined): BlockState {
+  const userId = useSession()?.user.id
+  const { data } = useQuery({
+    queryKey: ['blocks', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('blocks').select('blocker_id, blocked_id')
+      if (error) throw error
+      return data
+    },
+  })
+  if (data?.some((b) => b.blocker_id === userId && b.blocked_id === otherId)) return 'blocked-by-me'
+  if (data?.some((b) => b.blocker_id === otherId && b.blocked_id === userId)) return 'blocked-me'
+  return 'none'
+}
+
+// Bloquea o desbloquea a una persona; los dos dejan de poder escribirse
+export function useToggleBlock() {
+  const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
+  const key = ['blocks', userId]
+  type Row = { blocker_id: string; blocked_id: string }
+
+  return useMutation({
+    mutationFn: async ({ otherId, blocked }: { otherId: string; blocked: boolean }) => {
+      const { error } = blocked
+        ? await supabase.from('blocks').insert({ blocked_id: otherId })
+        : await supabase.from('blocks').delete().eq('blocker_id', userId!).eq('blocked_id', otherId)
+      if (error) throw error
+    },
+    onMutate: async ({ otherId, blocked }) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<Row[]>(key)
+      const others = (previous ?? []).filter((b) => !(b.blocker_id === userId && b.blocked_id === otherId))
+      queryClient.setQueryData(key, blocked ? [...others, { blocker_id: userId!, blocked_id: otherId }] : others)
+      return { previous }
+    },
+    onError: (_error, _vars, context) => queryClient.setQueryData(key, context?.previous),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+  }).mutate
 }

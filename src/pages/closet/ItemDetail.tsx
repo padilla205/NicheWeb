@@ -18,12 +18,13 @@ import { PhotoCarousel } from './PhotoCarousel'
 type ItemDetailProps = {
   item: ClosetItem
   onClose: () => void
+  readOnly?: boolean
 }
 
 // Aparicion de la informacion: empieza casi junto con la apertura y frena suave al final
 const appearTransition = { delay: 0.05, duration: 0.25, ease: [0.32, 0.72, 0, 1] } as const
 
-export function ItemDetail({ item, onClose }: ItemDetailProps) {
+export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
   // Cada vez que se abre una prenda empieza en la portada
   const [photoIndex, setPhotoIndex] = useState(0)
   const { label: typeLabel, zoneLabel } = getTypeInfo(item.type)
@@ -133,45 +134,50 @@ export function ItemDetail({ item, onClose }: ItemDetailProps) {
               )}
             </DetailSection>
 
-            <DetailSection title="En tu perfil">
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Quien ve esta prenda en tu perfil">
-                <ChoicePill active={!item.private} onClick={() => setItemPrivate(item.id, false)}>
-                  Visible
-                </ChoicePill>
-                <ChoicePill active={item.private} onClick={() => setItemPrivate(item.id, true)}>
-                  Privada
-                </ChoicePill>
-              </div>
-              {!closetPublic && (
-                <p className="text-xs text-muted-foreground">
-                  Tu closet es privado, asi que por ahora nadie ve ninguna prenda.
-                </p>
-              )}
-            </DetailSection>
+            {/* Las prendas de otra persona solo se ven; editar y vender es del dueno */}
+            {!readOnly && (
+              <>
+                <DetailSection title="En tu perfil">
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Quien ve esta prenda en tu perfil">
+                    <ChoicePill active={!item.private} onClick={() => setItemPrivate(item.id, false)}>
+                      Visible
+                    </ChoicePill>
+                    <ChoicePill active={item.private} onClick={() => setItemPrivate(item.id, true)}>
+                      Privada
+                    </ChoicePill>
+                  </div>
+                  {!closetPublic && (
+                    <p className="text-xs text-muted-foreground">
+                      Tu closet es privado, asi que por ahora nadie ve ninguna prenda.
+                    </p>
+                  )}
+                </DetailSection>
 
-            <div className="flex flex-wrap gap-2">
-              {/* Crea una venta con los datos de la prenda; solo falta precio, talla y estado */}
-              <MorphButton hidden={sellOrigin !== null} onOpen={setSellOrigin} variant="outline">
-                <Tag />
-                Vender esta prenda
-              </MorphButton>
-              <Button
-                variant={confirmDelete ? 'destructive' : 'ghost'}
-                disabled={deleteItem.isPending}
-                onClick={() => {
-                  if (!confirmDelete) return setConfirmDelete(true)
-                  deleteItem.mutate(item, { onSuccess: onClose })
-                }}
-                onBlur={() => setConfirmDelete(false)}
-              >
-                <Trash2 />
-                {deleteItem.isPending ? 'Eliminando' : confirmDelete ? 'Toca otra vez para eliminar' : 'Eliminar'}
-              </Button>
-            </div>
-            {deleteItem.isError && (
-              <p role="alert" className="text-sm text-destructive">
-                No se pudo eliminar. Intenta de nuevo.
-              </p>
+                <div className="flex flex-wrap gap-2">
+                  {/* Crea una venta con los datos de la prenda; solo falta precio, talla y estado */}
+                  <MorphButton hidden={sellOrigin !== null} onOpen={setSellOrigin} variant="outline">
+                    <Tag />
+                    Vender esta prenda
+                  </MorphButton>
+                  <Button
+                    variant={confirmDelete ? 'destructive' : 'ghost'}
+                    disabled={deleteItem.isPending}
+                    onClick={() => {
+                      if (!confirmDelete) return setConfirmDelete(true)
+                      deleteItem.mutate(item, { onSuccess: onClose })
+                    }}
+                    onBlur={() => setConfirmDelete(false)}
+                  >
+                    <Trash2 />
+                    {deleteItem.isPending ? 'Eliminando' : confirmDelete ? 'Toca otra vez para eliminar' : 'Eliminar'}
+                  </Button>
+                </div>
+                {deleteItem.isError && (
+                  <p role="alert" className="text-sm text-destructive">
+                    No se pudo eliminar. Intenta de nuevo.
+                  </p>
+                )}
+              </>
             )}
 
             <DetailSection title="Agregada">

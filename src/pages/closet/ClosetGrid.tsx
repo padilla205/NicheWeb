@@ -6,9 +6,11 @@ import { ItemDetail } from './ItemDetail'
 
 type ClosetGridProps = {
   items: ClosetItem[]
+  // Closet de otra persona: el detalle no trae opciones para editar
+  readOnly?: boolean
 }
 
-export function ClosetGrid({ items }: ClosetGridProps) {
+export function ClosetGrid({ items, readOnly }: ClosetGridProps) {
   const [openId, setOpenId] = useState<string | null>(null)
   // La ultima tarjeta abierta se queda por encima hasta que termina de regresar a su lugar
   const [raisedId, setRaisedId] = useState<string | null>(null)
@@ -41,6 +43,7 @@ export function ClosetGrid({ items }: ClosetGridProps) {
             key={openItem.id}
             item={openItem}
             onClose={close}
+            readOnly={readOnly}
           />
         )}
       </AnimatePresence>

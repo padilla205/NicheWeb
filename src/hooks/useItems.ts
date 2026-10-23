@@ -37,9 +37,11 @@ function fromRow(row: Tables<'items'>): ClosetItem {
   }
 }
 
-// Tus prendas, las mas nuevas primero, de 20 en 20. Con tipos elegidos, solo esos tipos
-export function useItems(types: ClothingType[] = []) {
-  const { id: userId } = useProfile()
+// Prendas de un closet, las mas nuevas primero, de 20 en 20. Con tipos elegidos, solo esos tipos.
+// Sin ownerId es tu closet; el de otra persona solo trae sus prendas visibles (lo decide RLS)
+export function useItems(types: ClothingType[] = [], ownerId?: string) {
+  const { id: myId } = useProfile()
+  const userId = ownerId ?? myId
   const query = useInfiniteQuery({
     queryKey: ['items', userId, [...types].sort()],
     initialPageParam: 0,

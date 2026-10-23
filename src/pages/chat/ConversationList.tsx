@@ -1,9 +1,9 @@
-import { MessageCircle, Shirt } from 'lucide-react'
+import { BellOff, MessageCircle, Shirt } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink } from 'react-router'
 import { ChoicePill } from '@/components/ChoicePill'
 import { UnreadBadge } from '@/components/UnreadBadge'
-import { useUnreadCounts } from '@/hooks/useChat'
+import { useChatMutes, useUnreadCounts } from '@/hooks/useChat'
 import type { Conversation } from '@/lib/chat'
 import { formatTimeAgo } from '@/lib/feed'
 import { cn } from '@/lib/utils'
@@ -21,9 +21,13 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
   const buying = chosen ?? conversations?.find((conversation) => conversation.id === activeId)?.isBuyer ?? true
   const shown = conversations?.filter((conversation) => conversation.isBuyer === buying)
   const unread = useUnreadCounts()
-  // Sin leer en cada pestana, para notar los de la pestana que no estas viendo
+  const mutes = useChatMutes()
+  // Sin leer en cada pestana (sin los silenciados), para notar los de la pestana que no estas viendo
   const tabUnread = (isBuyer: boolean) =>
-    conversations?.reduce((sum, c) => sum + (c.isBuyer === isBuyer ? (unread[c.id] ?? 0) : 0), 0) ?? 0
+    conversations?.reduce(
+      (sum, c) => sum + (c.isBuyer === isBuyer && !mutes.has(c.id) ? (unread[c.id] ?? 0) : 0),
+      0,
+    ) ?? 0
 
   return (
     <div className="flex min-h-0 flex-col">
@@ -51,7 +55,11 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
         <ul className="flex flex-col md:overflow-y-auto">
           {shown.map((conversation) => (
             <li key={conversation.id}>
-              <ConversationRow conversation={conversation} unread={unread[conversation.id] ?? 0} />
+              <ConversationRow
+                conversation={conversation}
+                unread={unread[conversation.id] ?? 0}
+                muted={mutes.has(conversation.id)}
+              />
             </li>
           ))}
         </ul>
@@ -60,7 +68,9 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
   )
 }
 
-function ConversationRow({ conversation, unread }: { conversation: Conversation; unread: number }) {
+type ConversationRowProps = { conversation: Conversation; unread: number; muted: boolean }
+
+function ConversationRow({ conversation, unread, muted }: ConversationRowProps) {
   const { listing, other, lastMessage, lastMessageAt } = conversation
 
   return (
@@ -76,7 +86,10 @@ function ConversationRow({ conversation, unread }: { conversation: Conversation;
       <UserAvatar user={other} className="size-10" />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-sm">
         <div className="flex items-baseline justify-between gap-2">
-          <p className="truncate font-medium">{other.name}</p>
+          <p className="flex min-w-0 items-center gap-1.5 font-medium">
+            <span className="truncate">{other.name}</span>
+            {muted && <BellOff aria-label="Silenciado" className="size-3.5 shrink-0 text-muted-foreground" />}
+          </p>
           {lastMessageAt && (
             <span className="shrink-0 text-xs text-muted-foreground">{formatTimeAgo(lastMessageAt)}</span>
           )}
@@ -93,7 +106,7 @@ function ConversationRow({ conversation, unread }: { conversation: Conversation;
           <p className={cn('truncate', unread ? 'font-medium text-foreground' : 'text-muted-foreground')}>
             {lastMessage ?? 'Chat nuevo, escribe el primer mensaje'}
           </p>
-          <UnreadBadge count={unread} />
+          <UnreadBadge count={unread} muted={muted} />
         </div>
       </div>
     </NavLink>
