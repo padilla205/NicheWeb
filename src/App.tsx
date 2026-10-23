@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { AppLayout } from '@/components/AppLayout'
+import { RequireAuth } from '@/components/RequireAuth'
 import { ChatPage } from '@/pages/chat/ChatPage'
 import { ClosetPage } from '@/pages/closet/ClosetPage'
 import { FeedPage } from '@/pages/feed/FeedPage'
@@ -14,16 +15,18 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="login" element={<LoginPage />} />
-        <Route element={<AppLayout />}>
-          <Route index element={<Navigate to="/closet" replace />} />
-          <Route path="closet" element={<ClosetPage />} />
-          <Route path="outfits" element={<OutfitsPage />} />
-          <Route path="feed" element={<FeedPage />} />
-          <Route path="marketplace" element={<MarketplacePage />} />
-          <Route path="marketplace/:id" element={<ListingDetailPage />} />
-          <Route path="chat" element={<ChatPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="*" element={<Navigate to="/closet" replace />} />
+        <Route element={<RequireAuth />}>
+          <Route element={<AppLayout />}>
+            <Route index element={<Navigate to="/closet" replace />} />
+            <Route path="closet" element={<ClosetPage />} />
+            <Route path="outfits" element={<OutfitsPage />} />
+            <Route path="feed" element={<FeedPage />} />
+            <Route path="marketplace" element={<MarketplacePage />} />
+            <Route path="marketplace/:id" element={<ListingDetailPage />} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="*" element={<Navigate to="/closet" replace />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
