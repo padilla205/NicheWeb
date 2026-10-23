@@ -54,14 +54,24 @@ export function AuthForm() {
 
   return (
     <div className="flex w-full max-w-sm flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {mode === 'login' ? 'Bienvenido de vuelta' : 'Crea tu cuenta'}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {mode === 'login' ? 'Entra para ver tu closet' : 'Empieza a armar tu closet digital'}
-        </p>
-      </div>
+      {/* Al cambiar de modo el texto nuevo se abre desde el centro hacia los lados, como cortina */}
+      {/* popLayout: el texto que sale no ocupa lugar, asi nada brinca */}
+      <AnimatePresence initial={false} mode="popLayout">
+        <motion.div
+          key={mode}
+          initial={{ clipPath: 'inset(0 50% 0 50%)' }}
+          animate={{ clipPath: 'inset(0 0% 0 0%)' }}
+          exit={{ opacity: 0, transition: { duration: 0 } }}
+          transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+        >
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {mode === 'login' ? 'Bienvenido de vuelta' : 'Crea tu cuenta'}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {mode === 'login' ? 'Entra para ver tu closet' : 'Empieza a armar tu closet digital'}
+          </p>
+        </motion.div>
+      </AnimatePresence>
 
       {/* Selector: el fondo se desliza a la opcion elegida */}
       <div role="tablist" aria-label="Tipo de acceso" className="grid grid-cols-2 rounded-lg bg-muted p-1">
