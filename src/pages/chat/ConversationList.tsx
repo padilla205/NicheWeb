@@ -14,32 +14,47 @@ type ConversationListProps = {
   activeId: string | undefined
 }
 
-// Tus chats separados en los que compras y los que vendes
+type Tab = 'buying' | 'selling' | 'unread'
+
+const tabs: { value: Tab; label: string; empty: string }[] = [
+  { value: 'buying', label: 'Chats', empty: 'Cuando le escribas a un vendedor, el chat aparece aqui' },
+  { value: 'selling', label: 'Vendiendo', empty: 'Cuando alguien te escriba por una venta, el chat aparece aqui' },
+  { value: 'unread', label: 'No leido', empty: 'No tienes mensajes sin leer' },
+]
+
+// Tus chats separados en los que compras, los que vendes y los que tienen mensajes sin leer
 export function ConversationList({ conversations, activeId }: ConversationListProps) {
-  // Hasta que eliges una pestana, se ve la del chat abierto (o Comprando)
-  const [chosen, setBuying] = useState<boolean>()
-  const buying = chosen ?? conversations?.find((conversation) => conversation.id === activeId)?.isBuyer ?? true
-  const shown = conversations?.filter((conversation) => conversation.isBuyer === buying)
   const unread = useUnreadCounts()
   const mutes = useChatMutes()
+  // Hasta que eliges una pestana, se ve la del chat abierto (o Chats)
+  const [chosen, setTab] = useState<Tab>()
+  const active = conversations?.find((conversation) => conversation.id === activeId)
+  const tab = chosen ?? (active && !active.isBuyer ? 'selling' : 'buying')
+
+  function inTab(c: Conversation, value: Tab) {
+    if (value === 'buying') return c.isBuyer
+    if (value === 'selling') return !c.isBuyer
+    // El chat abierto se queda en "No leido" aunque al abrirlo ya quedo leido, para que no desaparezca
+    return (unread[c.id] ?? 0) > 0 || c.id === activeId
+  }
+
+  const shown = conversations?.filter((conversation) => inTab(conversation, tab))
   // Sin leer en cada pestana (sin los silenciados), para notar los de la pestana que no estas viendo
-  const tabUnread = (isBuyer: boolean) =>
+  const tabUnread = (value: Tab) =>
     conversations?.reduce(
-      (sum, c) => sum + (c.isBuyer === isBuyer && !mutes.has(c.id) ? (unread[c.id] ?? 0) : 0),
+      (sum, c) => sum + (inTab(c, value) && !mutes.has(c.id) ? (unread[c.id] ?? 0) : 0),
       0,
     ) ?? 0
 
   return (
     <div className="flex min-h-0 flex-col">
-      <div className="flex gap-2 pb-3 md:p-3">
-        <ChoicePill active={buying} onClick={() => setBuying(true)}>
-          Comprando
-          <UnreadBadge count={tabUnread(true)} />
-        </ChoicePill>
-        <ChoicePill active={!buying} onClick={() => setBuying(false)}>
-          Vendiendo
-          <UnreadBadge count={tabUnread(false)} />
-        </ChoicePill>
+      <div className="flex flex-wrap gap-2 pb-3 md:p-3">
+        {tabs.map(({ value, label }) => (
+          <ChoicePill key={value} active={tab === value} onClick={() => setTab(value)}>
+            {label}
+            <UnreadBadge count={tabUnread(value)} />
+          </ChoicePill>
+        ))}
       </div>
 
       {!shown ? (
@@ -47,9 +62,7 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
       ) : shown.length === 0 ? (
         <div className="flex flex-col items-center gap-2 px-6 py-12 text-center text-sm text-muted-foreground">
           <MessageCircle className="size-8" strokeWidth={1.5} />
-          {buying
-            ? 'Cuando le escribas a un vendedor, el chat aparece aqui'
-            : 'Cuando alguien te escriba por una venta, el chat aparece aqui'}
+          {tabs.find((option) => option.value === tab)?.empty}
         </div>
       ) : (
         <ul className="flex flex-col md:overflow-y-auto">

@@ -41,7 +41,7 @@ export function ChatPage() {
   return (
     <div className="md:mx-auto md:max-w-6xl">
       <PageTitle title="Mensajes" />
-      <div className="md:grid md:h-[calc(100dvh-4rem-3rem-4rem)] md:grid-cols-[20rem_minmax(0,1fr)] md:overflow-hidden md:rounded-2xl md:border-2">
+      <div className="md:grid md:h-[calc(100dvh-4rem-3rem-4rem)] md:grid-cols-[22rem_minmax(0,1fr)] md:overflow-hidden md:rounded-2xl md:border-2">
         <aside className="md:col-start-1 md:row-start-1 md:flex md:min-h-0 md:flex-col md:border-r-2">
           <ConversationList conversations={conversations} activeId={id} />
         </aside>
