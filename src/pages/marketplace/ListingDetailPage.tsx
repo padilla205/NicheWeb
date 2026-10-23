@@ -12,6 +12,7 @@ import { getTeamLabel } from '@/lib/teams'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
 import { ListingGallery } from './ListingGallery'
 import { ListingOwnerActions } from './ListingOwnerActions'
+import { ShareButton } from './ShareButton'
 import { StatusBadge } from './StatusBadge'
 
 // El mapa solo se descarga en las ventas que tienen lugar de entrega
@@ -25,12 +26,15 @@ export function ListingDetailPage() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <Button variant="ghost" size="sm" className="mb-4 -ml-2" asChild>
-        <Link to="/marketplace">
-          <ArrowLeft />
-          Volver al marketplace
-        </Link>
-      </Button>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <Button variant="ghost" size="sm" className="-ml-2" asChild>
+          <Link to="/marketplace">
+            <ArrowLeft />
+            Volver al marketplace
+          </Link>
+        </Button>
+        {listing && <ShareButton title={listing.title} />}
+      </div>
 
       {!listing ? (
         <p className="py-20 text-center text-sm text-muted-foreground">Esta venta ya no existe.</p>
