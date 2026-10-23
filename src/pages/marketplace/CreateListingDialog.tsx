@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateListing, useUpdateListing } from '@/hooks/useListings'
 import { useUserLocation } from '@/hooks/useUserLocation'
-import type { Season } from '@/lib/clothing'
+import { type ClosetItem, getTypeInfo, type Season } from '@/lib/clothing'
 import { toLocation } from '@/lib/locations'
 import { type Delivery, isJerseyType, type Listing, type ListingCondition, listingConditions } from '@/lib/marketplace'
 import { ColorPicker } from '@/pages/closet/ColorPicker'
@@ -24,9 +24,13 @@ type CreateListingDialogProps = {
   onClose: () => void
   // Si llega una venta, la ventana sirve para editarla en lugar de crear una nueva
   listing?: Listing
+  // Prenda del closet que se quiere vender: llena fotos, nombre, tipo, temporadas y colores
+  fromItem?: ClosetItem
+  // Se llama despues de publicar una venta nueva (no al cancelar)
+  onPublished?: () => void
 }
 
-export function CreateListingDialog({ origin, onClose, listing }: CreateListingDialogProps) {
+export function CreateListingDialog({ origin, onClose, listing, fromItem, onPublished }: CreateListingDialogProps) {
   return (
     <MorphDialog
       origin={origin}
@@ -36,7 +40,12 @@ export function CreateListingDialog({ origin, onClose, listing }: CreateListingD
         listing ? 'Cambia lo que necesites de tu venta.' : 'Agrega fotos y los datos de la prenda. El trato se cierra en persona.'
       }
     >
-      <CreateListingForm onDone={onClose} listing={listing} />
+      <CreateListingForm
+        onDone={onClose}
+        listing={listing}
+        fromItem={fromItem}
+        onPublished={onPublished}
+      />
     </MorphDialog>
   )
 }
@@ -52,17 +61,22 @@ async function urlsToFiles(urls: string[]) {
   )
 }
 
-function CreateListingForm({ onDone, listing }: { onDone: () => void; listing?: Listing }) {
+type CreateListingFormProps = Pick<CreateListingDialogProps, 'listing' | 'fromItem' | 'onPublished'> & {
+  onDone: () => void
+}
+
+function CreateListingForm({ onDone, listing, fromItem, onPublished }: CreateListingFormProps) {
+  const itemType = fromItem ? getTypeInfo(fromItem.type).label : ''
   const [photos, setPhotos] = useState<File[]>([])
-  const [title, setTitle] = useState(listing?.title ?? '')
+  const [title, setTitle] = useState(listing?.title ?? (fromItem ? fromItem.name || itemType : ''))
   // Se guarda como texto mientras se escribe; se convierte a numero al publicar
   const [price, setPrice] = useState(listing ? String(listing.price) : '')
-  const [type, setType] = useState(listing?.type ?? '')
-  const [team, setTeam] = useState(listing?.team ?? '')
+  const [type, setType] = useState(listing?.type ?? itemType)
+  const [team, setTeam] = useState(listing?.team ?? fromItem?.team ?? '')
   const [size, setSize] = useState(listing?.size ?? '')
   const [condition, setCondition] = useState<ListingCondition | ''>(listing?.condition ?? '')
-  const [selectedSeasons, setSelectedSeasons] = useState<Season[]>(listing?.seasons ?? [])
-  const [colors, setColors] = useState<string[]>(listing?.colors ?? [])
+  const [selectedSeasons, setSelectedSeasons] = useState<Season[]>(listing?.seasons ?? fromItem?.seasons ?? [])
+  const [colors, setColors] = useState<string[]>(listing?.colors ?? fromItem?.colors ?? [])
   const [description, setDescription] = useState(listing?.description ?? '')
   const [delivery, setDelivery] = useState<Delivery | undefined>(listing?.delivery)
   // Empieza con tu localizacion si ya la elegiste; se puede cambiar solo para esta venta
@@ -72,10 +86,11 @@ function CreateListingForm({ onDone, listing }: { onDone: () => void; listing?: 
   const createListing = useCreateListing()
   const updateListing = useUpdateListing()
 
-  // Al editar, carga las fotos actuales en el selector
+  // Al editar (o al vender una prenda del closet), carga sus fotos en el selector
   useEffect(() => {
-    if (listing && listing.photoUrls.length > 0) urlsToFiles(listing.photoUrls).then(setPhotos)
-  }, [listing])
+    const urls = listing?.photoUrls ?? fromItem?.photoUrls ?? []
+    if (urls.length > 0) urlsToFiles(urls).then(setPhotos)
+  }, [listing, fromItem])
 
   const priceNumber = Number(price)
   const isJersey = isJerseyType(type)
@@ -115,7 +130,10 @@ function CreateListingForm({ onDone, listing }: { onDone: () => void; listing?: 
       description,
     }
     if (listing) updateListing(listing.id, data)
-    else createListing(data)
+    else {
+      createListing(data)
+      onPublished?.()
+    }
     onDone()
   }
 
