@@ -1,6 +1,7 @@
 import { Check, Heart, MessageCircle, MessageSquareShare, Repeat2, Send } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
+import { RollingNumber } from '@/components/RollingNumber'
 import { Button } from '@/components/ui/button'
 import type { Post } from '@/lib/feed'
 import { popIn } from '@/lib/motion'
@@ -35,7 +36,7 @@ export function PostActions({ post, onLike, onComment, onShareToProfile }: PostA
         >
           <Heart className={cn('size-5', post.likedByMe && 'fill-red-500 text-red-500')} />
         </motion.span>
-        <span className="tabular-nums">{post.likes}</span>
+        <RollingNumber value={post.likes} />
       </Button>
       <Button variant="ghost" size="sm" aria-label="Comentar" onClick={onComment} className="gap-1.5">
         <MessageCircle className="size-5" />

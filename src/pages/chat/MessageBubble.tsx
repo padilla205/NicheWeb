@@ -15,6 +15,7 @@ import {
   sharedLink,
 } from '@/lib/chat'
 import { cn } from '@/lib/utils'
+import { RollingNumber } from '@/components/RollingNumber'
 import { ChatImage } from './ChatImage'
 
 type MessageBubbleProps = {
@@ -237,7 +238,8 @@ function Reactions({ message }: { message: ChatMessage }) {
       {[...counts].map(([emoji, count]) => (
         <span key={emoji} className="flex items-center">
           {emoji}
-          {count > 1 && <span className="ml-0.5 text-xs text-muted-foreground tabular-nums">{count}</span>}
+          {/* El contador rueda al sumar o quitar una reaccion */}
+          <RollingNumber value={count} className="ml-0.5 text-xs text-muted-foreground" />
         </span>
       ))}
     </motion.span>

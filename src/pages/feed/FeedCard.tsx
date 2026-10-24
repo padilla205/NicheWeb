@@ -5,6 +5,7 @@ import { useToggleLike } from '@/hooks/usePosts'
 import type { Post } from '@/lib/feed'
 import { hoverLift } from '@/lib/motion'
 import { cn } from '@/lib/utils'
+import { RollingNumber } from '@/components/RollingNumber'
 import { PostPhotos } from './PostPhotos'
 import { AuthorMenu } from './AuthorMenu'
 
@@ -70,8 +71,17 @@ export function FeedCard({ post, onOpen, onAuthorHidden, layoutId }: FeedCardPro
           aria-label={post.likedByMe ? 'Quitar me gusta' : 'Me gusta'}
           className="touch-target relative flex items-center gap-1 text-muted-foreground tabular-nums hover:text-foreground"
         >
-          <Heart className={cn('size-4', post.likedByMe && 'fill-red-500 text-red-500')} />
-          {post.likes}
+          {/* Al dar like el corazon da un saltito y el numero sube rodando */}
+          <motion.span
+            key={String(post.likedByMe)}
+            initial={post.likedByMe ? { scale: 0.6 } : false}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', visualDuration: 0.2, bounce: 0.5 }}
+            className="flex"
+          >
+            <Heart className={cn('size-4', post.likedByMe && 'fill-red-500 text-red-500')} />
+          </motion.span>
+          <RollingNumber value={post.likes} />
         </button>
         <button
           type="button"
