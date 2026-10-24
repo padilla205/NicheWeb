@@ -1,6 +1,8 @@
 import { MapPin } from 'lucide-react'
 import { Link } from 'react-router'
 import { getCityLabel } from '@/lib/locations'
+import { hoverLift } from '@/lib/motion'
+import { cn } from '@/lib/utils'
 import { formatPrice, getConditionLabel, type Listing } from '@/lib/marketplace'
 import { ListingPhoto } from './ListingPhoto'
 import { StatusBadge } from './StatusBadge'
@@ -15,7 +17,12 @@ export function ListingCard({ listing }: { listing: Listing }) {
   return (
     <Link
       to={`/marketplace/${listing.id}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border bg-card outline-none transition-transform duration-150 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98]"
+      className={cn(
+        'group relative flex flex-col overflow-hidden rounded-2xl border bg-card outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+        // Sube con el mouse y se encoge apenas al presionarla
+        hoverLift,
+        'transition-[translate,box-shadow,scale] motion-safe:active:scale-[0.98]',
+      )}
     >
       <ListingPhoto listing={listing} iconClassName="size-10" />
       {listing.status !== 'disponible' && <StatusBadge listing={listing} className="absolute top-2 left-2" />}

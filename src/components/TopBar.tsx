@@ -1,5 +1,6 @@
 import { MessageCircle, Search } from 'lucide-react'
 import { Link, NavLink } from 'react-router'
+import { NotificationBell } from '@/components/NotificationBell'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { UnreadBadge } from '@/components/UnreadBadge'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,7 @@ export function TopBar() {
         />
       </div>
       <div className="flex items-center gap-2 justify-self-end">
+        <NotificationBell />
         <NavLink
           to="/chat"
           aria-label={unread ? `Mensajes, ${unread} sin leer` : 'Mensajes'}

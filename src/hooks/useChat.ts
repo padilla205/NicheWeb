@@ -14,7 +14,7 @@ const PAGE_SIZE = 30
 const CHATS_LIMIT = 50
 
 // Cada persona se nombra por su llave porque los chats se conectan dos veces con perfiles
-const CHAT_COLUMNS = `id, buyer_id, last_message, last_message_at,
+const CHAT_COLUMNS = `id, buyer_id, listing_id, last_message, last_message_at,
   listing:listings(id, title, price, status, photos),
   buyer:profiles!conversations_buyer_id_fkey(id, username, name, avatar_path),
   seller:profiles!conversations_seller_id_fkey(id, username, name, avatar_path)`
@@ -145,6 +145,7 @@ export function useConversations() {
             avatarUrl: other.avatar_path ? photoUrl(other.avatar_path, true) : undefined,
           },
           otherId: other.id,
+          isDirect: row.listing_id === null,
           isBuyer,
           lastMessage: row.last_message,
           lastMessageAt: row.last_message_at ? new Date(row.last_message_at) : null,
@@ -510,4 +511,32 @@ export function useDeleteMessage() {
     onError: (_error, message) => queryClient.invalidateQueries({ queryKey: ['messages', message.conversationId] }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chats'] }),
   }).mutate
+}
+
+// Abre (o crea) el chat directo con una persona, sin venta de por medio. Hay uno solo por pareja
+export function useOpenDirectChat() {
+  const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
+
+  return useMutation({
+    mutationFn: async (otherId: string) => {
+      const { data: existing, error: findError } = await supabase
+        .from('conversations')
+        .select('id')
+        .is('listing_id', null)
+        .or(`and(buyer_id.eq.${userId},seller_id.eq.${otherId}),and(buyer_id.eq.${otherId},seller_id.eq.${userId})`)
+        .maybeSingle()
+      if (findError) throw findError
+      if (existing) return existing.id
+
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert({ listing_id: null, seller_id: otherId })
+        .select('id')
+        .single()
+      if (error) throw error
+      return data.id
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chats'] }),
+  })
 }

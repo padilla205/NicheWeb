@@ -41,6 +41,7 @@ export function ListingOwnerActions({ listing }: { listing: Listing }) {
         {listingStatuses.map((status) => (
           <ChoicePill
             key={status.value}
+            slideId="listing-status"
             active={listing.status === status.value}
             onClick={() => setStatus.mutate({ id: listing.id, status: status.value })}
           >

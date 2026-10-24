@@ -54,7 +54,7 @@ export function PostGrid({ posts, emptyText }: { posts: Post[]; emptyText: strin
                 className="relative flex aspect-[4/5] items-end overflow-hidden text-left outline outline-1 -outline-offset-1 outline-black/10 focus-visible:ring-3 focus-visible:ring-ring/50 dark:outline-white/10"
               >
                 <motion.div
-                  layoutId={linked ? `profile-post-photo-${post.id}` : undefined}
+                  layoutId={linked ? `profile-post-${post.id}-photo` : undefined}
                   className="absolute inset-0 flex items-center justify-center bg-muted"
                 >
                   <PostPhoto post={post} iconClassName="size-10" />

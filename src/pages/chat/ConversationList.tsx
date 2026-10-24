@@ -18,7 +18,7 @@ type ConversationListProps = {
 type Tab = 'buying' | 'selling' | 'unread'
 
 const tabs: { value: Tab; label: string; empty: string }[] = [
-  { value: 'buying', label: 'Chats', empty: 'Cuando le escribas a un vendedor, el chat aparece aqui' },
+  { value: 'buying', label: 'Chats', empty: 'Escribele a alguien desde su perfil o a un vendedor desde su venta' },
   { value: 'selling', label: 'Vendiendo', empty: 'Cuando alguien te escriba por una venta, el chat aparece aqui' },
   { value: 'unread', label: 'No leido', empty: 'No tienes mensajes sin leer' },
 ]
@@ -30,11 +30,12 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
   // Hasta que eliges una pestana, se ve la del chat abierto (o Chats)
   const [chosen, setTab] = useState<Tab>()
   const active = conversations?.find((conversation) => conversation.id === activeId)
-  const tab = chosen ?? (active && !active.isBuyer ? 'selling' : 'buying')
+  const tab = chosen ?? (active && !active.isBuyer && !active.isDirect ? 'selling' : 'buying')
 
   function inTab(c: Conversation, value: Tab) {
-    if (value === 'buying') return c.isBuyer
-    if (value === 'selling') return !c.isBuyer
+    // Los mensajes directos van en Chats; Vendiendo es solo para tus ventas
+    if (value === 'buying') return c.isBuyer || c.isDirect
+    if (value === 'selling') return !c.isBuyer && !c.isDirect
     // El chat abierto se queda en "No leido" aunque al abrirlo ya quedo leido, para que no desaparezca
     return (unread[c.id] ?? 0) > 0 || c.id === activeId
   }
@@ -53,7 +54,7 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
     <div className="flex min-h-0 flex-col">
       <div className="flex flex-wrap gap-2 pb-3 md:p-3">
         {tabs.map(({ value, label }) => (
-          <ChoicePill key={value} active={tab === value} onClick={() => setTab(value)}>
+          <ChoicePill key={value} slideId="chat-tab" active={tab === value} onClick={() => setTab(value)}>
             {label}
             <UnreadBadge count={tabUnread(value)} />
           </ChoicePill>
@@ -113,12 +114,16 @@ function ConversationRow({ conversation, unread, muted }: ConversationRowProps) 
           )}
         </div>
         <div className="flex items-center gap-1.5 text-muted-foreground">
-          {listing?.thumbUrl ? (
+          {conversation.isDirect ? (
+            <MessageCircle className="size-4 shrink-0" strokeWidth={1.5} />
+          ) : listing?.thumbUrl ? (
             <img src={listing.thumbUrl} alt="" loading="lazy" className="size-4 shrink-0 rounded object-cover" />
           ) : (
             <Shirt className="size-4 shrink-0" strokeWidth={1.5} />
           )}
-          <span className="truncate">{listing?.title ?? 'Venta no disponible'}</span>
+          <span className="truncate">
+            {conversation.isDirect ? 'Mensaje directo' : (listing?.title ?? 'Venta no disponible')}
+          </span>
         </div>
         <div className="flex items-center justify-between gap-2">
           <p className={cn('truncate', unread ? 'font-medium text-foreground' : 'text-muted-foreground')}>

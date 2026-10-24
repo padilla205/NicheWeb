@@ -71,13 +71,13 @@ export function DeliveryPicker({ value, onChange, city }: DeliveryPickerProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2" role="group" aria-label="Lugar de entrega">
-        <ChoicePill active={mode === 'none'} onClick={() => changeMode('none')}>
+        <ChoicePill slideId="delivery-mode" active={mode === 'none'} onClick={() => changeMode('none')}>
           Sin mapa
         </ChoicePill>
-        <ChoicePill active={mode === 'point'} onClick={() => changeMode('point')}>
+        <ChoicePill slideId="delivery-mode" active={mode === 'point'} onClick={() => changeMode('point')}>
           Punto de encuentro
         </ChoicePill>
-        <ChoicePill active={mode === 'radius'} onClick={() => changeMode('radius')}>
+        <ChoicePill slideId="delivery-mode" active={mode === 'radius'} onClick={() => changeMode('radius')}>
           Radio de entrega
         </ChoicePill>
       </div>

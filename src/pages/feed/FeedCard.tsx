@@ -1,7 +1,9 @@
 import { Heart, MessageCircle } from 'lucide-react'
+import { motion } from 'motion/react'
 import { type MouseEvent, type PointerEvent, useRef } from 'react'
 import { useToggleLike } from '@/hooks/usePosts'
 import type { Post } from '@/lib/feed'
+import { hoverLift } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 import { PostPhotos } from './PostPhotos'
 import { AuthorMenu } from './AuthorMenu'
@@ -14,10 +16,12 @@ type FeedCardProps = {
   onOpen: () => void
   // Despues de "No me interesa" en el menu del autor
   onAuthorHidden: () => void
+  // Con el mismo nombre que la publicacion abierta, la tarjeta crece hasta abrirse
+  layoutId?: string
 }
 
 // Publicacion en la cuadricula: la foto con su forma, y abajo el autor, likes y comentarios
-export function FeedCard({ post, onOpen, onAuthorHidden }: FeedCardProps) {
+export function FeedCard({ post, onOpen, onAuthorHidden, layoutId }: FeedCardProps) {
   const toggleLike = useToggleLike()
   const start = useRef({ x: 0, y: 0 })
 
@@ -33,8 +37,13 @@ export function FeedCard({ post, onOpen, onAuthorHidden }: FeedCardProps) {
   }
 
   return (
-    <article className="mb-3 break-inside-avoid sm:mb-4 overflow-hidden rounded-2xl border bg-card">
-      <div
+    <motion.article
+      layoutId={layoutId}
+      style={{ borderRadius: 16 }}
+      className={cn('overflow-hidden border bg-card', hoverLift)}
+    >
+      <motion.div
+        layoutId={layoutId && `${layoutId}-photo`}
         role="button"
         tabIndex={0}
         aria-label={`Ver publicacion de ${post.author.username}`}
@@ -45,7 +54,7 @@ export function FeedCard({ post, onOpen, onAuthorHidden }: FeedCardProps) {
         style={{ aspectRatio: post.aspect }}
       >
         <PostPhotos post={post} carouselId={`feed-${post.id}`} iconClassName="size-10" fit="cover" />
-      </div>
+      </motion.div>
       {/* En celular la tarjeta es angosta: el autor va en su propio renglon y los contadores abajo */}
       <footer className="flex flex-wrap items-center gap-x-2 gap-y-1 p-2.5 text-sm">
         <AuthorMenu
@@ -74,6 +83,6 @@ export function FeedCard({ post, onOpen, onAuthorHidden }: FeedCardProps) {
           {post.commentCount}
         </button>
       </footer>
-    </article>
+    </motion.article>
   )
 }

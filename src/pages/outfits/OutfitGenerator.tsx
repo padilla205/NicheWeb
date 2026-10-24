@@ -13,9 +13,11 @@ import {
   type OutfitPieces,
   type OutfitSlot,
   slotLabels,
+  type weatherSuggestion,
 } from '@/lib/outfits'
 import { cn } from '@/lib/utils'
 import { SaveOutfitDialog } from './SaveOutfitDialog'
+import { WeatherCard } from './WeatherCard'
 
 const optionalSlots: OptionalSlot[] = ['cabeza', 'chamarra', 'accesorio']
 
@@ -83,6 +85,14 @@ export function OutfitGenerator({ items, savedKeys }: OutfitGeneratorProps) {
     generate({ optional: next, lock: Object.keys(pieces) as OutfitSlot[] })
   }
 
+  // Outfit para hoy: temporadas segun la temperatura y chamarra si hace frio o llueve
+  function suggestForWeather({ seasons: next, jacket }: ReturnType<typeof weatherSuggestion>) {
+    const nextOptional: OptionalSlot[] = jacket && !optional.includes('chamarra') ? [...optional, 'chamarra'] : optional
+    setSelectedSeasons(next)
+    setOptional(nextOptional)
+    generate({ seasons: next, optional: nextOptional })
+  }
+
   function toggleLock(slot: OutfitSlot) {
     setLocked(locked.includes(slot) ? locked.filter((s) => s !== slot) : [...locked, slot])
   }
@@ -94,6 +104,7 @@ export function OutfitGenerator({ items, savedKeys }: OutfitGeneratorProps) {
 
   return (
     <section aria-label="Generador de outfits" className="flex flex-col gap-4">
+      <WeatherCard onSuggest={suggestForWeather} />
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
         {seasons.map(({ value, label }) => (
           <ChoicePill key={value} active={selectedSeasons.includes(value)} onClick={() => toggleSeason(value)}>

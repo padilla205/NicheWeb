@@ -1,8 +1,9 @@
-import { UserCheck, UserPlus } from 'lucide-react'
+import { MessageCircle, UserCheck, UserPlus } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useOpenDirectChat } from '@/hooks/useChat'
 import { type FollowKind, useFollowCounts, useFollowList, useIsFollowing, useToggleFollow } from '@/hooks/useFollows'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
 
@@ -84,5 +85,25 @@ export function FollowButton({ userId }: { userId: string }) {
       {following ? <UserCheck /> : <UserPlus />}
       {following ? 'Siguiendo' : 'Seguir'}
     </Button>
+  )
+}
+
+// Escribirle a la persona: abre su chat directo (o lo crea la primera vez)
+export function MessageButton({ userId }: { userId: string }) {
+  const openChat = useOpenDirectChat()
+  const navigate = useNavigate()
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <Button
+        variant="outline"
+        disabled={openChat.isPending}
+        onClick={() => openChat.mutate(userId, { onSuccess: (chatId) => navigate(`/chat/${chatId}`) })}
+      >
+        <MessageCircle />
+        {openChat.isPending ? 'Abriendo' : 'Mensaje'}
+      </Button>
+      {openChat.isError && <p className="text-xs text-destructive">No se pudo abrir el chat.</p>}
+    </div>
   )
 }

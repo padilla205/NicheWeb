@@ -202,3 +202,17 @@
 .custom-color-picker .react-colorful__last-control {
   border-radius: 0 0 6px 6px;
 }
+
+/* Notificaciones: las filas entran subiendo apenas y el resaltado de las nuevas se desvanece.
+   Con CSS porque dentro del panel flotante Motion no llega a animarlas */
+@keyframes notif-in {
+  from { opacity: 0; translate: 0 6px; }
+}
+@keyframes notif-fade {
+  to { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes notif-in {
+    from { opacity: 0; }
+  }
+}

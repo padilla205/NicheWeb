@@ -1,6 +1,7 @@
 import { Lock } from 'lucide-react'
 import { motion } from 'motion/react'
 import { type ClosetItem, getColorInfo, getTypeInfo } from '@/lib/clothing'
+import { hoverLift } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
 type ItemCardProps = {
@@ -29,7 +30,10 @@ export function ItemCard({ item, open, raised, onOpen, onLayoutAnimationComplete
         whileTap={{ scale: 0.97 }}
         onLayoutAnimationComplete={onLayoutAnimationComplete}
         style={{ borderRadius: 12, zIndex: raised ? 60 : undefined }}
-        className="relative flex flex-col overflow-hidden border bg-card text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className={cn(
+          'relative flex flex-col overflow-hidden border bg-card text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+          hoverLift,
+        )}
       >
         {/* En la cuadricula siempre se ve la portada; las demas fotos se ven al abrir la prenda */}
         <motion.div layoutId={`item-photo-${item.id}`} className="aspect-square overflow-hidden bg-muted">

@@ -155,10 +155,10 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
               <>
                 <DetailSection title="En tu perfil">
                   <div className="flex flex-wrap gap-2" role="group" aria-label="Quien ve esta prenda en tu perfil">
-                    <ChoicePill active={!item.private} onClick={() => setItemPrivate(item.id, false)}>
+                    <ChoicePill slideId="item-visibility" active={!item.private} onClick={() => setItemPrivate(item.id, false)}>
                       Visible
                     </ChoicePill>
-                    <ChoicePill active={item.private} onClick={() => setItemPrivate(item.id, true)}>
+                    <ChoicePill slideId="item-visibility" active={item.private} onClick={() => setItemPrivate(item.id, true)}>
                       Privada
                     </ChoicePill>
                   </div>

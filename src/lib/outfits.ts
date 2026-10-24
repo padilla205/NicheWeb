@@ -136,3 +136,22 @@ export type Outfit = {
   items: ClosetItem[]
   createdAt: Date
 }
+
+// Que ponerse segun el clima: temporadas de las prendas y si conviene chamarra.
+// Las temporadas se cruzan para no dejar sin opciones a quien tiene pocas prendas
+export function weatherSuggestion({ temperature, sky }: { temperature: number; sky: string }) {
+  const seasons: Season[] =
+    temperature >= 26
+      ? ['verano']
+      : temperature >= 20
+        ? ['primavera', 'verano']
+        : temperature >= 14
+          ? ['primavera', 'otono']
+          : temperature >= 8
+            ? ['otono', 'invierno']
+            : ['invierno']
+  const label = temperature >= 26 ? 'Hace calor' : temperature >= 20 ? 'Templado' : temperature >= 14 ? 'Fresco' : 'Hace frio'
+  // Con frio, lluvia o nieve va chamarra
+  const jacket = temperature < 16 || sky === 'lluvia' || sky === 'nieve'
+  return { seasons, label, jacket }
+}

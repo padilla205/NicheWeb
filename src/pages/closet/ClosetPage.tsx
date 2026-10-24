@@ -1,9 +1,10 @@
-import { MotionConfig } from 'motion/react'
+import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 import { useCallback, useState } from 'react'
 import { PageTitle } from '@/components/PageTitle'
 import { ShowMore } from '@/components/ShowMore'
 import { useKeepScroll } from '@/hooks/useKeepScroll'
 import type { ClothingType } from '@/lib/clothing'
+import { crossfade } from '@/lib/motion'
 import { useItems } from '@/hooks/useItems'
 import { AddItemButton } from './AddItemButton'
 import { AddItemDialog } from './AddItemDialog'
@@ -41,23 +42,30 @@ export function ClosetPage() {
         </div>
       </div>
       <div ref={keep.ref} style={keep.style}>
-        {isPending ? (
-          <ClosetSkeleton />
-        ) : items.length === 0 && selectedTypes.length === 0 ? (
-          <ClosetEmpty
-            addOpen={addOrigin?.from === 'empty'}
-            onAdd={(button) => setAddOrigin({ from: 'empty', button })}
-          />
-        ) : items.length === 0 ? (
-          <p className="py-20 text-center text-sm text-muted-foreground">
-            Ninguna prenda coincide con los filtros.
-          </p>
-        ) : (
-          <>
-            <ClosetGrid items={items} />
-            <ShowMore shown={items.length} total={total} onClick={loadMore} />
-          </>
-        )}
+        {/* El skeleton se desvanece hacia el contenido en vez de cambiar de golpe */}
+        <AnimatePresence mode="wait" initial={false}>
+          {isPending ? (
+            <motion.div key="cargando" {...crossfade}>
+              <ClosetSkeleton />
+            </motion.div>
+          ) : items.length === 0 && selectedTypes.length === 0 ? (
+            <motion.div key="vacio" {...crossfade}>
+              <ClosetEmpty
+                addOpen={addOrigin?.from === 'empty'}
+                onAdd={(button) => setAddOrigin({ from: 'empty', button })}
+              />
+            </motion.div>
+          ) : items.length === 0 ? (
+            <motion.p key="sin-resultados" {...crossfade} className="py-20 text-center text-sm text-muted-foreground">
+              Ninguna prenda coincide con los filtros.
+            </motion.p>
+          ) : (
+            <motion.div key="prendas" {...crossfade}>
+              <ClosetGrid items={items} />
+              <ShowMore shown={items.length} total={total} onClick={loadMore} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       <AddItemDialog origin={addOrigin?.button ?? null} onClose={closeAdd} />
     </MotionConfig>

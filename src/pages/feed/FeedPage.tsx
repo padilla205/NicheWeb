@@ -1,6 +1,6 @@
 import { EyeOff, Plus, Users } from 'lucide-react'
-import { MotionConfig } from 'motion/react'
-import { useCallback, useState } from 'react'
+import { AnimatePresence, motion, MotionConfig } from 'motion/react'
+import { useCallback, useEffect, useState } from 'react'
 import { ChoicePill } from '@/components/ChoicePill'
 import { MorphButton } from '@/components/MorphButton'
 import { PageTitle } from '@/components/PageTitle'
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { useKeepScroll } from '@/hooks/useKeepScroll'
 import { useFeaturedPosts, useFeed, useToggleHiddenAuthor } from '@/hooks/usePosts'
 import type { Post } from '@/lib/feed'
+import { cascade, crossfade } from '@/lib/motion'
+import { cn } from '@/lib/utils'
 import { type Season, seasons } from '@/lib/clothing'
 import { EmptyTab } from '@/pages/profile/EmptyTab'
 import { PostDetail } from '@/pages/profile/PostDetail'
@@ -22,6 +24,27 @@ export function FeedPage() {
   const [tab, setTab] = useState<Tab>('for-you')
   const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([])
   const [openId, setOpenId] = useState<string | null>(null)
+  // Si se abrio desde su tarjeta crece desde ahi; desde Destacados solo aparece
+  const [fromCard, setFromCard] = useState(false)
+  // Al cerrar, la tarjeta se vuelve a crear sin enlace con la ventana: la ventana desaparece al
+  // instante en vez de regresar a la tarjeta (igual que en el perfil)
+  const [closingId, setClosingId] = useState<string | null>(null)
+  // Cada apertura crea una ventana nueva, aunque la anterior aun se este quitando
+  const [openCount, setOpenCount] = useState(0)
+
+  function openPost(id: string, card: boolean) {
+    setClosingId(null)
+    setFromCard(card)
+    setOpenId(id)
+    setOpenCount((count) => count + 1)
+  }
+  const closePost = useCallback(() => (fromCard ? setClosingId(openId) : setOpenId(null)), [fromCard, openId])
+  // Paso 2 del cierre (en el siguiente cuadro): ya sin enlace, se quita la ventana
+  useEffect(() => {
+    if (!closingId || closingId !== openId) return
+    const frame = requestAnimationFrame(() => setOpenId(null))
+    return () => cancelAnimationFrame(frame)
+  }, [closingId, openId])
   // Boton que abrio "Crear publicacion"; null si la ventana esta cerrada
   const [publishOrigin, setPublishOrigin] = useState<HTMLElement | null>(null)
   const closePublish = useCallback(() => setPublishOrigin(null), [])
@@ -45,7 +68,7 @@ export function FeedPage() {
   const keep = useKeepScroll(`${tab}-${selectedSeasons.join()}`)
   const { featured, secondsRemaining } = useFeaturedPosts()
   // Se busca en las dos listas para que la publicacion abierta refleje likes al instante
-  const openPost = [...feed.posts, ...featured].find((post) => post.id === openId)
+  const opened = [...feed.posts, ...featured].find((post) => post.id === openId)
 
   function toggleSeason(season: Season) {
     setSelectedSeasons((current) =>
@@ -64,14 +87,14 @@ export function FeedPage() {
             Crear publicacion
           </MorphButton>
         </div>
-        <FeaturedPosts featured={featured} secondsRemaining={secondsRemaining} onOpen={setOpenId} />
+        <FeaturedPosts featured={featured} secondsRemaining={secondsRemaining} onOpen={(id) => openPost(id, false)} />
 
         {/* En celular las pastillas se deslizan de lado en una sola fila */}
         <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-          <ChoicePill active={tab === 'for-you'} onClick={() => setTab('for-you')}>
+          <ChoicePill slideId="feed-tab" active={tab === 'for-you'} onClick={() => setTab('for-you')}>
             Para ti
           </ChoicePill>
-          <ChoicePill active={tab === 'following'} onClick={() => setTab('following')}>
+          <ChoicePill slideId="feed-tab" active={tab === 'following'} onClick={() => setTab('following')}>
             Siguiendo
           </ChoicePill>
           <span aria-hidden className="mx-1 w-px shrink-0 self-stretch bg-border" />
@@ -93,35 +116,61 @@ export function FeedPage() {
         )}
 
         <div ref={keep.ref} style={keep.style}>
-          {feed.isPending ? (
-            <FeedSkeleton />
-          ) : feed.posts.length === 0 ? (
-            <EmptyTab>
-              {tab === 'following' ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Users className="size-4 shrink-0" />
-                  Cuando sigas a alguien, sus outfits apareceran aqui.
-                </span>
-              ) : selectedSeasons.length > 0 ? (
-                'No hay outfits de esa temporada todavia.'
-              ) : (
-                'Aun no hay outfits. Publica el primero con Crear publicacion.'
-              )}
-            </EmptyTab>
-          ) : (
-            // ponytail: columnas de CSS (tipo Pinterest); el orden va de arriba hacia abajo por columna
-            <div className="columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4">
-              {feed.posts.map((post) => (
-                <FeedCard key={post.id} post={post} onOpen={() => setOpenId(post.id)} onAuthorHidden={() => onAuthorHidden(post)} />
-              ))}
-            </div>
-          )}
+          {/* El skeleton se desvanece hacia el contenido en vez de cambiar de golpe */}
+          <AnimatePresence mode="wait" initial={false}>
+            {feed.isPending ? (
+              <motion.div key="cargando" {...crossfade}>
+                <FeedSkeleton />
+              </motion.div>
+            ) : feed.posts.length === 0 ? (
+              <motion.div key="vacio" {...crossfade}>
+                <EmptyTab>
+                  {tab === 'following' ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Users className="size-4 shrink-0" />
+                      Cuando sigas a alguien, sus outfits apareceran aqui.
+                    </span>
+                  ) : selectedSeasons.length > 0 ? (
+                    'No hay outfits de esa temporada todavia.'
+                  ) : (
+                    'Aun no hay outfits. Publica el primero con Crear publicacion.'
+                  )}
+                </EmptyTab>
+              </motion.div>
+            ) : (
+              // ponytail: columnas de CSS (tipo Pinterest); el orden va de arriba hacia abajo por columna
+              <motion.div key="publicaciones" {...crossfade} className="columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4">
+                {feed.posts.map((post, index) => (
+                  // Aparecen en cascada; mientras su publicacion esta abierta, la tarjeta se esconde
+                  <motion.div key={post.id} {...cascade(index)} className="mb-3 break-inside-avoid sm:mb-4">
+                    <div className={cn(fromCard && openId === post.id && 'pointer-events-none opacity-0')}>
+                      <FeedCard
+                        key={post.id === closingId ? `${post.id}-cerrando` : post.id}
+                        post={post}
+                        layoutId={post.id === closingId ? undefined : `profile-post-${post.id}`}
+                        onOpen={() => openPost(post.id, true)}
+                        onAuthorHidden={() => onAuthorHidden(post)}
+                      />
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
           <ShowMore shown={feed.posts.length} total={feed.total} onClick={feed.loadMore} />
         </div>
       </div>
-      {openPost && (
-        <PostDetail post={openPost} onClose={() => setOpenId(null)} onAuthorHidden={() => onAuthorHidden(openPost)} />
-      )}
+      <AnimatePresence>
+        {opened && (
+          <PostDetail
+            key={`${opened.id}-${openCount}`}
+            post={opened}
+            morph={fromCard}
+            onClose={closePost}
+            onAuthorHidden={() => onAuthorHidden(opened)}
+          />
+        )}
+      </AnimatePresence>
       <PublishPostDialog origin={publishOrigin} onClose={closePublish} />
     </MotionConfig>
   )

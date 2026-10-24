@@ -69,7 +69,7 @@ export function ShareToChatDialog({ open, onClose, shared }: ShareToChatDialogPr
                   <UserAvatar user={conversation.other} className="size-9" />
                   <div className="min-w-0 flex-1 text-sm">
                     <p className="truncate font-medium">{conversation.other.name}</p>
-                    <p className="truncate text-muted-foreground">{conversation.listing?.title ?? 'Chat'}</p>
+                    <p className="truncate text-muted-foreground">{conversation.isDirect ? 'Mensaje directo' : (conversation.listing?.title ?? 'Chat')}</p>
                   </div>
                   <Button
                     size="sm"

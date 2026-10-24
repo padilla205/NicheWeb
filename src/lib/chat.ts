@@ -12,8 +12,10 @@ export type ChatListing = {
 
 export type Conversation = {
   id: string
-  // null si la venta ya no se puede ver
+  // null si la venta ya no se puede ver (o si es un mensaje directo)
   listing: ChatListing | null
+  // Mensaje directo: un chat entre dos personas, sin venta de por medio
+  isDirect: boolean
   // La otra persona del chat
   other: FeedUser
   otherId: string

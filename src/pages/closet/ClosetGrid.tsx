@@ -1,6 +1,7 @@
-import { AnimatePresence } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useState } from 'react'
 import type { ClosetItem } from '@/lib/clothing'
+import { cascade } from '@/lib/motion'
 import { ItemCard } from './ItemCard'
 import { ItemDetail } from './ItemDetail'
 
@@ -21,20 +22,22 @@ export function ClosetGrid({ items, readOnly }: ClosetGridProps) {
   return (
     <>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {items.map((item) => (
-          <ItemCard
-            key={item.id}
-            item={item}
-            open={openId === item.id}
-            raised={raisedId === item.id}
-            onOpen={() => {
-              setOpenId(item.id)
-              setRaisedId(item.id)
-            }}
-            onLayoutAnimationComplete={() => {
-              if (openId !== item.id && raisedId === item.id) setRaisedId(null)
-            }}
-          />
+        {items.map((item, index) => (
+          // Aparecen en cascada al cargar o al pedir mas
+          <motion.div key={item.id} {...cascade(index)} className="grid">
+            <ItemCard
+              item={item}
+              open={openId === item.id}
+              raised={raisedId === item.id}
+              onOpen={() => {
+                setOpenId(item.id)
+                setRaisedId(item.id)
+              }}
+              onLayoutAnimationComplete={() => {
+                if (openId !== item.id && raisedId === item.id) setRaisedId(null)
+              }}
+            />
+          </motion.div>
         ))}
       </div>
       <AnimatePresence>

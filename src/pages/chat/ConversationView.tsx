@@ -102,7 +102,8 @@ export function ConversationView({ id, conversation }: ConversationViewProps) {
             if (editing && body !== editing.body) editMessage({ message: editing, body })
             setEditing(null)
           }}
-          showQuickReplies={!isPending && messages.length === 0 && !!conversation?.isBuyer}
+          // Las respuestas rapidas son para preguntar por una venta
+          showQuickReplies={!isPending && messages.length === 0 && !!conversation?.isBuyer && !conversation.isDirect}
           onSend={(body, file) => send({ conversationId: id, body, file })}
         />
       ) : (

@@ -23,10 +23,12 @@ type PostDetailProps = {
   onClose: () => void
   // Despues de "No me interesa" en el menu del autor
   onAuthorHidden?: () => void
+  // Sin tarjeta de donde crecer (por ejemplo, abierta desde Destacados): solo aparece
+  morph?: boolean
 }
 
 // Publicacion completa: foto, autor, descripcion, likes y comentarios
-export function PostDetail({ post, onClose, onAuthorHidden }: PostDetailProps) {
+export function PostDetail({ post, onClose, onAuthorHidden, morph = true }: PostDetailProps) {
   // Se decide una sola vez al abrir: en el celular el cuadro de comentario no se enfoca solo
   // para que el teclado no tape la publicacion
   const [isDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches)
@@ -56,7 +58,7 @@ export function PostDetail({ post, onClose, onAuthorHidden }: PostDetailProps) {
       <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* layoutCrossfade={false}: se ve solido desde el primer instante, sin parpadear */}
         <motion.div
-          layoutId={`profile-post-${post.id}`}
+          layoutId={morph ? `profile-post-${post.id}` : undefined}
           layoutCrossfade={false}
           exit={HIDE_NOW}
           {...swipe.panelProps}
@@ -71,7 +73,7 @@ export function PostDetail({ post, onClose, onAuthorHidden }: PostDetailProps) {
         >
           <SwipeHandle onPointerDown={swipe.startDrag} />
           <motion.div
-            layoutId={`profile-post-photo-${post.id}`}
+            layoutId={morph ? `profile-post-${post.id}-photo` : undefined}
             className="relative flex aspect-[4/5] shrink-0 items-center justify-center bg-muted md:aspect-auto md:h-full md:w-1/2"
           >
             <PostPhotos post={post} carouselId={`profile-post-detail-${post.id}`} iconClassName="size-16" />

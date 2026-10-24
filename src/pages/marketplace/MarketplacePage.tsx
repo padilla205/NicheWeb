@@ -1,5 +1,5 @@
 import { Plus, Search } from 'lucide-react'
-import { MotionConfig } from 'motion/react'
+import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
 import { ChoicePill } from '@/components/ChoicePill'
 import { MorphButton } from '@/components/MorphButton'
@@ -12,6 +12,7 @@ import { useListingSizes, useListings } from '@/hooks/useListings'
 import { useUserLocation } from '@/hooks/useUserLocation'
 import { getCityLabel } from '@/lib/locations'
 import { countActiveFilters, emptyFilters, type ListingSort } from '@/lib/marketplace'
+import { cascade, crossfade } from '@/lib/motion'
 import { CreateListingDialog } from './CreateListingDialog'
 import { ListingCard } from './ListingCard'
 import { ListingsSkeleton } from './ListingsSkeleton'
@@ -92,10 +93,10 @@ export function MarketplacePage() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         {location && (
           <div className="flex flex-wrap gap-2" role="group" aria-label="Mostrar ventas">
-            <ChoicePill active={onlyMyCity} onClick={() => setShowAll(false)}>
+            <ChoicePill slideId="market-city" active={onlyMyCity} onClick={() => setShowAll(false)}>
               En {getCityLabel(location)}
             </ChoicePill>
-            <ChoicePill active={!onlyMyCity} onClick={() => setShowAll(true)}>
+            <ChoicePill slideId="market-city" active={!onlyMyCity} onClick={() => setShowAll(true)}>
               Todas
             </ChoicePill>
           </div>
@@ -106,37 +107,43 @@ export function MarketplacePage() {
       </div>
 
       <div ref={keep.ref} style={keep.style}>
-        {isPending ? (
-          <ListingsSkeleton />
-        ) : listings.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-20 text-center text-sm text-muted-foreground">
-            {searching ? (
-              <>
-                <p>Ninguna venta coincide con tu busqueda.</p>
-                <Button variant="outline" size="sm" onClick={clearSearch}>
-                  Limpiar busqueda y filtros
-                </Button>
-              </>
-            ) : onlyMyCity ? (
-              <>
-                <p>Aun no hay ventas en {getCityLabel(location)}.</p>
-                <Button variant="outline" size="sm" onClick={() => setShowAll(true)}>
-                  Ver todas las ventas
-                </Button>
-              </>
-            ) : (
-              <p>Aun no hay ventas publicadas.</p>
-            )}
-          </div>
-        ) : (
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-            {listings.map((listing) => (
-              <li key={listing.id}>
-                <ListingCard listing={listing} />
-              </li>
-            ))}
-          </ul>
-        )}
+        {/* El skeleton se desvanece hacia el contenido en vez de cambiar de golpe */}
+        <AnimatePresence mode="wait" initial={false}>
+          {isPending ? (
+            <motion.div key="cargando" {...crossfade}>
+              <ListingsSkeleton />
+            </motion.div>
+          ) : listings.length === 0 ? (
+            <motion.div key="vacio" {...crossfade} className="flex flex-col items-center gap-3 py-20 text-center text-sm text-muted-foreground">
+              {searching ? (
+                <>
+                  <p>Ninguna venta coincide con tu busqueda.</p>
+                  <Button variant="outline" size="sm" onClick={clearSearch}>
+                    Limpiar busqueda y filtros
+                  </Button>
+                </>
+              ) : onlyMyCity ? (
+                <>
+                  <p>Aun no hay ventas en {getCityLabel(location)}.</p>
+                  <Button variant="outline" size="sm" onClick={() => setShowAll(true)}>
+                    Ver todas las ventas
+                  </Button>
+                </>
+              ) : (
+                <p>Aun no hay ventas publicadas.</p>
+              )}
+            </motion.div>
+          ) : (
+            <motion.ul key="ventas" {...crossfade} className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+              {listings.map((listing, index) => (
+                // Aparecen en cascada al cargar o al pedir mas
+                <motion.li key={listing.id} {...cascade(index)}>
+                  <ListingCard listing={listing} />
+                </motion.li>
+              ))}
+            </motion.ul>
+          )}
+        </AnimatePresence>
         <ShowMore shown={listings.length} total={total} onClick={loadMore} />
       </div>
       <CreateListingDialog origin={createOrigin} onClose={closeCreate} />
