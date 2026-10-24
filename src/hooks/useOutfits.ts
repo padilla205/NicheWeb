@@ -10,20 +10,21 @@ import { supabase } from '@/lib/supabase'
 const LIST_LIMIT = 60
 
 export type OutfitRow = Tables<'outfits'> & {
-  owner: Pick<Tables<'profiles'>, 'username' | 'name' | 'avatar_path'>
+  owner: Pick<Tables<'profiles'>, 'username' | 'name' | 'avatar_path' | 'closet_public'>
   outfit_items: { item: Tables<'items'> | null }[]
 }
 
 // El outfit con su dueno y sus prendas. Se nombra la llave porque outfits y perfiles tambien
 // se conectan por las publicaciones
 export const OUTFIT_COLUMNS =
-  '*, owner:profiles!outfits_owner_id_fkey(username, name, avatar_path), outfit_items(item:items(*))'
+  '*, owner:profiles!outfits_owner_id_fkey(username, name, avatar_path, closet_public), outfit_items(item:items(*))'
 
 export function outfitFromRow(row: OutfitRow): Outfit {
   return {
     id: row.id,
     ownerId: row.owner_id,
     owner: feedUserFromRow(row.owner),
+    ownerClosetPublic: row.owner.closet_public,
     name: row.name,
     isPublic: row.is_public,
     inCloset: row.in_closet,

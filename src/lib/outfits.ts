@@ -129,6 +129,8 @@ export type Outfit = {
   id: string
   ownerId: string
   owner: FeedUser
+  // Si el dueno muestra su closet en su perfil (sus prendas visibles se pueden abrir solas)
+  ownerClosetPublic: boolean
   name: string
   // Con true cualquiera lo ve con su link; se activa al mostrarlo en el closet o publicarlo
   isPublic: boolean
@@ -154,4 +156,10 @@ export function weatherSuggestion({ temperature, sky }: { temperature: number; s
   // Con frio, lluvia o nieve va chamarra
   const jacket = temperature < 16 || sky === 'lluvia' || sky === 'nieve'
   return { seasons, label, jacket }
+}
+
+// Si una prenda del outfit se puede abrir sola: la ves si es tuya, o si su dueno muestra su closet
+// y no la marco como privada (aunque se vea dentro del outfit, no se expone fuera de el)
+export function canOpenItem(outfit: Outfit, item: ClosetItem, viewerId: string | undefined) {
+  return outfit.ownerId === viewerId || (outfit.ownerClosetPublic && !item.private)
 }

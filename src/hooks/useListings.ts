@@ -34,11 +34,11 @@ export type NewListing = {
   description: string
 }
 
-type ListingRow = Tables<'listings'> & { seller: FeedUser }
+export type ListingRow = Tables<'listings'> & { seller: FeedUser }
 type ListingsPage = { items: Listing[]; total: number }
 
 // Fila de la base de datos (con su vendedor) -> lo que usan las pantallas
-function fromRow(row: ListingRow): Listing {
+export function listingFromRow(row: ListingRow): Listing {
   return {
     id: row.id,
     seller: row.seller,
@@ -109,7 +109,7 @@ export function useListings(search: ListingSearch) {
       })
       if (error) throw error
       const result = data as { items: ListingRow[]; total: number }
-      return { items: result.items.map(fromRow), total: result.total }
+      return { items: result.items.map(listingFromRow), total: result.total }
     },
     getNextPageParam: (last, pages) => {
       const loaded = pages.reduce((sum, page) => sum + page.items.length, 0)
@@ -142,7 +142,7 @@ export function useMyListings(sellerId?: string) {
         .order('created_at', { ascending: false })
         .range(pageParam, pageParam + PAGE_SIZE - 1)
       if (error) throw error
-      return { items: (data as ListingRow[]).map(fromRow), total: count ?? 0 }
+      return { items: (data as ListingRow[]).map(listingFromRow), total: count ?? 0 }
     },
     getNextPageParam: (last, pages) => {
       const loaded = pages.reduce((sum, page) => sum + page.items.length, 0)
@@ -168,7 +168,7 @@ export function useListing(id: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase.from('listings').select(WITH_SELLER).eq('id', id!).maybeSingle()
       if (error) throw error
-      return data ? fromRow(data as ListingRow) : null
+      return data ? listingFromRow(data as ListingRow) : null
     },
   })
 }

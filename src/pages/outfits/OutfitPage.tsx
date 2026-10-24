@@ -1,10 +1,11 @@
-import { ArrowLeft, Shirt } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Shirt } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { OutfitBoard } from '@/components/OutfitBoard'
 import { Button } from '@/components/ui/button'
+import { useSession } from '@/hooks/useAuth'
 import { useOutfit } from '@/hooks/useOutfits'
 import { getTypeInfo } from '@/lib/clothing'
-import { piecesOf } from '@/lib/outfits'
+import { canOpenItem, piecesOf } from '@/lib/outfits'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
 import { EmptyTab } from '@/pages/profile/EmptyTab'
 
@@ -13,6 +14,7 @@ export function OutfitPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { data: outfit, isPending } = useOutfit(id)
+  const session = useSession()
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
@@ -48,21 +50,37 @@ export function OutfitPage() {
             <section aria-label="Prendas" className="flex flex-col gap-2">
               <h2 className="text-sm font-medium text-muted-foreground">Prendas</h2>
               <ul className="flex flex-col gap-2">
-                {outfit.items.map((item) => (
-                  <li key={item.id} className="flex items-center gap-3 rounded-xl border p-2">
-                    {item.thumbUrl ? (
-                      <img src={item.thumbUrl} alt="" loading="lazy" className="size-12 rounded-lg object-cover" />
-                    ) : (
-                      <span className="flex size-12 items-center justify-center rounded-lg bg-muted">
-                        <Shirt className="size-5 text-muted-foreground" strokeWidth={1.5} />
+                {outfit.items.map((item) => {
+                  const content = (
+                    <>
+                      {item.thumbUrl ? (
+                        <img src={item.thumbUrl} alt="" loading="lazy" className="size-12 rounded-lg object-cover" />
+                      ) : (
+                        <span className="flex size-12 items-center justify-center rounded-lg bg-muted">
+                          <Shirt className="size-5 text-muted-foreground" strokeWidth={1.5} />
+                        </span>
+                      )}
+                      <span className="flex flex-1 flex-col text-sm">
+                        <span className="font-medium">{item.name || getTypeInfo(item.type).label}</span>
+                        <span className="text-muted-foreground">{getTypeInfo(item.type).label}</span>
                       </span>
-                    )}
-                    <span className="flex flex-col text-sm">
-                      <span className="font-medium">{item.name || getTypeInfo(item.type).label}</span>
-                      <span className="text-muted-foreground">{getTypeInfo(item.type).label}</span>
-                    </span>
-                  </li>
-                ))}
+                    </>
+                  )
+                  const row = 'flex items-center gap-3 rounded-xl border p-2'
+                  return (
+                    <li key={item.id}>
+                      {/* Con sesion, las prendas visibles en el closet de su dueno se abren solas */}
+                      {session && canOpenItem(outfit, item, session.user.id) ? (
+                        <Link to={`/prenda/${item.id}`} className={`${row} transition-colors duration-150 hover:bg-accent`}>
+                          {content}
+                          <ChevronRight className="size-4 text-muted-foreground" />
+                        </Link>
+                      ) : (
+                        <div className={row}>{content}</div>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             </section>
           </div>

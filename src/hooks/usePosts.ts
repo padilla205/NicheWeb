@@ -20,7 +20,7 @@ const PAGE_SIZE = 12
 const HOUR_MS = 60 * 60 * 1000
 
 type ProfileBits = Pick<Tables<'profiles'>, 'username' | 'name' | 'avatar_path'>
-type PostRow = Tables<'posts'> & {
+export type PostRow = Tables<'posts'> & {
   author: ProfileBits
   likes: { count: number }[]
   comments: { count: number }[]
@@ -30,7 +30,7 @@ type PostsPage = { items: Post[]; total: number }
 
 // Columnas de la publicacion con su autor y sus contadores. Se nombra la llave del autor porque
 // publicaciones y perfiles tambien se conectan por likes, comentarios y compartidos
-const POST_COLUMNS = `*, author:profiles!posts_author_id_fkey(username, name, avatar_path), likes(count), comments(count),
+export const POST_COLUMNS = `*, author:profiles!posts_author_id_fkey(username, name, avatar_path), likes(count), comments(count),
   outfit:outfits(${OUTFIT_COLUMNS})`
 
 export function feedUserFromRow(row: ProfileBits): FeedUser {
@@ -42,7 +42,7 @@ export function feedUserFromRow(row: ProfileBits): FeedUser {
 }
 
 // Filas de la base de datos -> lo que usan las pantallas, con tus likes y compartidos
-async function toPosts(rows: PostRow[], userId: string | undefined): Promise<Post[]> {
+export async function toPosts(rows: PostRow[], userId: string | undefined): Promise<Post[]> {
   const ids = rows.map((row) => row.id)
   let liked = new Set<string>()
   let shared = new Set<string>()

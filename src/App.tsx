@@ -12,6 +12,7 @@ import { MarketplacePage } from '@/pages/marketplace/MarketplacePage'
 import { OutfitPage } from '@/pages/outfits/OutfitPage'
 import { OutfitsPage } from '@/pages/outfits/OutfitsPage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
+import { SearchPage } from '@/pages/search/SearchPage'
 import { UserProfilePage } from '@/pages/profile/UserProfilePage'
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
             <Route path="chat/:id?" element={<ChatPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="u/:username" element={<UserProfilePage />} />
+            <Route path="buscar" element={<SearchPage />} />
             <Route path="p/:id" element={<PostPage />} />
             <Route path="prenda/:id" element={<ItemPage />} />
             <Route path="*" element={<Navigate to="/closet" replace />} />

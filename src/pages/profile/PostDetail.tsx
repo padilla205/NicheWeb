@@ -1,6 +1,7 @@
-import { Shirt, Trash2, X } from 'lucide-react'
+import { ChevronRight, Shirt, Trash2, X } from 'lucide-react'
 import { motion, useIsPresent } from 'motion/react'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { SwipeHandle } from '@/components/SwipeHandle'
 import { Button } from '@/components/ui/button'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
@@ -9,6 +10,7 @@ import { useSession } from '@/hooks/useAuth'
 import { useDeletePost, useToggleLike, useToggleShare } from '@/hooks/usePosts'
 import { getTypeInfo } from '@/lib/clothing'
 import { formatTimeAgo, type Post } from '@/lib/feed'
+import { canOpenItem } from '@/lib/outfits'
 import { cn } from '@/lib/utils'
 import { CommentsThread } from '@/pages/feed/CommentsThread'
 import { PostActions } from '@/pages/feed/PostActions'
@@ -34,7 +36,8 @@ export function PostDetail({ post, onClose, onAuthorHidden, morph = true }: Post
   const [isDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches)
   const toggleLike = useToggleLike()
   const toggleShare = useToggleShare()
-  const isMine = useSession()?.user.id === post.authorId
+  const viewerId = useSession()?.user.id
+  const isMine = viewerId === post.authorId
   const deletePost = useDeletePost()
   // Eliminar pide un segundo toque para confirmar
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -118,16 +121,35 @@ export function PostDetail({ post, onClose, onAuthorHidden, morph = true }: Post
               <section aria-label="Prendas del outfit" className="flex flex-col gap-2 border-b p-4">
                 <h3 className="text-xs font-medium text-muted-foreground">Prendas del outfit</h3>
                 <ul className="flex flex-wrap gap-1.5">
-                  {post.outfit.items.map((item) => (
-                    <li key={item.id} className="flex items-center gap-1.5 rounded-full border bg-muted/40 py-1 pr-2.5 pl-1 text-xs">
-                      {item.thumbUrl ? (
-                        <img src={item.thumbUrl} alt="" loading="lazy" className="size-6 rounded-full object-cover" />
-                      ) : (
-                        <Shirt className="size-3.5 text-muted-foreground" />
-                      )}
-                      {item.name || getTypeInfo(item.type).label}
-                    </li>
-                  ))}
+                  {post.outfit.items.map((item) => {
+                    const content = (
+                      <>
+                        {item.thumbUrl ? (
+                          <img src={item.thumbUrl} alt="" loading="lazy" className="size-6 rounded-full object-cover" />
+                        ) : (
+                          <Shirt className="size-3.5 text-muted-foreground" />
+                        )}
+                        {item.name || getTypeInfo(item.type).label}
+                      </>
+                    )
+                    const chip = 'flex items-center gap-1.5 rounded-full border bg-muted/40 py-1 pr-2.5 pl-1 text-xs'
+                    return (
+                      <li key={item.id}>
+                        {/* Las prendas visibles en el closet de su dueno se abren solas; las privadas solo se nombran */}
+                        {canOpenItem(post.outfit!, item, viewerId) ? (
+                          <Link
+                            to={`/prenda/${item.id}`}
+                            className={cn(chip, 'transition-colors duration-150 hover:border-foreground/30 hover:bg-accent')}
+                          >
+                            {content}
+                            <ChevronRight className="-mr-1 size-3.5 text-muted-foreground" />
+                          </Link>
+                        ) : (
+                          <span className={chip}>{content}</span>
+                        )}
+                      </li>
+                    )
+                  })}
                 </ul>
               </section>
             )}

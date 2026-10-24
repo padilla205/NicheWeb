@@ -13,6 +13,7 @@ import {
   useNotificationsRealtime,
 } from '@/hooks/useNotifications'
 import { formatTimeAgo } from '@/lib/feed'
+import { topBarIconClass } from '@/lib/styles'
 import { cn } from '@/lib/utils'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
 
@@ -54,10 +55,7 @@ export function NotificationBell() {
       <PopoverTrigger
         aria-label={unread ? `Notificaciones, ${unread} sin leer` : 'Notificaciones'}
         title="Notificaciones"
-        className={cn(
-          'relative flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 outline-none hover:bg-accent hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 motion-safe:active:scale-[0.96] motion-reduce:transition-none',
-          open && 'bg-accent text-foreground',
-        )}
+        className={cn(topBarIconClass, open && 'bg-accent text-foreground')}
       >
         {/* Se balancea un instante cuando llega una notificacion */}
         <motion.span
@@ -70,7 +68,7 @@ export function NotificationBell() {
         >
           <Bell aria-hidden="true" className="size-5" />
         </motion.span>
-        <UnreadBadge count={unread} className="absolute top-1 right-1" />
+        <UnreadBadge count={unread} className="absolute top-0 right-0" />
       </PopoverTrigger>
 
       <PopoverContent align="end" className="flex max-h-[70dvh] w-[min(24rem,calc(100vw-2rem))] flex-col gap-0 overflow-hidden p-0">
