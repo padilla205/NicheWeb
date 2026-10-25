@@ -33,6 +33,8 @@ function App() {
           <Route path="o/:id" element={<OutfitPage />} />
           <Route path="privacidad" element={<PrivacyPage />} />
           <Route path="terminos" element={<TermsPage />} />
+          {/* Solo en tu computadora: una pantalla que falla a proposito para ver la pantalla de error */}
+          {import.meta.env.DEV && <Route path="probar-error" element={<BrokenPage />} />}
           {/* Cualquier otra direccion: pagina 404, con o sin cuenta */}
           <Route path="*" element={<NotFoundPage />} />
         </Route>
@@ -56,6 +58,11 @@ function App() {
       </Routes>
     </BrowserRouter>
   )
+}
+
+// Falla al dibujarse (solo existe en desarrollo)
+function BrokenPage(): never {
+  throw new Error('Error de prueba')
 }
 
 export default App

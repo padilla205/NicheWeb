@@ -4,6 +4,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // Guarda en memoria lo que llega de Supabase; durante 1 minuto lo reutiliza sin volver a pedirlo
 const queryClient = new QueryClient({
@@ -13,7 +14,9 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
     </QueryClientProvider>
     {/* Cuenta visitas de forma anonima (sin cookies) en el panel de Vercel; en local no manda nada */}
     <Analytics />
