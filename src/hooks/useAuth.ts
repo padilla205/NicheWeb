@@ -97,6 +97,32 @@ export function useUpdatePassword() {
   })
 }
 
+// Borra tu cuenta para siempre: primero tus fotos (Storage solo deja borrar tu carpeta) y luego la
+// cuenta, que se lleva en cadena todo lo demas. Al final se cierra la sesion en este navegador
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: async () => {
+      const userId = session?.user.id
+      if (!userId) throw new Error('No hay sesion')
+      // Storage entrega las fotos de 100 en 100
+      for (;;) {
+        const { data: files, error } = await supabase.storage.from('photos').list(userId, { limit: 100 })
+        if (error) throw error
+        if (files.length === 0) break
+        const { data: removed, error: removeError } = await supabase.storage
+          .from('photos')
+          .remove(files.map((file) => `${userId}/${file.name}`))
+        if (removeError) throw removeError
+        // Si no se pudo borrar ninguna, se detiene en vez de intentarlo para siempre
+        if (removed.length === 0) throw new Error('No se pudieron borrar las fotos')
+      }
+      const { error } = await supabase.rpc('delete_my_account')
+      if (error) throw error
+      await supabase.auth.signOut({ scope: 'local' })
+    },
+  })
+}
+
 export function useSignOut() {
   return useMutation({
     mutationFn: async () => {

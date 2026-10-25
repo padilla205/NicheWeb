@@ -13,7 +13,10 @@ import { MarketplacePage } from '@/pages/marketplace/MarketplacePage'
 import { OutfitPage } from '@/pages/outfits/OutfitPage'
 import { OutfitsPage } from '@/pages/outfits/OutfitsPage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
+import { PrivacyPage } from '@/pages/legal/PrivacyPage'
+import { TermsPage } from '@/pages/legal/TermsPage'
 import { ReportsPage } from '@/pages/reports/ReportsPage'
+import { MoreOptionsPage } from '@/pages/settings/MoreOptionsPage'
 import { SearchPage } from '@/pages/search/SearchPage'
 import { UserProfilePage } from '@/pages/profile/UserProfilePage'
 
@@ -27,6 +30,8 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="marketplace/:id" element={<ListingDetailPage />} />
           <Route path="o/:id" element={<OutfitPage />} />
+          <Route path="privacidad" element={<PrivacyPage />} />
+          <Route path="terminos" element={<TermsPage />} />
         </Route>
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
@@ -42,6 +47,7 @@ function App() {
             <Route path="p/:id" element={<PostPage />} />
             <Route path="prenda/:id" element={<ItemPage />} />
             <Route path="reportes" element={<ReportsPage />} />
+            <Route path="mas-opciones" element={<MoreOptionsPage />} />
             <Route path="*" element={<Navigate to="/closet" replace />} />
           </Route>
         </Route>

@@ -951,6 +951,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_my_account: { Args: never; Returns: undefined }
       featured_posts: {
         Args: { how_many?: number }
         Returns: Database["public"]["Tables"]["posts"]["Row"][]

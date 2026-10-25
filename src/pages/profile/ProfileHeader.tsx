@@ -1,4 +1,4 @@
-import { Flag, LogOut, Pencil, Plus } from 'lucide-react'
+import { Flag, LogOut, Pencil, Plus, Settings } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { Link } from 'react-router'
 import { MorphButton } from '@/components/MorphButton'
@@ -28,7 +28,8 @@ export function ProfileHeader() {
         <ProfileSummary profile={profile} />
         <FollowStats userId={profile.id} />
 
-        <div className="flex gap-2">
+        {/* En celular, si no caben, los botones pasan a otra fila en vez de salirse de la pantalla */}
+        <div className="flex flex-wrap justify-center gap-2">
           <MorphButton hidden={publishOrigin !== null} onOpen={setPublishOrigin}>
             <Plus />
             Publicar
@@ -45,6 +46,11 @@ export function ProfileHeader() {
               </Link>
             </Button>
           )}
+          <Button variant="outline" size="icon" asChild>
+            <Link to="/mas-opciones" aria-label="Mas opciones" title="Mas opciones">
+              <Settings />
+            </Link>
+          </Button>
           {/* Al cerrar sesion, RequireAuth te manda a /login */}
           <Button variant="ghost" disabled={signOut.isPending} onClick={() => signOut.mutate()}>
             <LogOut />

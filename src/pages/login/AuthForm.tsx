@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { type FormEvent, type ReactNode, useRef, useState } from 'react'
+import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -203,6 +204,19 @@ export function AuthForm() {
         <Button type="submit" disabled={pending} className="h-11 w-full">
           {pending ? 'Un momento' : mode === 'login' ? 'Iniciar sesion' : 'Crear cuenta'}
         </Button>
+        {mode === 'register' && (
+          <p className="pt-3 text-center text-xs text-muted-foreground">
+            Al crear tu cuenta aceptas los{' '}
+            <Link to="/terminos" className="underline underline-offset-4 hover:text-foreground">
+              Terminos de uso
+            </Link>{' '}
+            y el{' '}
+            <Link to="/privacidad" className="underline underline-offset-4 hover:text-foreground">
+              Aviso de privacidad
+            </Link>
+            .
+          </p>
+        )}
       </form>
     </div>
   )
