@@ -940,6 +940,10 @@ export type Database = {
         Args: { value: string }
         Returns: string
       }
+      seller_stats: {
+        Args: { seller: string }
+        Returns: { member_since: string; sold_count: number }[]
+      }
       search_listings: {
         Args: {
           colors?: string[]

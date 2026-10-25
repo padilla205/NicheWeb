@@ -1,9 +1,9 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSession } from '@/hooks/useAuth'
+import { feedUserFromRow } from '@/hooks/usePosts'
 import { useProfile } from '@/hooks/useProfile'
 import type { Season } from '@/lib/clothing'
 import type { Tables } from '@/lib/database.types'
-import type { FeedUser } from '@/lib/feed'
 import type { UserLocation } from '@/lib/locations'
 import type {
   Delivery,
@@ -34,14 +34,16 @@ export type NewListing = {
   description: string
 }
 
-export type ListingRow = Tables<'listings'> & { seller: FeedUser }
+export type ListingRow = Tables<'listings'> & {
+  seller: Pick<Tables<'profiles'>, 'username' | 'name' | 'avatar_path'>
+}
 type ListingsPage = { items: Listing[]; total: number }
 
 // Fila de la base de datos (con su vendedor) -> lo que usan las pantallas
 export function listingFromRow(row: ListingRow): Listing {
   return {
     id: row.id,
-    seller: row.seller,
+    seller: feedUserFromRow(row.seller),
     sellerId: row.seller_id,
     title: row.title,
     price: row.price,
@@ -66,9 +68,9 @@ export function listingFromRow(row: ListingRow): Listing {
   }
 }
 
-// Columnas de la venta mas el usuario y nombre del vendedor. Se nombra la llave (seller_id)
+// Columnas de la venta mas el usuario, nombre y foto del vendedor. Se nombra la llave (seller_id)
 // porque ventas y perfiles tambien se conectan a traves de los chats, y Supabase no sabria cual usar
-export const WITH_SELLER = '*, seller:profiles!listings_seller_id_fkey(username, name)'
+export const WITH_SELLER = '*, seller:profiles!listings_seller_id_fkey(username, name, avatar_path)'
 
 export type ListingSearch = {
   query: string
@@ -210,6 +212,20 @@ export function useSimilarListings(listing: Listing | null | undefined) {
         .limit(8)
       if (error) throw error
       return (data as ListingRow[]).map(listingFromRow)
+    },
+  })
+}
+
+// Desde cuando esta el vendedor y cuantas ventas completo (lo cuenta la base de datos)
+export function useSellerStats(sellerId: string | undefined) {
+  return useQuery({
+    queryKey: ['listings', 'seller-stats', sellerId],
+    enabled: !!sellerId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('seller_stats', { seller: sellerId! })
+      if (error) throw error
+      const row = data[0]
+      return row ? { memberSince: new Date(row.member_since), sold: Number(row.sold_count) } : null
     },
   })
 }

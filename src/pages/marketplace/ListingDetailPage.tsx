@@ -11,11 +11,12 @@ import { formatTimeAgo } from '@/lib/feed'
 import { formatPrice, getConditionLabel } from '@/lib/marketplace'
 import { formatLocation } from '@/lib/locations'
 import { getTeamLabel } from '@/lib/teams'
-import { UserAvatar } from '@/pages/feed/UserAvatar'
 import { FavoriteButton } from './FavoriteButton'
 import { ListingGallery } from './ListingGallery'
 import { ListingOwnerActions } from './ListingOwnerActions'
 import { ListingRow } from './ListingRow'
+import { SafetyTips } from './SafetyTips'
+import { SellerCard } from './SellerCard'
 import { ShareButton } from './ShareButton'
 import { SizeGuide } from './SizeGuide'
 import { StatusBadge } from './StatusBadge'
@@ -154,13 +155,7 @@ export function ListingDetailPage() {
               </DetailSection>
             )}
 
-            <div className="flex items-center gap-3 rounded-2xl border bg-card p-3">
-              <UserAvatar user={listing.seller} />
-              <div className="min-w-0 text-sm">
-                <p className="font-medium">{listing.seller.username}</p>
-                <p className="text-muted-foreground">Vendedor</p>
-              </div>
-            </div>
+            <SellerCard listing={listing} />
 
             {isMine ? (
               <ListingOwnerActions listing={listing} />
@@ -192,6 +187,7 @@ export function ListingDetailPage() {
                 <ReportButton type="listing" id={listing.id} label="Reportar venta" />
               </div>
             )}
+            {!isMine && <SafetyTips />}
           </div>
         </article>
       )}
