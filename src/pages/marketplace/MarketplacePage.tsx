@@ -1,4 +1,4 @@
-import { Plus, Search } from 'lucide-react'
+import { Heart, Plus, Search } from 'lucide-react'
 import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
 import { ChoicePill } from '@/components/ChoicePill'
@@ -8,6 +8,7 @@ import { ShowMore } from '@/components/ShowMore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCityCenter } from '@/hooks/useCityCenter'
+import { useSavedListings } from '@/hooks/useFavorites'
 import { useListingSizes, useListings } from '@/hooks/useListings'
 import { useUserLocation } from '@/hooks/useUserLocation'
 import { getCityLabel } from '@/lib/locations'
@@ -53,8 +54,11 @@ export function MarketplacePage() {
     center: activeSort === 'cercanos' ? center : null,
   })
   const sizes = useListingSizes()
+  // "Guardados": en vez de los resultados se ven las ventas que guardaste con el corazon
+  const [showSaved, setShowSaved] = useState(false)
+  const saved = useSavedListings(showSaved)
   // La pagina no sube al cambiar la busqueda, los filtros o el orden
-  const keep = useKeepScroll(JSON.stringify([debouncedQuery, filters, activeSort, onlyMyCity]))
+  const keep = useKeepScroll(JSON.stringify([debouncedQuery, filters, activeSort, onlyMyCity, showSaved]))
 
   function clearSearch() {
     setQuery('')
@@ -81,7 +85,11 @@ export function MarketplacePage() {
           <Input
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value)
+              // Buscar te regresa a todas las ventas
+              setShowSaved(false)
+            }}
             placeholder="Buscar ventas: chamarra, nike, vintage..."
             aria-label="Buscar ventas"
             className="h-8 rounded-full pl-9"
@@ -91,7 +99,11 @@ export function MarketplacePage() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        {location && (
+        <ChoicePill active={showSaved} onClick={() => setShowSaved(!showSaved)}>
+          {!showSaved && <Heart />}
+          Guardados
+        </ChoicePill>
+        {location && !showSaved && (
           <div className="flex flex-wrap gap-2" role="group" aria-label="Mostrar ventas">
             <ChoicePill slideId="market-city" active={onlyMyCity} onClick={() => setShowAll(false)}>
               En {getCityLabel(location)}
@@ -101,7 +113,7 @@ export function MarketplacePage() {
             </ChoicePill>
           </div>
         )}
-        <div className="ml-auto">
+        <div className={showSaved ? 'hidden' : 'ml-auto'}>
           <SortSelect value={activeSort} onChange={setSort} canSortByDistance={location !== null} />
         </div>
       </div>
@@ -109,7 +121,25 @@ export function MarketplacePage() {
       <div ref={keep.ref} style={keep.style}>
         {/* El skeleton se desvanece hacia el contenido en vez de cambiar de golpe */}
         <AnimatePresence mode="wait" initial={false}>
-          {isPending ? (
+          {showSaved ? (
+            saved.isPending ? (
+              <motion.div key="guardados-cargando" {...crossfade}>
+                <ListingsSkeleton />
+              </motion.div>
+            ) : saved.data?.length === 0 ? (
+              <motion.p key="guardados-vacio" {...crossfade} className="py-20 text-center text-sm text-muted-foreground">
+                Aun no guardas ventas. Toca el corazon de una venta para guardarla aqui.
+              </motion.p>
+            ) : (
+              <motion.ul key="guardados" {...crossfade} className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+                {saved.data?.map((listing, index) => (
+                  <motion.li key={listing.id} {...cascade(index)}>
+                    <ListingCard listing={listing} />
+                  </motion.li>
+                ))}
+              </motion.ul>
+            )
+          ) : isPending ? (
             <motion.div key="cargando" {...crossfade}>
               <ListingsSkeleton />
             </motion.div>
@@ -144,7 +174,7 @@ export function MarketplacePage() {
             </motion.ul>
           )}
         </AnimatePresence>
-        <ShowMore shown={listings.length} total={total} onClick={loadMore} />
+        {!showSaved && <ShowMore shown={listings.length} total={total} onClick={loadMore} />}
       </div>
       <CreateListingDialog origin={createOrigin} onClose={closeCreate} />
     </MotionConfig>

@@ -444,6 +444,7 @@ export type Database = {
           description: string
           id: string
           photos: string[]
+          previous_price: number | null
           price: number
           seasons: string[]
           seller_id: string
@@ -465,6 +466,7 @@ export type Database = {
           description?: string
           id?: string
           photos?: string[]
+          previous_price?: number | null
           price: number
           seasons?: string[]
           seller_id?: string
@@ -486,6 +488,7 @@ export type Database = {
           description?: string
           id?: string
           photos?: string[]
+          previous_price?: number | null
           price?: number
           seasons?: string[]
           seller_id?: string
@@ -618,6 +621,7 @@ export type Database = {
           comment_id: string | null
           created_at: string
           id: string
+          listing_id: string | null
           post_id: string | null
           read_at: string | null
           type: string
@@ -628,6 +632,7 @@ export type Database = {
           comment_id?: string | null
           created_at?: string
           id?: string
+          listing_id?: string | null
           post_id?: string | null
           read_at?: string | null
           type: string
@@ -638,6 +643,7 @@ export type Database = {
           comment_id?: string | null
           created_at?: string
           id?: string
+          listing_id?: string | null
           post_id?: string | null
           read_at?: string | null
           type?: string
@@ -656,6 +662,13 @@ export type Database = {
             columns: ["comment_id"]
             isOneToOne: false
             referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
             referencedColumns: ["id"]
           },
           {

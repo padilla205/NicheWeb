@@ -1,4 +1,4 @@
-import { Bell, Heart, MessageCircle, Repeat2, UserPlus } from 'lucide-react'
+import { Bell, Heart, MessageCircle, Repeat2, TrendingDown, UserPlus } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { Link } from 'react-router'
@@ -22,6 +22,7 @@ const typeInfo: Record<NotificationType, { text: string; icon: typeof Heart; cla
   comment: { text: 'comento tu publicacion', icon: MessageCircle, className: 'text-primary' },
   reply: { text: 'respondio a tu comentario', icon: MessageCircle, className: 'text-primary' },
   comment_like: { text: 'le gusto tu comentario', icon: Heart, className: 'fill-red-500 text-red-500' },
+  price_drop: { text: 'bajo el precio de una venta que guardaste', icon: TrendingDown, className: 'text-primary' },
   share: { text: 'compartio tu publicacion', icon: Repeat2, className: 'text-primary' },
   follow: { text: 'empezo a seguirte', icon: UserPlus, className: 'text-primary' },
 }
@@ -99,8 +100,12 @@ export function NotificationBell() {
 
 function NotificationRow({ item, fresh, onOpen }: { item: AppNotification; fresh: boolean; onOpen: () => void }) {
   const { text, icon: Icon, className } = typeInfo[item.type]
-  // Lo que se abre al tocarla: la publicacion o el perfil de quien te siguio
-  const to = item.postId ? `/p/${item.postId}` : `/u/${item.actor.username}`
+  // Lo que se abre al tocarla: la publicacion, la venta o el perfil de quien te siguio
+  const to = item.postId
+    ? `/p/${item.postId}`
+    : item.listingId
+      ? `/marketplace/${item.listingId}`
+      : `/u/${item.actor.username}`
 
   return (
     <Link

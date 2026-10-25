@@ -45,6 +45,7 @@ export function listingFromRow(row: ListingRow): Listing {
     sellerId: row.seller_id,
     title: row.title,
     price: row.price,
+    previousPrice: row.previous_price ?? undefined,
     size: row.size,
     location: { country: row.country, city: row.city },
     delivery:
@@ -67,7 +68,7 @@ export function listingFromRow(row: ListingRow): Listing {
 
 // Columnas de la venta mas el usuario y nombre del vendedor. Se nombra la llave (seller_id)
 // porque ventas y perfiles tambien se conectan a traves de los chats, y Supabase no sabria cual usar
-const WITH_SELLER = '*, seller:profiles!listings_seller_id_fkey(username, name)'
+export const WITH_SELLER = '*, seller:profiles!listings_seller_id_fkey(username, name)'
 
 export type ListingSearch = {
   query: string
@@ -169,6 +170,46 @@ export function useListing(id: string | undefined) {
       const { data, error } = await supabase.from('listings').select(WITH_SELLER).eq('id', id!).maybeSingle()
       if (error) throw error
       return data ? listingFromRow(data as ListingRow) : null
+    },
+  })
+}
+
+// "Mas de este vendedor": sus otras ventas que aun no se venden (funciona sin sesion)
+export function useMoreFromSeller(listing: Listing | null | undefined) {
+  return useQuery({
+    queryKey: ['listings', 'more', listing?.id],
+    enabled: !!listing,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('listings')
+        .select(WITH_SELLER)
+        .eq('seller_id', listing!.sellerId)
+        .neq('id', listing!.id)
+        .neq('status', 'vendida')
+        .order('created_at', { ascending: false })
+        .limit(8)
+      if (error) throw error
+      return (data as ListingRow[]).map(listingFromRow)
+    },
+  })
+}
+
+// "Te puede gustar": ventas disponibles del mismo tipo de prenda, de otras personas
+export function useSimilarListings(listing: Listing | null | undefined) {
+  return useQuery({
+    queryKey: ['listings', 'similar', listing?.id],
+    enabled: !!listing,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('listings')
+        .select(WITH_SELLER)
+        .eq('type', listing!.type)
+        .neq('seller_id', listing!.sellerId)
+        .neq('status', 'vendida')
+        .order('created_at', { ascending: false })
+        .limit(8)
+      if (error) throw error
+      return (data as ListingRow[]).map(listingFromRow)
     },
   })
 }

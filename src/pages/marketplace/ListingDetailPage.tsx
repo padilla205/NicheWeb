@@ -5,15 +5,17 @@ import { ReportButton } from '@/components/ReportDialog'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/hooks/useAuth'
 import { useOpenConversation } from '@/hooks/useChat'
-import { useListing } from '@/hooks/useListings'
+import { useListing, useMoreFromSeller, useSimilarListings } from '@/hooks/useListings'
 import { getColorInfo, getSeasonLabel } from '@/lib/clothing'
 import { formatTimeAgo } from '@/lib/feed'
 import { formatPrice, getConditionLabel } from '@/lib/marketplace'
 import { formatLocation } from '@/lib/locations'
 import { getTeamLabel } from '@/lib/teams'
 import { UserAvatar } from '@/pages/feed/UserAvatar'
+import { FavoriteButton } from './FavoriteButton'
 import { ListingGallery } from './ListingGallery'
 import { ListingOwnerActions } from './ListingOwnerActions'
+import { ListingRow } from './ListingRow'
 import { ShareButton } from './ShareButton'
 import { SizeGuide } from './SizeGuide'
 import { StatusBadge } from './StatusBadge'
@@ -29,6 +31,9 @@ export function ListingDetailPage() {
   const isMine = !!session && listing?.sellerId === session.user.id
   const navigate = useNavigate()
   const openChat = useOpenConversation()
+  // Otras ventas del mismo vendedor (sin esta ni las vendidas) y parecidas de otras personas
+  const { data: moreFromSeller = [] } = useMoreFromSeller(listing)
+  const { data: similar = [] } = useSimilarListings(listing)
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -39,7 +44,12 @@ export function ListingDetailPage() {
             Volver al marketplace
           </Link>
         </Button>
-        {listing && <ShareButton title={listing.title} />}
+        {listing && (
+          <div className="flex items-center gap-2">
+            <FavoriteButton listing={listing} className="border" />
+            <ShareButton title={listing.title} />
+          </div>
+        )}
       </div>
 
       {isPending ? (
@@ -55,7 +65,17 @@ export function ListingDetailPage() {
             <div>
               {listing.status !== 'disponible' && <StatusBadge listing={listing} className="mb-2 inline-block" />}
               <h1 className="text-2xl font-semibold tracking-tight">{listing.title}</h1>
-              <p className="mt-1 text-3xl font-semibold tabular-nums">{formatPrice(listing.price)}</p>
+              <p className="mt-1 flex flex-wrap items-baseline gap-2 tabular-nums">
+                <span className="text-3xl font-semibold">{formatPrice(listing.price)}</span>
+                {listing.previousPrice && (
+                  <>
+                    <span className="text-lg text-muted-foreground line-through">{formatPrice(listing.previousPrice)}</span>
+                    <span className="rounded-full bg-editorial px-2.5 py-0.5 text-xs font-medium text-editorial-foreground">
+                      Rebajada
+                    </span>
+                  </>
+                )}
+              </p>
               <p className="mt-1 text-sm text-muted-foreground">Publicado {formatTimeAgo(listing.createdAt)}</p>
               <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin className="size-4 shrink-0" />
@@ -174,6 +194,13 @@ export function ListingDetailPage() {
             )}
           </div>
         </article>
+      )}
+
+      {listing && (
+        <div className="mt-12 flex flex-col gap-10">
+          <ListingRow title={`Mas de @${listing.seller.username}`} listings={moreFromSeller} />
+          <ListingRow title="Te puede gustar" listings={similar} />
+        </div>
       )}
     </div>
   )

@@ -3,20 +3,23 @@ import { useEffect, useRef } from 'react'
 import { useSession } from '@/hooks/useAuth'
 import { feedUserFromRow } from '@/hooks/usePosts'
 import type { FeedUser } from '@/lib/feed'
+import { formatPrice } from '@/lib/marketplace'
 import { photoUrl } from '@/lib/photos'
 import { supabase } from '@/lib/supabase'
 
 // ponytail: se ven las 30 mas recientes; paginar si alguien recibe muchas
 const LIMIT = 30
 
-export type NotificationType = 'like' | 'comment' | 'reply' | 'share' | 'follow' | 'comment_like'
+export type NotificationType = 'like' | 'comment' | 'reply' | 'share' | 'follow' | 'comment_like' | 'price_drop'
 
 export type AppNotification = {
   id: string
   type: NotificationType
   actor: FeedUser
   postId?: string
-  // Portada de la publicacion (si tiene foto propia)
+  // Venta que bajo de precio
+  listingId?: string
+  // Portada de la publicacion o de la venta (si tiene foto)
   thumbUrl?: string
   commentText?: string
   createdAt: Date
@@ -27,11 +30,13 @@ type NotificationRow = {
   id: string
   type: string
   post_id: string | null
+  listing_id: string | null
   created_at: string
   read_at: string | null
   actor: { username: string; name: string; avatar_path: string | null }
   post: { photos: string[] } | null
   comment: { text: string } | null
+  listing: { title: string; photos: string[]; price: number } | null
 }
 
 // Tus notificaciones, las mas nuevas primero
@@ -44,7 +49,7 @@ export function useNotifications() {
       const { data, error } = await supabase
         .from('notifications')
         .select(
-          'id, type, post_id, created_at, read_at, actor:profiles!notifications_actor_id_fkey(username, name, avatar_path), post:posts(photos), comment:comments(text)',
+          'id, type, post_id, listing_id, created_at, read_at, actor:profiles!notifications_actor_id_fkey(username, name, avatar_path), post:posts(photos), comment:comments(text), listing:listings(title, photos, price)',
         )
         .order('created_at', { ascending: false })
         .limit(LIMIT)
@@ -54,8 +59,12 @@ export function useNotifications() {
         type: row.type as NotificationType,
         actor: feedUserFromRow(row.actor),
         postId: row.post_id ?? undefined,
-        thumbUrl: row.post?.photos[0] ? photoUrl(row.post.photos[0], true) : undefined,
-        commentText: row.comment?.text || undefined,
+        listingId: row.listing_id ?? undefined,
+        thumbUrl: (row.post ?? row.listing)?.photos[0] ? photoUrl((row.post ?? row.listing)!.photos[0], true) : undefined,
+        // En una rebaja se ve que venta y su precio nuevo
+        commentText: row.listing
+          ? `${row.listing.title}, ahora ${formatPrice(row.listing.price)}`
+          : row.comment?.text || undefined,
         createdAt: new Date(row.created_at),
         read: row.read_at !== null,
       }))

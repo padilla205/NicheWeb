@@ -32,6 +32,8 @@ export type Listing = {
   title: string
   // En pesos, sin centavos
   price: number
+  // Precio antes de la rebaja (lo pone la base de datos al bajar el precio)
+  previousPrice?: number
   size: string
   // Donde se entrega la prenda (el trato es en persona)
   location: UserLocation
