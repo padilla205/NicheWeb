@@ -61,7 +61,8 @@ export function PrivacyPage() {
             <strong>Supabase:</strong> guarda la base de datos, las fotos y las cuentas.
           </li>
           <li>
-            <strong>Vercel:</strong> aloja la pagina de Niche.
+            <strong>Vercel:</strong> aloja la pagina de Niche y cuenta las visitas de forma anonima (que paginas
+            se abren, desde que pais y tipo de dispositivo), sin cookies y sin saber quien eres.
           </li>
           <li>
             <strong>Open-Meteo:</strong> recibe la ubicacion aproximada de tu ciudad para mostrar el clima.
