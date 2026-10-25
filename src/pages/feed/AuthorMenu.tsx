@@ -7,6 +7,7 @@ import { useSession } from '@/hooks/useAuth'
 import { useToggleHiddenAuthor } from '@/hooks/usePosts'
 import type { Post } from '@/lib/feed'
 import { cn } from '@/lib/utils'
+import { ProfileHoverCard } from './ProfileHoverCard'
 import { UserAvatar } from './UserAvatar'
 
 type AuthorMenuProps = {
@@ -26,16 +27,19 @@ export function AuthorMenu({ post, onHidden, className, avatarClassName, childre
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        className={cn(
-          'flex min-w-0 items-center gap-2 rounded text-left outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50',
-          className,
-        )}
-      >
-        <UserAvatar user={post.author} className={avatarClassName} />
-        <span className="truncate font-medium">{post.author.username}</span>
-        {children}
-      </PopoverTrigger>
+      {/* Con mouse, quedarse encima muestra su perfil; al tocar sale el menu */}
+      <ProfileHoverCard username={post.author.username} disabled={open}>
+        <PopoverTrigger
+          className={cn(
+            'flex min-w-0 items-center gap-2 rounded text-left outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50',
+            className,
+          )}
+        >
+          <UserAvatar user={post.author} className={avatarClassName} />
+          <span className="truncate font-medium">{post.author.username}</span>
+          {children}
+        </PopoverTrigger>
+      </ProfileHoverCard>
       <PopoverContent align="start" className="z-[60] flex w-56 flex-col gap-1 p-1.5">
         <Button variant="ghost" className="w-full justify-start" asChild>
           <Link to={`/u/${post.author.username}`}>

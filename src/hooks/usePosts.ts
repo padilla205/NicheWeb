@@ -266,6 +266,54 @@ export function useToggleLike() {
       })),
     onError: (_error, post) =>
       updatePost(queryClient, post.id, (p) => ({ ...p, likedByMe: post.likedByMe, likes: post.likes })),
+    onSettled: (_data, _error, post) => queryClient.invalidateQueries({ queryKey: ['likers', post.id] }),
+  }).mutate
+}
+
+// Ultimas personas que dieron like a una publicacion ("Le gusta a ...")
+// ponytail: solo las ultimas 50; paginar si la lista se abre en publicaciones con miles
+export function usePostLikers(postId: string) {
+  return useQuery({
+    queryKey: ['likers', postId],
+    queryFn: async (): Promise<FeedUser[]> => {
+      const { data, error } = await supabase
+        .from('likes')
+        .select('user:profiles!likes_user_id_fkey(username, name, avatar_path)')
+        .eq('post_id', postId)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (error) throw error
+      return data.map((row) => feedUserFromRow(row.user))
+    },
+  })
+}
+
+// Like en un comentario: cambia al instante y regresa si falla
+export function useToggleCommentLike(postId: string) {
+  const queryClient = useQueryClient()
+  const userId = useSession()?.user.id
+  const key = ['comments', postId]
+  const setLiked = (commentId: string, liked: boolean) =>
+    queryClient.setQueryData<PostComment[]>(key, (comments) =>
+      comments?.map((comment) =>
+        comment.id === commentId && comment.likedByMe !== liked
+          ? { ...comment, likedByMe: liked, likes: comment.likes + (liked ? 1 : -1) }
+          : comment,
+      ),
+    )
+
+  return useMutation({
+    mutationFn: async (comment: PostComment) => {
+      const { error } = comment.likedByMe
+        ? await supabase.from('comment_likes').delete().eq('comment_id', comment.id).eq('user_id', userId!)
+        : await supabase.from('comment_likes').insert({ comment_id: comment.id })
+      if (error) throw error
+    },
+    onMutate: async (comment) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      setLiked(comment.id, !comment.likedByMe)
+    },
+    onError: (_error, comment) => setLiked(comment.id, comment.likedByMe),
   }).mutate
 }
 
@@ -338,18 +386,25 @@ export function useDeletePost() {
   })
 }
 
-type CommentRow = Tables<'comments'> & { author: ProfileBits; reply_to: { username: string } | null }
+type CommentRow = Tables<'comments'> & {
+  author: ProfileBits
+  reply_to: { username: string } | null
+  likes: { user_id: string }[]
+}
 
 // Comentarios de una publicacion, del mas viejo al mas nuevo.
 // ponytail: se traen todos al abrir la publicacion; paginar si un post junta cientos
 export function useComments(postId: string) {
+  const userId = useSession()?.user.id
   return useQuery({
     queryKey: ['comments', postId],
     queryFn: async (): Promise<PostComment[]> => {
       const { data, error } = await supabase
         .from('comments')
         .select(
-          '*, author:profiles!comments_author_id_fkey(username, name, avatar_path), reply_to:profiles!comments_reply_to_id_fkey(username)',
+          // ponytail: se traen los ids de quien dio like para contar y saber si fuiste tu; contarlos
+          // en la base de datos si un comentario junta miles
+          '*, author:profiles!comments_author_id_fkey(username, name, avatar_path), reply_to:profiles!comments_reply_to_id_fkey(username), likes:comment_likes(user_id)',
         )
         .eq('post_id', postId)
         .order('created_at')
@@ -361,6 +416,8 @@ export function useComments(postId: string) {
         text: row.text,
         imageUrl: row.image_path ? photoUrl(row.image_path) : undefined,
         createdAt: new Date(row.created_at),
+        likes: row.likes.length,
+        likedByMe: row.likes.some((like) => like.user_id === userId),
         reply:
           row.parent_id && row.reply_to_id
             ? { parentId: row.parent_id, toUserId: row.reply_to_id, toUsername: row.reply_to?.username ?? '' }

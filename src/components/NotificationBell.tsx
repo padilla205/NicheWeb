@@ -21,6 +21,7 @@ const typeInfo: Record<NotificationType, { text: string; icon: typeof Heart; cla
   like: { text: 'le gusto tu publicacion', icon: Heart, className: 'fill-red-500 text-red-500' },
   comment: { text: 'comento tu publicacion', icon: MessageCircle, className: 'text-primary' },
   reply: { text: 'respondio a tu comentario', icon: MessageCircle, className: 'text-primary' },
+  comment_like: { text: 'le gusto tu comentario', icon: Heart, className: 'fill-red-500 text-red-500' },
   share: { text: 'compartio tu publicacion', icon: Repeat2, className: 'text-primary' },
   follow: { text: 'empezo a seguirte', icon: UserPlus, className: 'text-primary' },
 }

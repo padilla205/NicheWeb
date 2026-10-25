@@ -1,9 +1,13 @@
-import { ArrowUp, ImagePlus, X } from 'lucide-react'
+import { ArrowUp, Heart, ImagePlus, X } from 'lucide-react'
+import { AnimatePresence, motion } from 'motion/react'
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { RollingNumber } from '@/components/RollingNumber'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useAddComment, useComments } from '@/hooks/usePosts'
+import { useAddComment, useComments, useToggleCommentLike } from '@/hooks/usePosts'
 import { formatTimeAgo, type Post, type PostComment } from '@/lib/feed'
+import { cn } from '@/lib/utils'
+import { ProfileHoverCard } from './ProfileHoverCard'
 import { UserAvatar } from './UserAvatar'
 
 type Reply = NonNullable<PostComment['reply']>
@@ -13,6 +17,21 @@ type Reply = NonNullable<PostComment['reply']>
 export function CommentsThread({ post, autoFocus }: { post: Post; autoFocus: boolean }) {
   const { data: comments, isPending } = useComments(post.id)
   const [replyingTo, setReplyingTo] = useState<Reply | null>(null)
+  // Hilos con las respuestas a la vista; los demas solo dicen "Ver N respuestas"
+  const [openThreads, setOpenThreads] = useState<Set<string>>(new Set())
+  const toggleLike = useToggleCommentLike(post.id)
+  const setThreadOpen = (id: string, open: boolean) =>
+    setOpenThreads((threads) => {
+      const next = new Set(threads)
+      if (open) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  // Al responder se abre el hilo para ver tu respuesta en cuanto llegue
+  const reply = (to: Reply) => {
+    setReplyingTo(to)
+    setThreadOpen(to.parentId, true)
+  }
 
   // Las respuestas se muestran debajo de su comentario principal, no en la lista general
   const topLevel = comments?.filter((comment) => !comment.reply) ?? []
@@ -31,37 +50,58 @@ export function CommentsThread({ post, autoFocus }: { post: Post; autoFocus: boo
           <ul className="flex flex-col gap-4">
             {topLevel.map((comment) => {
               const replies = repliesOf(comment.id)
+              const open = openThreads.has(comment.id)
               return (
                 <li key={comment.id}>
                   <CommentItem
                     comment={comment}
+                    onLike={() => toggleLike(comment)}
                     onReply={() =>
-                      setReplyingTo({
-                        parentId: comment.id,
-                        toUserId: comment.authorId,
-                        toUsername: comment.author.username,
-                      })
+                      reply({ parentId: comment.id, toUserId: comment.authorId, toUsername: comment.author.username })
                     }
                   />
                   {replies.length > 0 && (
-                    <ul className="mt-3 flex flex-col gap-3 pl-11">
-                      {replies.map((reply) => (
-                        <li key={reply.id}>
-                          {/* Responder a una respuesta la deja en el mismo hilo, mencionando a su autor */}
-                          <CommentItem
-                            comment={reply}
-                            small
-                            onReply={() =>
-                              setReplyingTo({
-                                parentId: comment.id,
-                                toUserId: reply.authorId,
-                                toUsername: reply.author.username,
-                              })
-                            }
-                          />
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="mt-2 pl-11">
+                      <button
+                        type="button"
+                        aria-expanded={open}
+                        onClick={() => setThreadOpen(comment.id, !open)}
+                        className="touch-target relative flex items-center gap-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <span aria-hidden className="h-px w-6 bg-border" />
+                        {open
+                          ? 'Ocultar respuestas'
+                          : `Ver ${replies.length} ${replies.length === 1 ? 'respuesta' : 'respuestas'}`}
+                      </button>
+                      {/* Las respuestas se despliegan con una linea a la izquierda que las une al comentario */}
+                      <AnimatePresence initial={false}>
+                        {open && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+                            className="overflow-hidden"
+                          >
+                            <ul className="mt-3 flex flex-col gap-3 border-l-2 pl-3">
+                              {replies.map((answer) => (
+                                <li key={answer.id}>
+                                  {/* Responder a una respuesta la deja en el mismo hilo, mencionando a su autor */}
+                                  <CommentItem
+                                    comment={answer}
+                                    small
+                                    onLike={() => toggleLike(answer)}
+                                    onReply={() =>
+                                      reply({ parentId: comment.id, toUserId: answer.authorId, toUsername: answer.author.username })
+                                    }
+                                  />
+                                </li>
+                              ))}
+                            </ul>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   )}
                 </li>
               )
@@ -84,18 +124,25 @@ export function CommentsThread({ post, autoFocus }: { post: Post; autoFocus: boo
 
 type CommentItemProps = {
   comment: PostComment
+  onLike: () => void
   onReply: () => void
   // Las respuestas usan un avatar mas chico para que se note que van dentro de un hilo
   small?: boolean
 }
 
-function CommentItem({ comment, onReply, small = false }: CommentItemProps) {
+function CommentItem({ comment, onLike, onReply, small = false }: CommentItemProps) {
   return (
     <div className="flex gap-3">
-      <UserAvatar user={comment.author} className={small ? 'size-6 text-[10px]' : undefined} />
-      <div className="min-w-0 text-sm">
+      <ProfileHoverCard username={comment.author.username}>
+        <span className="shrink-0">
+          <UserAvatar user={comment.author} className={small ? 'size-6 text-[10px]' : undefined} />
+        </span>
+      </ProfileHoverCard>
+      <div className="min-w-0 flex-1 text-sm">
         <p>
-          <span className="font-medium">{comment.author.username}</span>{' '}
+          <ProfileHoverCard username={comment.author.username}>
+            <span className="font-medium">{comment.author.username}</span>
+          </ProfileHoverCard>{' '}
           <span className="text-muted-foreground">{formatTimeAgo(comment.createdAt)}</span>
         </p>
         {(comment.text || comment.reply) && (
@@ -121,6 +168,25 @@ function CommentItem({ comment, onReply, small = false }: CommentItemProps) {
           Responder
         </button>
       </div>
+      <button
+        type="button"
+        onClick={onLike}
+        aria-pressed={comment.likedByMe}
+        aria-label={comment.likedByMe ? 'Quitar me gusta al comentario' : 'Me gusta el comentario'}
+        className="touch-target relative flex shrink-0 flex-col items-center self-start pt-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {/* Mismo saltito que el like de las publicaciones; el numero rueda al cambiar */}
+        <motion.span
+          key={String(comment.likedByMe)}
+          initial={comment.likedByMe ? { scale: 0.6 } : false}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', visualDuration: 0.2, bounce: 0.5 }}
+          className="flex"
+        >
+          <Heart className={cn('size-3.5', comment.likedByMe && 'fill-red-500 text-red-500')} />
+        </motion.span>
+        {comment.likes > 0 && <RollingNumber value={comment.likes} />}
+      </button>
     </div>
   )
 }

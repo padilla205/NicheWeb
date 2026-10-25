@@ -13,6 +13,7 @@ import { formatTimeAgo, type Post } from '@/lib/feed'
 import { canOpenItem } from '@/lib/outfits'
 import { cn } from '@/lib/utils'
 import { CommentsThread } from '@/pages/feed/CommentsThread'
+import { LikedBy } from '@/pages/feed/LikedBy'
 import { PostActions } from '@/pages/feed/PostActions'
 import { PostPhotos } from '@/pages/feed/PostPhotos'
 import { AuthorMenu } from '@/pages/feed/AuthorMenu'
@@ -162,6 +163,7 @@ export function PostDetail({ post, onClose, onAuthorHidden, morph = true }: Post
                 onComment={() => document.getElementById(`comment-input-${post.id}`)?.focus()}
                 onShareToProfile={() => toggleShare(post)}
               />
+              <LikedBy post={post} />
             </div>
 
             <CommentsThread post={post} autoFocus={isDesktop} />

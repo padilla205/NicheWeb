@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase'
 // ponytail: se ven las 30 mas recientes; paginar si alguien recibe muchas
 const LIMIT = 30
 
-export type NotificationType = 'like' | 'comment' | 'reply' | 'share' | 'follow'
+export type NotificationType = 'like' | 'comment' | 'reply' | 'share' | 'follow' | 'comment_like'
 
 export type AppNotification = {
   id: string

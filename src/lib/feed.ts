@@ -17,6 +17,8 @@ export type PostComment = {
   // Foto o GIF adjunto (opcional)
   imageUrl?: string
   createdAt: Date
+  likes: number
+  likedByMe: boolean
   // Si es una respuesta: el comentario principal bajo el que se muestra y a quien le responde
   reply?: { parentId: string; toUserId: string; toUsername: string }
 }

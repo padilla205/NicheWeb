@@ -82,13 +82,16 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
             className="aspect-square w-full md:aspect-auto md:h-full md:min-h-96"
             topRightControl={
               item.photoUrls.length > 0 && (
-                <FullscreenPhotos
-                  itemId={`item-${item.id}`}
-                  photos={item.photoUrls}
-                  index={photoIndex}
-                  onIndexChange={setPhotoIndex}
-                  alt={title}
-                />
+                // En celular la foto llega hasta la X de cerrar: este boton se recorre a su izquierda
+                <div className="max-md:mr-11">
+                  <FullscreenPhotos
+                    itemId={`item-${item.id}`}
+                    photos={item.photoUrls}
+                    index={photoIndex}
+                    onIndexChange={setPhotoIndex}
+                    alt={title}
+                  />
+                </div>
               )
             }
           />
@@ -215,7 +218,8 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, transition: appearTransition }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
-            className="absolute top-3 right-3"
+            // z-20: por encima de los controles de la foto (z-10), que en celular le tapaban el toque
+            className="absolute top-3 right-3 z-20"
           >
             <Button variant="secondary" size="icon-sm" onClick={onClose} autoFocus>
               <X />
