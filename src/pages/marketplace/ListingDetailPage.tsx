@@ -5,7 +5,7 @@ import { ReportButton } from '@/components/ReportDialog'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/hooks/useAuth'
 import { useOpenConversation } from '@/hooks/useChat'
-import { useListing, useMoreFromSeller, useSimilarListings } from '@/hooks/useListings'
+import { useListing, useMoreFromSeller, useRecordListingView, useSimilarListings } from '@/hooks/useListings'
 import { getColorInfo, getSeasonLabel } from '@/lib/clothing'
 import { formatTimeAgo } from '@/lib/feed'
 import { formatPrice, getConditionLabel } from '@/lib/marketplace'
@@ -34,6 +34,8 @@ export function ListingDetailPage() {
   const openChat = useOpenConversation()
   // Otras ventas del mismo vendedor (sin esta ni las vendidas) y parecidas de otras personas
   const { data: moreFromSeller = [] } = useMoreFromSeller(listing)
+  // Cuenta tu visita para las estadisticas del vendedor
+  useRecordListingView(listing)
   const { data: similar = [] } = useSimilarListings(listing)
 
   return (
@@ -85,10 +87,11 @@ export function ListingDetailPage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <dl className="grid grid-cols-3 gap-3 rounded-2xl border bg-card p-4 text-sm">
+              <dl className="grid grid-cols-3 gap-3 rounded-2xl border bg-card p-4 text-sm has-[div:nth-child(4)]:grid-cols-2 sm:has-[div:nth-child(4)]:grid-cols-4">
                 <Detail label="Talla" value={listing.size} />
                 <Detail label="Estado" value={getConditionLabel(listing.condition)} />
                 <Detail label="Tipo" value={listing.type} />
+                {listing.brand && <Detail label="Marca" value={listing.brand} />}
               </dl>
               <SizeGuide size={listing.size} />
             </div>

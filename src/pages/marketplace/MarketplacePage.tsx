@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCityCenter } from '@/hooks/useCityCenter'
 import { useSavedListings } from '@/hooks/useFavorites'
-import { useListingSizes, useListings } from '@/hooks/useListings'
+import { useListingBrands, useListingSizes, useListings } from '@/hooks/useListings'
 import { useUserLocation } from '@/hooks/useUserLocation'
 import { getCityLabel } from '@/lib/locations'
 import { countActiveFilters, emptyFilters, type ListingSort } from '@/lib/marketplace'
@@ -54,6 +54,7 @@ export function MarketplacePage() {
     center: activeSort === 'cercanos' ? center : null,
   })
   const sizes = useListingSizes()
+  const brands = useListingBrands()
   // "Guardados": en vez de los resultados se ven las ventas que guardaste con el corazon
   const [showSaved, setShowSaved] = useState(false)
   const saved = useSavedListings(showSaved)
@@ -95,7 +96,7 @@ export function MarketplacePage() {
             className="h-8 rounded-full pl-9"
           />
         </div>
-        <MarketplaceFilters value={filters} onChange={setFilters} sizes={sizes} />
+        <MarketplaceFilters value={filters} onChange={setFilters} sizes={sizes} brands={brands} />
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">

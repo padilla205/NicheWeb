@@ -43,6 +43,8 @@ export type Listing = {
   status: ListingStatus
   // Texto libre: "Chamarra de piel", "Tenis", etc.
   type: string
+  // Opcional: "Nike", "Zara"; vacio si no se puso
+  brand: string
   // Mismas caracteristicas que una prenda del closet
   seasons: Season[]
   // Colores de la lista ("azul") o personalizados ("#1e90ff")
@@ -79,9 +81,10 @@ export type ListingFilters = {
   conditions: ListingCondition[]
   colors: string[]
   seasons: Season[]
+  brands: string[]
 }
 
-export const emptyFilters: ListingFilters = { sizes: [], conditions: [], colors: [], seasons: [] }
+export const emptyFilters: ListingFilters = { sizes: [], conditions: [], colors: [], seasons: [], brands: [] }
 
 export function countActiveFilters(filters: ListingFilters) {
   return (
@@ -89,7 +92,8 @@ export function countActiveFilters(filters: ListingFilters) {
     filters.sizes.length +
     filters.conditions.length +
     filters.colors.length +
-    filters.seasons.length
+    filters.seasons.length +
+    filters.brands.length
   )
 }
 

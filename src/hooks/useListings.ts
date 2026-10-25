@@ -1,4 +1,5 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { useSession } from '@/hooks/useAuth'
 import { feedUserFromRow } from '@/hooks/usePosts'
 import { useProfile } from '@/hooks/useProfile'
@@ -28,6 +29,7 @@ export type NewListing = {
   delivery?: Delivery
   condition: ListingCondition
   type: string
+  brand: string
   seasons: Season[]
   colors: string[]
   team?: string
@@ -57,6 +59,7 @@ export function listingFromRow(row: ListingRow): Listing {
     condition: row.condition as ListingCondition,
     status: row.status as ListingStatus,
     type: row.type,
+    brand: row.brand,
     seasons: row.seasons as Season[],
     colors: row.colors,
     team: row.team ?? undefined,
@@ -100,6 +103,7 @@ export function useListings(search: ListingSearch) {
         conditions: filters.conditions,
         colors: filters.colors,
         seasons: filters.seasons,
+        brands: filters.brands,
         only_country: onlyCity?.country,
         only_city: onlyCity?.city,
         near_country: near?.country,
@@ -242,13 +246,49 @@ export function useListingSizes() {
   }).data ?? []
 }
 
+// Marcas que existen en las ventas, para el filtro y las sugerencias al publicar
+export function useListingBrands() {
+  return useQuery({
+    queryKey: ['listings', 'brands'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('listing_brands')
+      if (error) throw error
+      return data.sort((a, b) => a.localeCompare(b, 'es'))
+    },
+  }).data ?? []
+}
+
+// Cuantas personas vieron, guardaron y escribieron por tu venta (solo le responde al vendedor)
+export function useListingStats(listingId: string) {
+  return useQuery({
+    queryKey: ['listings', 'stats', listingId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('listing_stats', { listing: listingId })
+      if (error) throw error
+      const row = data[0]
+      return row ? { views: Number(row.views), saves: Number(row.saves), chats: Number(row.chats) } : null
+    },
+  })
+}
+
+// Cuenta tu visita a una venta ajena, una vez por persona: si ya la habias visto, la base de datos
+// la rechaza como repetida y no pasa nada
+export function useRecordListingView(listing: Listing | null | undefined) {
+  const userId = useSession()?.user.id
+  const listingId = listing && userId && listing.sellerId !== userId ? listing.id : undefined
+  useEffect(() => {
+    if (listingId) supabase.from('listing_views').insert({ listing_id: listingId }).then(() => {})
+  }, [listingId])
+}
+
 // Datos del formulario ya limpios, como columnas de la tabla
-function toRow({ title, description, size, type, location, delivery, team, price, condition, seasons, colors }: NewListing) {
+function toRow({ title, description, size, type, brand, location, delivery, team, price, condition, seasons, colors }: NewListing) {
   return {
     title: title.trim(),
     description: description.trim(),
     size: size.trim(),
     type: type.trim(),
+    brand: brand.trim(),
     price,
     condition,
     seasons,

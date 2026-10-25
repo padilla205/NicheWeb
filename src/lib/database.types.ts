@@ -431,8 +431,42 @@ export type Database = {
           },
         ]
       }
+      listing_views: {
+        Row: {
+          created_at: string
+          listing_id: string
+          viewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          listing_id: string
+          viewer_id?: string
+        }
+        Update: {
+          created_at?: string
+          listing_id?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_views_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
+          brand: string
           city: string
           colors: string[]
           condition: string
@@ -455,6 +489,7 @@ export type Database = {
           type: string
         }
         Insert: {
+          brand?: string
           city: string
           colors?: string[]
           condition: string
@@ -477,6 +512,7 @@ export type Database = {
           type?: string
         }
         Update: {
+          brand?: string
           city?: string
           colors?: string[]
           condition?: string
@@ -928,6 +964,11 @@ export type Database = {
       hidden_by_reports: { Args: { kind: string; target: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_blocked_with: { Args: { other: string }; Returns: boolean }
+      listing_brands: { Args: never; Returns: string[] }
+      listing_stats: {
+        Args: { listing: string }
+        Returns: { chats: number; saves: number; views: number }[]
+      }
       listing_sizes: {
         Args: never
         Returns: string[]
@@ -946,6 +987,7 @@ export type Database = {
       }
       search_listings: {
         Args: {
+          brands?: string[]
           colors?: string[]
           conditions?: string[]
           max_price?: number

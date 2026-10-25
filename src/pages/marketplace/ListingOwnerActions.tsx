@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react'
+import { Eye, Heart, MessageCircle, Pencil, Trash2 } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ChoicePill } from '@/components/ChoicePill'
@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { useDeleteListing, useSetListingStatus } from '@/hooks/useListings'
+import { useDeleteListing, useListingStats, useSetListingStatus } from '@/hooks/useListings'
 import { type Listing, listingStatuses } from '@/lib/marketplace'
 import { CreateListingDialog } from './CreateListingDialog'
 
@@ -36,6 +36,7 @@ export function ListingOwnerActions({ listing }: { listing: Listing }) {
   return (
     <section className="flex flex-col gap-3 rounded-2xl border bg-card p-4">
       <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Tu venta</h2>
+      <ListingStats listingId={listing.id} />
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Estado de la venta">
         {listingStatuses.map((status) => (
@@ -87,5 +88,31 @@ export function ListingOwnerActions({ listing }: { listing: Listing }) {
 
       <CreateListingDialog origin={editOrigin} onClose={closeEdit} listing={listing} />
     </section>
+  )
+}
+
+// Como le va a tu venta: personas que la vieron, la guardaron y te escribieron
+function ListingStats({ listingId }: { listingId: string }) {
+  const { data: stats } = useListingStats(listingId)
+  const items = [
+    { icon: Eye, value: stats?.views, label: (n: number) => (n === 1 ? 'vista' : 'vistas') },
+    { icon: Heart, value: stats?.saves, label: (n: number) => (n === 1 ? 'guardada' : 'guardadas') },
+    { icon: MessageCircle, value: stats?.chats, label: (n: number) => (n === 1 ? 'chat' : 'chats') },
+  ]
+
+  return (
+    <div className="grid grid-cols-3 gap-2 text-center">
+      {items.map(({ icon: Icon, value, label }) => (
+        <div key={label(2)} className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 p-3">
+          <Icon className="size-4 text-muted-foreground" />
+          {value === undefined ? (
+            <div aria-hidden className="h-6 w-8 animate-pulse rounded bg-muted" />
+          ) : (
+            <p className="text-lg font-semibold tabular-nums">{value}</p>
+          )}
+          <p className="text-xs text-muted-foreground">{label(value ?? 2)}</p>
+        </div>
+      ))}
+    </div>
   )
 }

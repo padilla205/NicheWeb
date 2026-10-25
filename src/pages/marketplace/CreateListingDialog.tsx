@@ -7,7 +7,7 @@ import { DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { useCreateListing, useUpdateListing } from '@/hooks/useListings'
+import { useCreateListing, useListingBrands, useUpdateListing } from '@/hooks/useListings'
 import { useUserLocation } from '@/hooks/useUserLocation'
 import { type ClosetItem, getTypeInfo, type Season } from '@/lib/clothing'
 import { toLocation } from '@/lib/locations'
@@ -62,6 +62,8 @@ function CreateListingForm({ onDone, listing, fromItem, onPublished }: CreateLis
   // Se guarda como texto mientras se escribe; se convierte a numero al publicar
   const [price, setPrice] = useState(listing ? String(listing.price) : '')
   const [type, setType] = useState(listing?.type ?? itemType)
+  const [brand, setBrand] = useState(listing?.brand ?? '')
+  const brands = useListingBrands()
   const [team, setTeam] = useState(listing?.team ?? fromItem?.team ?? '')
   const [size, setSize] = useState(listing?.size ?? '')
   const [condition, setCondition] = useState<ListingCondition | ''>(listing?.condition ?? '')
@@ -118,6 +120,7 @@ function CreateListingForm({ onDone, listing, fromItem, onPublished }: CreateLis
       delivery,
       condition,
       type,
+      brand,
       seasons: selectedSeasons,
       colors,
       team: isJersey && team ? team : undefined,
@@ -176,15 +179,36 @@ function CreateListingForm({ onDone, listing, fromItem, onPublished }: CreateLis
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="listing-type">Tipo de prenda</Label>
-        <Input
-          id="listing-type"
-          value={type}
-          onChange={(event) => changeType(event.target.value)}
-          placeholder="Ej. Chamarra de piel, tenis, jersey de futbol"
-          maxLength={40}
-        />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="listing-type">Tipo de prenda</Label>
+          <Input
+            id="listing-type"
+            value={type}
+            onChange={(event) => changeType(event.target.value)}
+            placeholder="Ej. Chamarra, tenis"
+            maxLength={40}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="listing-brand">
+            Marca <span className="font-normal text-muted-foreground">(opcional)</span>
+          </Label>
+          {/* Sugiere las marcas que ya existen para que "Nike" no aparezca escrito de mil formas */}
+          <Input
+            id="listing-brand"
+            list="listing-brands"
+            value={brand}
+            onChange={(event) => setBrand(event.target.value)}
+            placeholder="Ej. Nike, Zara"
+            maxLength={40}
+          />
+          <datalist id="listing-brands">
+            {brands.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
+        </div>
       </div>
 
       {isJersey && (

@@ -18,6 +18,8 @@ type MarketplaceFiltersProps = {
   onChange: (value: ListingFilters) => void
   // Tallas que existen en las ventas, para elegirlas con un toque
   sizes: string[]
+  // Marcas que existen en las ventas
+  brands: string[]
 }
 
 // Agrega o quita un valor de una lista
@@ -30,7 +32,7 @@ function toPrice(text: string) {
   return text === '' ? undefined : Math.max(0, Number(text))
 }
 
-export function MarketplaceFilters({ value, onChange, sizes }: MarketplaceFiltersProps) {
+export function MarketplaceFilters({ value, onChange, sizes, brands }: MarketplaceFiltersProps) {
   const active = countActiveFilters(value)
   const set = (changes: Partial<ListingFilters>) => onChange({ ...value, ...changes })
 
@@ -91,6 +93,22 @@ export function MarketplaceFilters({ value, onChange, sizes }: MarketplaceFilter
                   onClick={() => set({ sizes: toggle(value.sizes, size) })}
                 >
                   {size}
+                </ChoicePill>
+              ))}
+            </div>
+          </FilterSection>
+        )}
+
+        {brands.length > 0 && (
+          <FilterSection title="Marca">
+            <div className="flex flex-wrap gap-2">
+              {brands.map((brand) => (
+                <ChoicePill
+                  key={brand}
+                  active={value.brands.includes(brand)}
+                  onClick={() => set({ brands: toggle(value.brands, brand) })}
+                >
+                  {brand}
                 </ChoicePill>
               ))}
             </div>

@@ -46,7 +46,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
           </p>
           <p className="truncate text-sm group-hover:underline">{listing.title}</p>
           <p className="truncate text-xs text-muted-foreground">
-            Talla {listing.size} · {getConditionLabel(listing.condition)}
+            {listing.brand && `${listing.brand} · `}Talla {listing.size} · {getConditionLabel(listing.condition)}
           </p>
           <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
             <MapPin className="size-3 shrink-0" />
