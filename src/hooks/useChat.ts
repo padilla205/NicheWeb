@@ -414,7 +414,7 @@ export function useBlockState(otherId: string | undefined): BlockState {
   return 'none'
 }
 
-// Bloquea o desbloquea a una persona; los dos dejan de poder escribirse
+// Bloquea o desbloquea a una persona: no pueden escribirse ni ver lo que publica el otro
 export function useToggleBlock() {
   const queryClient = useQueryClient()
   const userId = useSession()?.user.id
@@ -436,7 +436,11 @@ export function useToggleBlock() {
       return { previous }
     },
     onError: (_error, _vars, context) => queryClient.setQueryData(key, context?.previous),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key })
+      // Con un bloqueo de por medio dejan de verse sus publicaciones, comentarios y ventas
+      for (const list of ['posts', 'comments', 'likers', 'listings']) queryClient.invalidateQueries({ queryKey: [list] })
+    },
   }).mutate
 }
 

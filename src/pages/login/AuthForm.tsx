@@ -1,9 +1,9 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { type FormEvent, type ReactNode, useState } from 'react'
+import { type FormEvent, type ReactNode, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { UsernameTakenError, useSignIn, useSignUp } from '@/hooks/useAuth'
+import { UsernameTakenError, useSendPasswordReset, useSignIn, useSignUp } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { PasswordInput } from './PasswordInput'
 
@@ -40,7 +40,28 @@ export function AuthForm() {
   const [formError, setFormError] = useState('')
   const signIn = useSignIn()
   const signUp = useSignUp()
+  const sendReset = useSendPasswordReset()
   const pending = signIn.isPending || signUp.isPending
+  const formRef = useRef<HTMLFormElement>(null)
+
+  // Usa el correo que ya escribiste para mandar el link de recuperacion
+  async function forgotPassword() {
+    const email = String(new FormData(formRef.current!).get('email') ?? '').trim()
+    setFormError('')
+    setNotice('')
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setErrors({ email: 'Escribe tu correo para recuperar tu contrasena' })
+      return
+    }
+    setErrors({})
+    try {
+      await sendReset.mutateAsync(email)
+      // Mismo aviso exista o no la cuenta, para no revelar que correos estan registrados
+      setNotice('Si hay una cuenta con ese correo, te enviamos un link para cambiar tu contrasena.')
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Algo salio mal, intenta de nuevo')
+    }
+  }
 
   function changeMode(next: Mode) {
     setMode(next)
@@ -122,7 +143,7 @@ export function AuthForm() {
         ))}
       </div>
 
-      <form noValidate onSubmit={submit} className="flex flex-col">
+      <form ref={formRef} noValidate onSubmit={submit} className="flex flex-col">
         <AnimatePresence initial={false}>
           {mode === 'register' && (
             <Collapsible key="username">
@@ -145,7 +166,8 @@ export function AuthForm() {
             mode === 'login' && (
               <button
                 type="button"
-                onClick={() => setNotice('Podras recuperar tu contrasena cuando conectemos las cuentas.')}
+                onClick={forgotPassword}
+                disabled={sendReset.isPending}
                 className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >
                 Olvidaste tu contrasena?

@@ -1,6 +1,7 @@
 import { ArrowLeft, ExternalLink, LogIn, MapPin, MessageCircle } from 'lucide-react'
 import { lazy, type ReactNode, Suspense } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
+import { ReportButton } from '@/components/ReportDialog'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/hooks/useAuth'
 import { useOpenConversation } from '@/hooks/useChat'
@@ -168,6 +169,7 @@ export function ListingDetailPage() {
                       ? 'Esta prenda ya se vendio.'
                       : 'El trato se cierra en persona.'}
                 </p>
+                <ReportButton type="listing" id={listing.id} label="Reportar venta" />
               </div>
             )}
           </div>

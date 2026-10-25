@@ -1,9 +1,11 @@
 import { ArrowUp, Heart, ImagePlus, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { ReportDialog } from '@/components/ReportDialog'
 import { RollingNumber } from '@/components/RollingNumber'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useSession } from '@/hooks/useAuth'
 import { useAddComment, useComments, useToggleCommentLike } from '@/hooks/usePosts'
 import { formatTimeAgo, type Post, type PostComment } from '@/lib/feed'
 import { cn } from '@/lib/utils'
@@ -131,6 +133,8 @@ type CommentItemProps = {
 }
 
 function CommentItem({ comment, onLike, onReply, small = false }: CommentItemProps) {
+  const isMine = useSession()?.user.id === comment.authorId
+  const [reporting, setReporting] = useState(false)
   return (
     <div className="flex gap-3">
       <ProfileHoverCard username={comment.author.username}>
@@ -167,6 +171,18 @@ function CommentItem({ comment, onLike, onReply, small = false }: CommentItemPro
         >
           Responder
         </button>
+        {!isMine && (
+          <>
+            <button
+              type="button"
+              onClick={() => setReporting(true)}
+              className="touch-target relative mt-0.5 ml-3 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
+            >
+              Reportar
+            </button>
+            <ReportDialog open={reporting} onClose={() => setReporting(false)} type="comment" id={comment.id} />
+          </>
+        )}
       </div>
       <button
         type="button"

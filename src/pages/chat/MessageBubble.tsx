@@ -1,7 +1,8 @@
-import { Ban, Check, Clock, Expand, Pencil, RotateCw, Shirt, Trash2 } from 'lucide-react'
+import { Ban, Check, Clock, Expand, Flag, Pencil, RotateCw, Shirt, Trash2 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { ReportDialog } from '@/components/ReportDialog'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useSession } from '@/hooks/useAuth'
@@ -32,6 +33,7 @@ export function MessageBubble({ message, mine, onRetry, onEdit }: MessageBubbleP
   const failed = message.status === 'failed'
   const [menuOpen, setMenuOpen] = useState(false)
   const [viewing, setViewing] = useState(false)
+  const [reporting, setReporting] = useState(false)
 
   return (
     <motion.div
@@ -83,6 +85,7 @@ export function MessageBubble({ message, mine, onRetry, onEdit }: MessageBubbleP
             mine={mine}
             onView={() => setViewing(true)}
             onEdit={onEdit}
+            onReport={() => setReporting(true)}
             onClose={() => setMenuOpen(false)}
           />
         </Popover>
@@ -122,6 +125,7 @@ export function MessageBubble({ message, mine, onRetry, onEdit }: MessageBubbleP
           onOpenChange={setViewing}
         />
       )}
+      {!mine && <ReportDialog open={reporting} onClose={() => setReporting(false)} type="message" id={message.id} />}
     </motion.div>
   )
 }
@@ -131,11 +135,12 @@ type MessageMenuProps = {
   mine: boolean
   onView: () => void
   onEdit: () => void
+  onReport: () => void
   onClose: () => void
 }
 
-// Las 4 reacciones arriba y abajo las acciones: ver la foto, editar y borrar
-function MessageMenu({ message, mine, onView, onEdit, onClose }: MessageMenuProps) {
+// Las 4 reacciones arriba y abajo las acciones: ver la foto, editar y borrar (o reportar los del otro)
+function MessageMenu({ message, mine, onView, onEdit, onReport, onClose }: MessageMenuProps) {
   const userId = useSession()?.user.id
   const toggleReaction = useToggleReaction()
   const deleteMessage = useDeleteMessage()
@@ -170,7 +175,7 @@ function MessageMenu({ message, mine, onView, onEdit, onClose }: MessageMenuProp
           </button>
         ))}
       </div>
-      {(message.imageUrl || changeable) && (
+      {(message.imageUrl || changeable || !mine) && (
         <div className="flex flex-col border-t pt-1">
           {message.imageUrl && (
             <Button
@@ -213,6 +218,20 @@ function MessageMenu({ message, mine, onView, onEdit, onClose }: MessageMenuProp
             >
               <Trash2 />
               {confirmDelete ? 'Toca otra vez para borrar' : 'Borrar'}
+            </Button>
+          )}
+          {!mine && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="justify-start text-destructive hover:text-destructive"
+              onClick={() => {
+                onReport()
+                onClose()
+              }}
+            >
+              <Flag />
+              Reportar
             </Button>
           )}
         </div>

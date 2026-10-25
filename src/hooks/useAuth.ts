@@ -31,6 +31,7 @@ const messages: Record<string, string> = {
   email_address_invalid: 'Correo no valido',
   over_request_rate_limit: 'Demasiados intentos, espera un momento',
   over_email_send_rate_limit: 'Demasiados intentos, espera un momento',
+  same_password: 'La nueva contrasena debe ser distinta a la anterior',
 }
 
 function friendly(error: AuthError) {
@@ -70,6 +71,28 @@ export function useSignUp() {
       if (error) throw friendly(error)
       // Sin sesion significa que Supabase pide confirmar el correo antes de entrar
       return { needsConfirmation: !data.session }
+    },
+  })
+}
+
+// Manda el correo con el link para cambiar la contrasena; el link abre /nueva-contrasena
+export function useSendPasswordReset() {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/nueva-contrasena`,
+      })
+      if (error) throw friendly(error)
+    },
+  })
+}
+
+// Cambia la contrasena de quien tiene la sesion (la que abre el link del correo)
+export function useUpdatePassword() {
+  return useMutation({
+    mutationFn: async (password: string) => {
+      const { error } = await supabase.auth.updateUser({ password })
+      if (error) throw friendly(error)
     },
   })
 }

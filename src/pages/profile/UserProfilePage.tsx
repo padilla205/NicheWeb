@@ -2,9 +2,11 @@ import { ArrowLeft } from 'lucide-react'
 import { MotionConfig } from 'motion/react'
 import { Navigate, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
+import { useBlockState } from '@/hooks/useChat'
 import { useProfile, useUserProfile } from '@/hooks/useProfile'
 import { EmptyTab } from './EmptyTab'
 import { FollowButton, FollowStats, MessageButton } from './FollowStats'
+import { ProfileMoreMenu } from './ProfileMoreMenu'
 import { ProfileSummary } from './ProfileSummary'
 import { ProfileTabs } from './ProfileTabs'
 
@@ -14,6 +16,7 @@ export function UserProfilePage() {
   const me = useProfile()
   const navigate = useNavigate()
   const { data: profile, isPending } = useUserProfile(username)
+  const blockedByMe = useBlockState(profile?.id) === 'blocked-by-me'
 
   if (username === me.username) return <Navigate to="/profile" replace />
 
@@ -40,7 +43,13 @@ export function UserProfilePage() {
               <div className="flex items-start gap-2">
                 <FollowButton userId={profile.id} />
                 <MessageButton userId={profile.id} />
+                <ProfileMoreMenu userId={profile.id} username={profile.username} />
               </div>
+              {blockedByMe && (
+                <p className="text-sm text-muted-foreground">
+                  Bloqueaste a @{profile.username}: no ves lo que publica ni puede escribirte.
+                </p>
+              )}
             </header>
             <ProfileTabs user={profile} />
           </>

@@ -7,11 +7,13 @@ import { ItemPage } from '@/pages/closet/ItemPage'
 import { FeedPage } from '@/pages/feed/FeedPage'
 import { PostPage } from '@/pages/feed/PostPage'
 import { LoginPage } from '@/pages/login/LoginPage'
+import { NewPasswordPage } from '@/pages/login/NewPasswordPage'
 import { ListingDetailPage } from '@/pages/marketplace/ListingDetailPage'
 import { MarketplacePage } from '@/pages/marketplace/MarketplacePage'
 import { OutfitPage } from '@/pages/outfits/OutfitPage'
 import { OutfitsPage } from '@/pages/outfits/OutfitsPage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
+import { ReportsPage } from '@/pages/reports/ReportsPage'
 import { SearchPage } from '@/pages/search/SearchPage'
 import { UserProfilePage } from '@/pages/profile/UserProfilePage'
 
@@ -20,6 +22,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="login" element={<LoginPage />} />
+        <Route path="nueva-contrasena" element={<NewPasswordPage />} />
         {/* La pagina de una venta se puede ver sin cuenta, para que funcionen los links compartidos */}
         <Route element={<AppLayout />}>
           <Route path="marketplace/:id" element={<ListingDetailPage />} />
@@ -38,6 +41,7 @@ function App() {
             <Route path="buscar" element={<SearchPage />} />
             <Route path="p/:id" element={<PostPage />} />
             <Route path="prenda/:id" element={<ItemPage />} />
+            <Route path="reportes" element={<ReportsPage />} />
             <Route path="*" element={<Navigate to="/closet" replace />} />
           </Route>
         </Route>
