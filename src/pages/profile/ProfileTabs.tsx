@@ -32,7 +32,7 @@ export function ProfileTabs({ user }: { user?: OtherUser }) {
   const shared = useSharedPosts(userId)
   // Outfits que la persona eligio mostrar en su closet
   const { data: closetOutfits = [] } = useOutfits(userId, true)
-  const { items, total: itemsTotal, isPending: itemsPending, loadMore: loadMoreItems } = useItems([], user?.id)
+  const { items, total: itemsTotal, isPending: itemsPending, loadMore: loadMoreItems } = useItems(undefined, user?.id)
   // En tu perfil incluye las vendidas: en el marketplace ya no salen, pero aqui las sigues viendo con su etiqueta
   const { listings: myListings, total: listingsTotal, isPending: listingsPending, loadMore: loadMoreListings } = useMyListings(user?.id)
 

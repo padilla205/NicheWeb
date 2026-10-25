@@ -217,6 +217,28 @@
   }
 }
 
+/* Pagina 404: el oso flota despacio y sus ojos rojos brillan. Sin movimiento si el sistema lo pide */
+.bear-float {
+  animation: bear-float 3s ease-in-out infinite alternate;
+}
+.bear-eyes {
+  animation: bear-glow 1.6s ease-in-out infinite alternate;
+}
+@keyframes bear-float {
+  from { translate: 0 0; }
+  to { translate: 0 -8px; }
+}
+@keyframes bear-glow {
+  from { opacity: 1; }
+  to { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bear-float,
+  .bear-eyes {
+    animation: none;
+  }
+}
+
 /* Vidrio liquido (barra del celular, su pastilla activa y el boton +): translucido, con lo de atras
    borroso, un brillo en el borde de arriba, sombra interior abajo y un reflejo curvo, para que se
    vea como una pieza de vidrio con volumen. El elemento necesita position relative o absolute */

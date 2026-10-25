@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
+import { SplashScreen } from '@/components/SplashScreen'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/hooks/useAuth'
 import { useProfileQuery } from '@/hooks/useProfile'
@@ -21,7 +22,7 @@ export function RequireAuth() {
       </div>
     )
   }
-  // Leer la sesion y el perfil tarda un instante; mientras, no se muestra nada
-  if (!profile.data) return null
+  // Leer la sesion y el perfil tarda un instante; mientras, la pantalla de carga
+  if (!profile.data) return <SplashScreen />
   return <Outlet />
 }

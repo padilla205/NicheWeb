@@ -1,4 +1,4 @@
-import { MessageSquareShare, Tag, Trash2, X } from 'lucide-react'
+import { MessageSquareShare, Pencil, Tag, Trash2, X } from 'lucide-react'
 import { motion } from 'motion/react'
 import { type ReactNode, useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -15,6 +15,7 @@ import { type ClosetItem, getColorInfo, getSeasonLabel, getTypeInfo } from '@/li
 import { getTeamLabel } from '@/lib/teams'
 import { ShareToChatDialog } from '@/pages/chat/ShareToChatDialog'
 import { CreateListingDialog } from '@/pages/marketplace/CreateListingDialog'
+import { AddItemDialog } from './AddItemDialog'
 import { PhotoCarousel } from './PhotoCarousel'
 
 type ItemDetailProps = {
@@ -39,6 +40,9 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
   // Boton que abrio "Vender"; null si esa ventana esta cerrada
   const [sellOrigin, setSellOrigin] = useState<HTMLElement | null>(null)
   const closeSell = useCallback(() => setSellOrigin(null), [])
+  // Boton que abrio "Editar"; null si esa ventana esta cerrada
+  const [editOrigin, setEditOrigin] = useState<HTMLElement | null>(null)
+  const closeEdit = useCallback(() => setEditOrigin(null), [])
   const navigate = useNavigate()
   const deleteItem = useDeleteItem()
   // Eliminar pide un segundo toque para confirmar
@@ -173,6 +177,10 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
                 </DetailSection>
 
                 <div className="flex flex-wrap gap-2">
+                  <MorphButton hidden={editOrigin !== null} onOpen={setEditOrigin} variant="outline">
+                    <Pencil />
+                    Editar
+                  </MorphButton>
                   {/* Crea una venta con los datos de la prenda; solo falta precio, talla y estado */}
                   <MorphButton hidden={sellOrigin !== null} onOpen={setSellOrigin} variant="outline">
                     <Tag />
@@ -233,6 +241,7 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
         onClose={() => setSharing(false)}
         shared={{ type: 'item', id: item.id, title, subtitle: typeLabel, thumbUrl: item.thumbUrl || undefined }}
       />
+      <AddItemDialog origin={editOrigin} onClose={closeEdit} item={item} />
       <CreateListingDialog
         origin={sellOrigin}
         onClose={closeSell}

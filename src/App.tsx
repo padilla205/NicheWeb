@@ -12,6 +12,7 @@ import { ListingDetailPage } from '@/pages/marketplace/ListingDetailPage'
 import { MarketplacePage } from '@/pages/marketplace/MarketplacePage'
 import { OutfitPage } from '@/pages/outfits/OutfitPage'
 import { OutfitsPage } from '@/pages/outfits/OutfitsPage'
+import { NotFoundPage } from '@/pages/not-found/NotFoundPage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { PrivacyPage } from '@/pages/legal/PrivacyPage'
 import { TermsPage } from '@/pages/legal/TermsPage'
@@ -32,6 +33,8 @@ function App() {
           <Route path="o/:id" element={<OutfitPage />} />
           <Route path="privacidad" element={<PrivacyPage />} />
           <Route path="terminos" element={<TermsPage />} />
+          {/* Cualquier otra direccion: pagina 404, con o sin cuenta */}
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
@@ -48,7 +51,6 @@ function App() {
             <Route path="prenda/:id" element={<ItemPage />} />
             <Route path="reportes" element={<ReportsPage />} />
             <Route path="mas-opciones" element={<MoreOptionsPage />} />
-            <Route path="*" element={<Navigate to="/closet" replace />} />
           </Route>
         </Route>
       </Routes>

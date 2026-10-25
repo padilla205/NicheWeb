@@ -1,11 +1,12 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { MorphDialog } from '@/components/MorphDialog'
 import { Button } from '@/components/ui/button'
 import { DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAddItem } from '@/hooks/useItems'
-import type { ClothingType, Season } from '@/lib/clothing'
+import { useAddItem, useUpdateItem } from '@/hooks/useItems'
+import type { ClosetItem, ClothingType, Season } from '@/lib/clothing'
+import { fileFromPhoto } from '@/lib/photos'
 import { ClothingTypePicker } from './ClothingTypePicker'
 import { ColorPicker } from './ColorPicker'
 import { PhotoPicker } from './PhotoPicker'
@@ -16,30 +17,41 @@ type AddItemDialogProps = {
   // Boton que abrio la ventana (crece desde ahi y regresa a el); null si esta cerrada
   origin: HTMLElement | null
   onClose: () => void
+  // Con una prenda, la ventana sirve para editarla en lugar de agregar una nueva
+  item?: ClosetItem
 }
 
-export function AddItemDialog({ origin, onClose }: AddItemDialogProps) {
+export function AddItemDialog({ origin, onClose, item }: AddItemDialogProps) {
   return (
     <MorphDialog
       origin={origin}
       onClose={onClose}
-      title="Agregar prenda"
-      description="Sube hasta 5 fotos y elige el tipo de prenda."
+      title={item ? 'Editar prenda' : 'Agregar prenda'}
+      description={item ? 'Cambia lo que necesites de tu prenda.' : 'Sube hasta 5 fotos y elige el tipo de prenda.'}
     >
-      <AddItemForm onDone={onClose} />
+      <AddItemForm onDone={onClose} item={item} />
     </MorphDialog>
   )
 }
 
-function AddItemForm({ onDone }: { onDone: () => void }) {
+function AddItemForm({ onDone, item }: { onDone: () => void; item?: ClosetItem }) {
   const [photos, setPhotos] = useState<File[]>([])
-  const [name, setName] = useState('')
-  const [type, setType] = useState<ClothingType | ''>('')
-  const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([])
-  const [colors, setColors] = useState<string[]>([])
-  const [team, setTeam] = useState('')
+  const [name, setName] = useState(item?.name ?? '')
+  const [type, setType] = useState<ClothingType | ''>(item?.type ?? '')
+  const [selectedSeasons, setSelectedSeasons] = useState<Season[]>(item?.seasons ?? [])
+  const [colors, setColors] = useState<string[]>(item?.colors ?? [])
+  const [team, setTeam] = useState(item?.team ?? '')
   const addItem = useAddItem()
+  const updateItem = useUpdateItem()
+  const saving = addItem.isPending || updateItem.isPending
   const [saveError, setSaveError] = useState('')
+
+  // Al editar, carga sus fotos en el selector. Al guardar no se vuelven a subir: se conservan tal cual.
+  // Depende de las rutas (texto) y no de la prenda, para no borrar tus cambios si la lista se recarga
+  const photoKey = item?.photoPaths.join('|') ?? ''
+  useEffect(() => {
+    if (photoKey) Promise.all(photoKey.split('|').map(fileFromPhoto)).then(setPhotos)
+  }, [photoKey])
 
   const canSave = photos.length > 0 && type !== ''
   const isJersey = type === 'jerseys-futbol'
@@ -55,15 +67,17 @@ function AddItemForm({ onDone }: { onDone: () => void }) {
     event.preventDefault()
     if (photos.length === 0 || type === '') return
     setSaveError('')
+    const changes = {
+      photos,
+      name,
+      type,
+      seasons: selectedSeasons,
+      colors,
+      team: isJersey && team ? team : undefined,
+    }
     try {
-      await addItem.mutateAsync({
-        photos,
-        name,
-        type,
-        seasons: selectedSeasons,
-        colors,
-        team: isJersey && team ? team : undefined,
-      })
+      if (item) await updateItem.mutateAsync({ item, changes })
+      else await addItem.mutateAsync(changes)
       onDone()
     } catch {
       setSaveError('No se pudo guardar la prenda. Revisa tu conexion e intenta de nuevo.')
@@ -124,8 +138,8 @@ function AddItemForm({ onDone }: { onDone: () => void }) {
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={!canSave || addItem.isPending}>
-          {addItem.isPending ? 'Guardando' : 'Guardar prenda'}
+        <Button type="submit" disabled={!canSave || saving}>
+          {saving ? 'Guardando' : item ? 'Guardar cambios' : 'Guardar prenda'}
         </Button>
       </DialogFooter>
     </form>

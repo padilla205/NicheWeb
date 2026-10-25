@@ -1,11 +1,14 @@
+import { Search } from 'lucide-react'
 import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { PageTitle } from '@/components/PageTitle'
 import { ShowMore } from '@/components/ShowMore'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useKeepScroll } from '@/hooks/useKeepScroll'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
-import type { ClothingType } from '@/lib/clothing'
+import { countClosetFilters, emptyClosetFilters } from '@/lib/clothing'
 import { crossfade } from '@/lib/motion'
 import { useItems } from '@/hooks/useItems'
 import { AddItemButton } from './AddItemButton'
@@ -19,16 +22,23 @@ import { ClosetEmptyDesktop } from './desktop/ClosetEmptyDesktop'
 import { ClosetStats } from './desktop/ClosetStats'
 
 export function ClosetPage() {
-  const [selectedTypes, setSelectedTypes] = useState<ClothingType[]>([])
+  const [filters, setFilters] = useState(emptyClosetFilters)
+  // Lo que escribes en la busqueda; se aplica cuando dejas de escribir un momento, no con cada letra
+  const [query, setQuery] = useState('')
+  useEffect(() => {
+    const timer = window.setTimeout(() => setFilters((current) => ({ ...current, query: query.trim() })), 300)
+    return () => window.clearTimeout(timer)
+  }, [query])
+  const filtering = filters.query !== '' || countClosetFilters(filters) > 0
   // Boton desde el que se abrio "Agregar prenda" (arriba o en el closet vacio); null si esta cerrada
   const [addOrigin, setAddOrigin] = useState<{ from: 'top' | 'empty' | 'shortcut'; button: HTMLElement } | null>(
     null,
   )
   const closeAdd = useCallback(() => setAddOrigin(null), [])
-  // Supabase filtra por tipo y manda de 20 en 20
-  const { items, total, isPending, loadMore } = useItems(selectedTypes)
+  // Supabase busca, filtra y manda de 20 en 20
+  const { items, total, isPending, loadMore } = useItems(filters)
   // La pagina no sube al cambiar de filtro
-  const keep = useKeepScroll(selectedTypes.join())
+  const keep = useKeepScroll(JSON.stringify(filters))
   // Rediseno de escritorio (1024 px o mas): en pantallas menores ni siquiera se monta, asi el
   // celular queda igual que antes y no pide datos que no muestra
   const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -59,7 +69,7 @@ export function ClosetPage() {
         </div>
         <div className="mb-6 flex gap-2">
           <ClosetVisibility />
-          <ClosetFilters selected={selectedTypes} onChange={setSelectedTypes} />
+          <ClosetFilters value={filters} onChange={setFilters} />
           <AddItemButton
             hidden={addOrigin?.from === 'top'}
             onOpen={(button) => setAddOrigin({ from: 'top', button })}
@@ -67,6 +77,20 @@ export function ClosetPage() {
         </div>
       </div>
       {isDesktop && <ClosetStats />}
+      {/* Con el closet vacio no hay nada que buscar */}
+      {(isPending || items.length > 0 || filtering) && (
+        <div className="relative mb-4">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Buscar en tu closet: chamarra negra, jeans..."
+            aria-label="Buscar en tu closet"
+            className="h-8 rounded-full pl-9"
+          />
+        </div>
+      )}
       <div ref={keep.ref} style={keep.style}>
         {/* El skeleton se desvanece hacia el contenido en vez de cambiar de golpe */}
         <AnimatePresence mode="wait" initial={false}>
@@ -74,7 +98,7 @@ export function ClosetPage() {
             <motion.div key="cargando" {...crossfade}>
               <ClosetSkeleton />
             </motion.div>
-          ) : items.length === 0 && selectedTypes.length === 0 ? (
+          ) : items.length === 0 && !filtering ? (
             <motion.div key="vacio" {...crossfade}>
               {/* Celular y tableta: el closet vacio de siempre. Escritorio: dos columnas con los primeros pasos */}
               {isDesktop ? (
@@ -90,9 +114,23 @@ export function ClosetPage() {
               )}
             </motion.div>
           ) : items.length === 0 ? (
-            <motion.p key="sin-resultados" {...crossfade} className="py-20 text-center text-sm text-muted-foreground">
-              Ninguna prenda coincide con los filtros.
-            </motion.p>
+            <motion.div
+              key="sin-resultados"
+              {...crossfade}
+              className="flex flex-col items-center gap-3 py-20 text-center text-sm text-muted-foreground"
+            >
+              <p>Ninguna prenda coincide con tu busqueda.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setQuery('')
+                  setFilters(emptyClosetFilters)
+                }}
+              >
+                Limpiar busqueda y filtros
+              </Button>
+            </motion.div>
           ) : (
             <motion.div key="prendas" {...crossfade}>
               <ClosetGrid items={items} />

@@ -1,9 +1,18 @@
 import { type InfiniteData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useProfile } from '@/hooks/useProfile'
-import type { ClosetItem, ClothingType, Season } from '@/lib/clothing'
+import {
+  type ClosetFilterValue,
+  type ClosetItem,
+  type ClothingType,
+  clothingColors,
+  clothingZones,
+  emptyClosetFilters,
+  type Season,
+} from '@/lib/clothing'
 import type { Tables } from '@/lib/database.types'
-import { deletePhotos, photoUrl, uploadPhoto } from '@/lib/photos'
+import { deletePhotos, photoUrl, savePhotos, uploadPhoto } from '@/lib/photos'
 import { supabase } from '@/lib/supabase'
+import { normalizeText } from '@/lib/text'
 
 // Prendas por bloque antes de "Ver mas"
 const PAGE_SIZE = 20
@@ -37,13 +46,40 @@ export function itemFromRow(row: Tables<'items'>): ClosetItem {
   }
 }
 
-// Prendas de un closet, las mas nuevas primero, de 20 en 20. Con tipos elegidos, solo esos tipos.
+const allTypes = clothingZones.flatMap<{ value: ClothingType; label: string }>((zone) => [...zone.types])
+
+// Cada palabra de la busqueda tiene que aparecer en el nombre, el tipo de prenda o el color.
+// Asi "chamarra negra" encuentra una chamarra de color negro aunque se llame "Mi favorita"
+function searchConditions(text: string) {
+  return normalizeText(text)
+    // Comas, parentesis y comillas romperian el filtro de Supabase
+    .replace(/[,()"*%\\]/g, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 0)
+    .map((word) => {
+      const types = allTypes.filter((type) => normalizeText(type.label).includes(word)).map((type) => type.value)
+      // ponytail: el color se compara por el principio de la palabra ("negra" -> "Negro", "roja" -> "Rojo");
+      // si hace falta mas precision, una lista de sinonimos por color
+      const stem = word.slice(0, Math.max(3, word.length - 1))
+      const colors =
+        word.length >= 3
+          ? clothingColors.filter((color) => normalizeText(color.label).startsWith(stem)).map((color) => color.value)
+          : []
+      return [
+        `name.ilike."%${word}%"`,
+        ...(types.length > 0 ? [`type.in.(${types.join(',')})`] : []),
+        ...(colors.length > 0 ? [`colors.ov.{${colors.join(',')}}`] : []),
+      ].join(',')
+    })
+}
+
+// Prendas de un closet, las mas nuevas primero, de 20 en 20, con los filtros que elijas.
 // Sin ownerId es tu closet; el de otra persona solo trae sus prendas visibles (lo decide RLS)
-export function useItems(types: ClothingType[] = [], ownerId?: string) {
+export function useItems(filters: ClosetFilterValue = emptyClosetFilters, ownerId?: string) {
   const { id: myId } = useProfile()
   const userId = ownerId ?? myId
   const query = useInfiniteQuery({
-    queryKey: ['items', userId, [...types].sort()],
+    queryKey: ['items', userId, filters],
     initialPageParam: 0,
     queryFn: async ({ pageParam }): Promise<ItemsPage> => {
       let request = supabase
@@ -52,7 +88,11 @@ export function useItems(types: ClothingType[] = [], ownerId?: string) {
         .eq('owner_id', userId)
         .order('created_at', { ascending: false })
         .range(pageParam, pageParam + PAGE_SIZE - 1)
-      if (types.length > 0) request = request.in('type', types)
+      if (filters.types.length > 0) request = request.in('type', filters.types)
+      if (filters.colors.length > 0) request = request.overlaps('colors', filters.colors)
+      if (filters.seasons.length > 0) request = request.overlaps('seasons', filters.seasons)
+      if (filters.visibility !== 'todas') request = request.eq('is_private', filters.visibility === 'privadas')
+      for (const condition of searchConditions(filters.query)) request = request.or(condition)
       const { data, error, count } = await request
       if (error) throw error
       return { items: data.map(itemFromRow), total: count ?? 0 }
@@ -123,6 +163,39 @@ export function useAddItem() {
     },
     // Vuelve a pedir la primera pagina para que la prenda nueva salga hasta arriba
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['items', userId] }),
+  })
+}
+
+// Guarda los cambios de una prenda. Las fotos que ya tenia se conservan; solo se suben las nuevas
+export function useUpdateItem() {
+  const queryClient = useQueryClient()
+  const { id: userId } = useProfile()
+
+  return useMutation({
+    mutationFn: async ({ item, changes }: { item: ClosetItem; changes: NewItem }) => {
+      const paths = await savePhotos(changes.photos, userId, item.photoPaths)
+      const { error } = await supabase
+        .from('items')
+        .update({
+          photos: paths,
+          name: changes.name.trim(),
+          type: changes.type,
+          seasons: changes.seasons,
+          colors: changes.colors,
+          team: changes.team ?? null,
+        })
+        .eq('id', item.id)
+      if (error) {
+        deletePhotos(paths.filter((path) => !item.photoPaths.includes(path))).catch(() => {})
+        throw error
+      }
+      // Las fotos que se quitaron ya no se usan
+      deletePhotos(item.photoPaths.filter((path) => !paths.includes(path))).catch(() => {})
+    },
+    // La prenda tambien sale en outfits y publicaciones: todo se vuelve a pedir
+    onSuccess: () => {
+      for (const list of ['items', 'outfits', 'posts']) queryClient.invalidateQueries({ queryKey: [list] })
+    },
   })
 }
 

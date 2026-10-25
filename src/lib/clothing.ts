@@ -159,6 +159,31 @@ export const clothingColors = [
 
 export type ClothingColor = (typeof clothingColors)[number]['value']
 
+// Filtros del closet: busqueda por texto, tipos, colores, temporadas y (en tu closet) visibilidad
+export type ClosetVisibilityFilter = 'todas' | 'visibles' | 'privadas'
+export type ClosetFilterValue = {
+  query: string
+  types: ClothingType[]
+  colors: string[]
+  seasons: Season[]
+  visibility: ClosetVisibilityFilter
+}
+
+export const emptyClosetFilters: ClosetFilterValue = {
+  query: '',
+  types: [],
+  colors: [],
+  seasons: [],
+  visibility: 'todas',
+}
+
+// Cuantos filtros del menu estan puestos (la busqueda va aparte)
+export function countClosetFilters(filters: ClosetFilterValue) {
+  return (
+    filters.types.length + filters.colors.length + filters.seasons.length + (filters.visibility === 'todas' ? 0 : 1)
+  )
+}
+
 // Una prenda guardada en el closet
 export type ClosetItem = {
   id: string
