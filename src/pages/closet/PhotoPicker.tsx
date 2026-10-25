@@ -1,5 +1,6 @@
-import { ImagePlus, X } from 'lucide-react'
+import { Crop, ImagePlus, X } from 'lucide-react'
 import { type DragEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { PhotoEditor } from '@/components/PhotoEditor'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -15,6 +16,8 @@ type PhotoPickerProps = {
 export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda' }: PhotoPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const isFull = files.length >= MAX_PHOTOS
+  // Foto que se esta recortando o enderezando; null si el editor esta cerrado
+  const [editing, setEditing] = useState<number | null>(null)
 
   // Crea una direccion temporal para ver cada foto y las libera al cambiarlas (evita gastar memoria)
   const previewUrls = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files])
@@ -28,6 +31,12 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
 
   function remove(index: number) {
     onChange(files.filter((_, i) => i !== index))
+  }
+
+  // La foto editada reemplaza a la original en el mismo lugar
+  function replace(index: number, file: File) {
+    onChange(files.map((current, i) => (i === index ? file : current)))
+    setEditing(null)
   }
 
   const fileInput = (
@@ -71,6 +80,19 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
                 Portada
               </span>
             )}
+            {/* Recortar y enderezar es opcional; los GIF no se editan para que sigan animados */}
+            {files[index].type !== 'image/gif' && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon-xs"
+                className="absolute top-1.5 left-1.5"
+                onClick={() => setEditing(index)}
+              >
+                <Crop />
+                <span className="sr-only">Recortar y enderezar foto {index + 1}</span>
+              </Button>
+            )}
             <Button
               type="button"
               variant="secondary"
@@ -95,9 +117,14 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        {files.length} de {MAX_PHOTOS} fotos. La primera es la portada.
+        {files.length} de {MAX_PHOTOS} fotos. La primera es la portada. Toca el icono de recortar para editar una foto.
       </p>
       {fileInput}
+      <PhotoEditor
+        file={editing === null ? null : files[editing]}
+        onClose={() => setEditing(null)}
+        onSave={(file) => editing !== null && replace(editing, file)}
+      />
     </div>
   )
 }
