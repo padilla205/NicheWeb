@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { LegalList, LegalPage, LegalSection } from './LegalPage'
+import { ContactLink, LegalList, LegalPage, LegalSection } from './LegalPage'
 
 // Terminos de uso. Se pueden leer sin cuenta (se enlazan desde el registro)
 // ponytail: borrador hecho a partir de como funciona la app; que lo revise alguien que sepa de leyes
@@ -89,6 +89,12 @@ export function TermsPage() {
           Podemos actualizar estos terminos. Si el cambio es importante te avisaremos dentro de la app; si sigues
           usando Niche despues del aviso, aceptas los terminos nuevos. Estos terminos se rigen por las leyes de
           Mexico.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Contacto">
+        <p>
+          Si tienes dudas sobre estos terminos o un problema con otra persona de Niche, escribenos a <ContactLink />.
         </p>
       </LegalSection>
     </LegalPage>

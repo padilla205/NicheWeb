@@ -3,6 +3,9 @@ import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 
+// Correo para dudas, solicitudes sobre tus datos y reportes que no se puedan hacer en la app
+export const CONTACT_EMAIL = 'archivomexicano507@gmail.com'
+
 // Forma comun del aviso de privacidad y los terminos: titulo, fecha y secciones. Se leen sin cuenta
 export function LegalPage({ title, updated, children }: { title: string; updated: string; children: ReactNode }) {
   const navigate = useNavigate()
@@ -32,4 +35,12 @@ export function LegalSection({ title, children }: { title: string; children: Rea
 
 export function LegalList({ children }: { children: ReactNode }) {
   return <ul className="flex list-disc flex-col gap-1 pl-5">{children}</ul>
+}
+
+export function ContactLink() {
+  return (
+    <a href={`mailto:${CONTACT_EMAIL}`} className="underline underline-offset-4">
+      {CONTACT_EMAIL}
+    </a>
+  )
 }

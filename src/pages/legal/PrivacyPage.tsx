@@ -1,8 +1,7 @@
-import { LegalList, LegalPage, LegalSection } from './LegalPage'
+import { ContactLink, LegalList, LegalPage, LegalSection } from './LegalPage'
 
 // Aviso de privacidad. Se puede leer sin cuenta (se enlaza desde el registro)
 // ponytail: borrador hecho a partir de como funciona la app; que lo revise alguien que sepa de leyes
-// y agregar un correo de contacto cuando exista
 export function PrivacyPage() {
   return (
     <LegalPage title="Aviso de privacidad" updated="25 de octubre de 2026">
@@ -84,6 +83,10 @@ export function PrivacyPage() {
           <li>
             <strong>Borrar:</strong> en Perfil, Mas opciones, Borrar mi cuenta. Se borra para siempre tu cuenta con
             todo su contenido y sus fotos.
+          </li>
+          <li>
+            <strong>Cualquier otra solicitud</strong> (por ejemplo, si ya no puedes entrar a tu cuenta o te opones a
+            algun uso de tus datos): escribenos a <ContactLink /> y te respondemos en un maximo de 20 dias habiles.
           </li>
         </LegalList>
       </LegalSection>
