@@ -51,31 +51,30 @@
 }
 
 :root {
-    /* Paleta "Midnight Concrete" (prueba) - modo claro.
-       Las anteriores: la original en `git show main:src/index.css`; Oxblood en palette-experiments/oxblood.patch */
-    --background: #F2F1F0;
-    --foreground: #20232C;
-    --card: #FCFCFD;
-    --card-foreground: #20232C;
-    --popover: #FCFCFD;
-    --popover-foreground: #20232C;
-    --primary: #405771;
+    /* Paleta "Blanco y negro" (prueba, estilo bencho.dev) - modo claro: el oscuro invertido.
+       Midnight Concrete: `git show main:src/index.css` */
+    --background: #FFFFFF;
+    --foreground: #000000;
+    --card: #F5F5F5;
+    --card-foreground: #000000;
+    --popover: #FFFFFF;
+    --popover-foreground: #000000;
+    --primary: #000000;
     --primary-foreground: #FFFFFF;
     /* Superficie elevada: fondos suaves, hover, pastillas y skeletons */
-    --secondary: #E7E9ED;
-    --secondary-foreground: #20232C;
-    --muted: #E7E9ED;
-    /* #646A77 de la paleta, 2 puntos mas oscuro: sobre la superficie elevada daba 4.46:1 y AA pide 4.5 */
-    --muted-foreground: #626875;
-    --accent: #E7E9ED;
-    --accent-foreground: #20232C;
+    --secondary: #EBEBEB;
+    --secondary-foreground: #000000;
+    --muted: #EBEBEB;
+    --muted-foreground: #616161;
+    --accent: #EBEBEB;
+    --accent-foreground: #000000;
     /* Estados: el rojo de error se queda */
     --destructive: oklch(0.577 0.245 27.325);
-    --border: #D5D8E0;
-    --input: #D5D8E0;
-    --ring: #405771;
-    /* Esta paleta no trae acento editorial: Destacados y "Recien publicada" usan el mismo acento */
-    --editorial: #405771;
+    --border: #E0E0E0;
+    --input: #E0E0E0;
+    --ring: #8E8E8E;
+    /* Sin color en la interfaz: Destacados y "Recien publicada" van en negro */
+    --editorial: #000000;
     --editorial-foreground: #FFFFFF;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
@@ -83,52 +82,53 @@
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
     --radius: 0.625rem;
-    --sidebar: #FCFCFD;
-    --sidebar-foreground: #20232C;
-    --sidebar-primary: #405771;
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #000000;
+    --sidebar-primary: #000000;
     --sidebar-primary-foreground: #FFFFFF;
-    --sidebar-accent: #E7E9ED;
-    --sidebar-accent-foreground: #20232C;
-    --sidebar-border: #D5D8E0;
-    --sidebar-ring: #405771;
+    --sidebar-accent: #EBEBEB;
+    --sidebar-accent-foreground: #000000;
+    --sidebar-border: #E0E0E0;
+    --sidebar-ring: #8E8E8E;
 }
 
 .dark {
-    /* Paleta "Midnight Concrete" (prueba) - modo oscuro */
-    --background: #14151A;
-    --foreground: #ECEBF0;
-    --card: #202229;
-    --card-foreground: #ECEBF0;
-    --popover: #202229;
-    --popover-foreground: #ECEBF0;
-    --primary: #B1BED3;
-    --primary-foreground: #14151A;
+    /* Paleta "Blanco y negro" (prueba) - modo oscuro: negro puro, tarjetas gris translucido
+       (blanco al 9% = #171717), lineas al 13% y texto gris #9A9A9A */
+    --background: #000000;
+    --foreground: #FFFFFF;
+    --card: #171717;
+    --card-foreground: #FFFFFF;
+    --popover: #171717;
+    --popover-foreground: #FFFFFF;
+    --primary: #FFFFFF;
+    --primary-foreground: #000000;
     /* Superficie elevada: fondos suaves, hover, pastillas y skeletons */
-    --secondary: #2B2E37;
-    --secondary-foreground: #ECEBF0;
-    --muted: #2B2E37;
-    --muted-foreground: #A8A9B6;
-    --accent: #2B2E37;
-    --accent-foreground: #ECEBF0;
+    --secondary: #262626;
+    --secondary-foreground: #FFFFFF;
+    --muted: #262626;
+    --muted-foreground: #9A9A9A;
+    --accent: #262626;
+    --accent-foreground: #FFFFFF;
     --destructive: oklch(0.704 0.191 22.216);
-    --border: #353843;
-    --input: #353843;
-    --ring: #B1BED3;
-    --editorial: #B1BED3;
-    --editorial-foreground: #14151A;
+    --border: #212121;
+    --input: #2E2E2E;
+    --ring: #8E8E8E;
+    --editorial: #FFFFFF;
+    --editorial-foreground: #000000;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
-    --sidebar: #202229;
-    --sidebar-foreground: #ECEBF0;
-    --sidebar-primary: #B1BED3;
-    --sidebar-primary-foreground: #14151A;
-    --sidebar-accent: #2B2E37;
-    --sidebar-accent-foreground: #ECEBF0;
-    --sidebar-border: #353843;
-    --sidebar-ring: #B1BED3;
+    --sidebar: #000000;
+    --sidebar-foreground: #FFFFFF;
+    --sidebar-primary: #FFFFFF;
+    --sidebar-primary-foreground: #000000;
+    --sidebar-accent: #262626;
+    --sidebar-accent-foreground: #FFFFFF;
+    --sidebar-border: #212121;
+    --sidebar-ring: #8E8E8E;
 }
 
 @layer base {
