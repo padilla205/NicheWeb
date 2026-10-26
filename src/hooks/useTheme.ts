@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
 export type Theme = 'light' | 'dark'
 
@@ -15,21 +15,28 @@ function getInitialTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
-export function useTheme() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme)
+// Un solo tema para toda la app: el boton de la barra y el de Mas opciones siempre coinciden
+let theme = getInitialTheme()
+document.documentElement.classList.toggle('dark', theme === 'dark')
+const listeners = new Set<() => void>()
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
-    try {
-      localStorage.setItem(STORAGE_KEY, theme)
-    } catch {
-      // Sin localStorage el tema funciona igual, solo no se recuerda
-    }
-  }, [theme])
-
-  function toggleTheme() {
-    setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
+function setTheme(next: Theme) {
+  theme = next
+  document.documentElement.classList.toggle('dark', theme === 'dark')
+  try {
+    localStorage.setItem(STORAGE_KEY, theme)
+  } catch {
+    // Sin localStorage el tema funciona igual, solo no se recuerda
   }
+  listeners.forEach((listener) => listener())
+}
 
-  return { theme, toggleTheme }
+function subscribe(listener: () => void) {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+export function useTheme() {
+  const current = useSyncExternalStore(subscribe, () => theme)
+  return { theme: current, toggleTheme: () => setTheme(current === 'dark' ? 'light' : 'dark') }
 }

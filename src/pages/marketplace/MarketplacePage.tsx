@@ -71,9 +71,10 @@ export function MarketplacePage() {
     <MotionConfig transition={{ type: 'spring', visualDuration: 0.3, bounce: 0.15 }} reducedMotion="user">
       <div className="flex flex-wrap items-start justify-between gap-x-4">
         <PageTitle title="Marketplace" />
-        <div className="mb-6 flex gap-2">
+        {/* En celular Localizacion queda junto al titulo y "Crear venta" baja a todo lo ancho */}
+        <div className="mb-6 flex gap-2 max-md:contents">
           <LocationButton />
-          <MorphButton hidden={createOrigin !== null} onOpen={setCreateOrigin}>
+          <MorphButton hidden={createOrigin !== null} onOpen={setCreateOrigin} className="max-md:mb-6 max-md:w-full">
             <Plus />
             Crear venta
           </MorphButton>
@@ -93,7 +94,7 @@ export function MarketplacePage() {
             }}
             placeholder="Buscar ventas"
             aria-label="Buscar ventas"
-            className="h-8 rounded-full pl-9"
+            className="h-10 rounded-full pl-9 md:h-8"
           />
         </div>
         <MarketplaceFilters value={filters} onChange={setFilters} sizes={sizes} brands={brands} />

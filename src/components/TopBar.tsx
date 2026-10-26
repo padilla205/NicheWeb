@@ -18,13 +18,20 @@ export function TopBar() {
   useChatRealtime()
   const { pathname } = useLocation()
   const searching = pathname === '/buscar'
+  // En las pantallas con cabecera negra la barra se funde con ella (solo celular)
+  const onHero = ['/closet', '/feed'].some((path) => pathname.startsWith(path))
   // Los chats silenciados no suman
   const mutes = useChatMutes()
   const unread = Object.entries(useUnreadCounts()).reduce((sum, [chat, count]) => (mutes.has(chat) ? sum : sum + count), 0)
 
   return (
     <MotionConfig reducedMotion="user">
-      <header className="topbar-ceramic sticky top-0 z-10 flex h-[calc(4rem+env(safe-area-inset-top))] items-center gap-2 border-b-2 bg-background px-4 pt-[env(safe-area-inset-top)] md:gap-6 md:px-6">
+      <header
+        className={cn(
+          'topbar-ceramic sticky top-0 z-10 flex h-[calc(4rem+env(safe-area-inset-top))] items-center gap-2 border-b-2 bg-background px-4 pt-[env(safe-area-inset-top)] md:gap-6 md:px-6',
+          onHero && 'topbar-hero',
+        )}
+      >
         {/* En celular, mientras buscas, el logo deja su lugar a la flecha para regresar */}
         <Link
           to="/"
@@ -56,7 +63,10 @@ export function TopBar() {
               <MessageCircle aria-hidden="true" className="size-5" />
               <UnreadBadge count={unread} className="absolute top-0 right-0" />
             </NavLink>
-            <ThemeToggle />
+            {/* En celular el modo oscuro vive en Mas opciones, para no llenar la barra de iconos */}
+            <div className="hidden md:contents">
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </header>

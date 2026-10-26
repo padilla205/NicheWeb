@@ -38,14 +38,14 @@ export function ListingCard({ listing }: { listing: Listing }) {
         )}
         <div className="flex flex-col gap-0.5 p-3">
           <p className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-base font-semibold">{formatPrice(listing.price)}</span>
+            <span className="text-lg font-semibold md:text-base">{formatPrice(listing.price)}</span>
             {/* Rebajada: el precio de antes tachado */}
             {listing.previousPrice && (
               <span className="text-xs text-muted-foreground line-through">{formatPrice(listing.previousPrice)}</span>
             )}
           </p>
-          <p className="truncate text-sm group-hover:underline">{listing.title}</p>
-          <p className="truncate text-xs text-muted-foreground">
+          <p className="truncate text-[15px] group-hover:underline md:text-sm">{listing.title}</p>
+          <p className="truncate text-[13px] text-muted-foreground md:text-xs">
             {listing.brand && `${listing.brand} · `}Talla {listing.size} · {getConditionLabel(listing.condition)}
           </p>
           <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">

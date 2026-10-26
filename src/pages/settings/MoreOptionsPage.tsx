@@ -1,19 +1,22 @@
-import { ArrowLeft, ChevronRight, FileText, LogOut, ShieldCheck, Trash2 } from 'lucide-react'
+import { ArrowLeft, ChevronRight, FileText, LogOut, Moon, ShieldCheck, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { PageTitle } from '@/components/PageTitle'
 import { Button } from '@/components/ui/button'
 import { useSignOut } from '@/hooks/useAuth'
+import { useTheme } from '@/hooks/useTheme'
 import { DeleteAccountDialog } from './DeleteAccountDialog'
 
 const rowClass =
-  'flex items-center gap-3 rounded-xl p-3 text-sm font-medium transition-colors duration-150 hover:bg-accent'
+  'flex items-center gap-3 rounded-xl p-3.5 text-[15px] font-medium transition-colors duration-150 hover:bg-accent md:p-3 md:text-sm'
 
 // Opciones de la cuenta que no se usan a diario: cerrar sesion, aviso de privacidad, terminos y borrar la cuenta
 export function MoreOptionsPage() {
   const navigate = useNavigate()
   const [deleting, setDeleting] = useState(false)
   const signOut = useSignOut()
+  const { theme, toggleTheme } = useTheme()
+  const isDark = theme === 'dark'
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
@@ -22,6 +25,25 @@ export function MoreOptionsPage() {
         Volver
       </Button>
       <PageTitle title="Mas opciones" />
+
+      <section aria-labelledby="apariencia" className="flex flex-col gap-1 rounded-2xl border bg-card p-1.5">
+        <h2 id="apariencia" className="px-3 pt-2 pb-1 text-xs font-medium text-muted-foreground">
+          Apariencia
+        </h2>
+        <button type="button" role="switch" aria-checked={isDark} onClick={toggleTheme} className={`${rowClass} text-left`}>
+          <Moon className="size-4 text-muted-foreground" />
+          <span className="flex-1">Modo oscuro</span>
+          {/* Interruptor: la bolita se recorre a la derecha cuando esta encendido */}
+          <span
+            aria-hidden
+            className={`flex h-6 w-10 items-center rounded-full p-0.5 transition-colors duration-150 ${isDark ? 'bg-foreground' : 'bg-muted'}`}
+          >
+            <span
+              className={`size-5 rounded-full bg-background shadow transition-transform duration-150 ${isDark ? 'translate-x-4' : ''}`}
+            />
+          </span>
+        </button>
+      </section>
 
       <section aria-labelledby="sesion" className="flex flex-col gap-1 rounded-2xl border bg-card p-1.5">
         <h2 id="sesion" className="px-3 pt-2 pb-1 text-xs font-medium text-muted-foreground">

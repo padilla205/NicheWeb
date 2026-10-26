@@ -1,5 +1,9 @@
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, Check } from 'lucide-react'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { type ListingSort, listingSorts } from '@/lib/marketplace'
+import { cn } from '@/lib/utils'
 
 type SortSelectProps = {
   value: ListingSort
@@ -8,25 +12,52 @@ type SortSelectProps = {
   canSortByDistance: boolean
 }
 
-// Lista nativa del navegador: en el celular abre el selector del sistema, comodo para el dedo
+// Boton de contorno que abre un menu con las formas de ordenar: crece desde el boton y cada opcion
+// es un renglon alto, comodo para el dedo, con una palomita en la elegida
 export function SortSelect({ value, onChange, canSortByDistance }: SortSelectProps) {
+  const [open, setOpen] = useState(false)
   const options = listingSorts.filter((option) => option.value !== 'cercanos' || canSortByDistance)
+  const current = listingSorts.find((option) => option.value === value)
+
   return (
-    // data-variant: se ve igual que los botones de contorno (ver "Estilo ceramica" en index.css)
-    <label data-variant="outline" className="touch-target relative flex h-8 shrink-0 items-center rounded-full border bg-background text-sm font-medium transition-colors hover:bg-muted focus-within:ring-3 focus-within:ring-ring/50 dark:border-input dark:bg-input/30 dark:hover:bg-input/50">
-      <ArrowUpDown className="pointer-events-none absolute left-2.5 size-4" aria-hidden="true" />
-      <span className="sr-only">Ordenar ventas</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value as ListingSort)}
-        className="h-full cursor-pointer appearance-none rounded-full bg-transparent pr-3 pl-8 outline-none [&>option]:bg-popover [&>option]:text-popover-foreground"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="rounded-full" aria-label={`Ordenar ventas: ${current?.label}`}>
+          <ArrowUpDown />
+          {current?.label}
+        </Button>
+      </PopoverTrigger>
+      {/* Misma apertura que el menu de filtros: crece desde el boton en 200 ms y se cierra en 150 ms */}
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-56 gap-0 rounded-2xl p-1.5 ease-out data-closed:duration-150 data-open:duration-200 data-open:zoom-in-90 data-[side=bottom]:slide-in-from-top-3"
       >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
+        <div role="radiogroup" aria-label="Ordenar ventas" className="flex flex-col gap-0.5">
+          {options.map((option) => {
+            const selected = option.value === value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => {
+                  onChange(option.value)
+                  setOpen(false)
+                }}
+                className={cn(
+                  'flex h-11 items-center justify-between gap-3 rounded-xl px-3 text-left text-[15px] transition-colors duration-150 outline-none hover:bg-accent focus-visible:bg-accent md:h-9 md:text-sm',
+                  selected && 'font-medium',
+                )}
+              >
+                {option.label}
+                {selected && <Check className="size-4" />}
+              </button>
+            )
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }

@@ -10,6 +10,7 @@ import { useKeepScroll } from '@/hooks/useKeepScroll'
 import { useFeaturedPosts, useFeed, useToggleHiddenAuthor } from '@/hooks/usePosts'
 import type { Post } from '@/lib/feed'
 import { cascade, crossfade } from '@/lib/motion'
+import { mobileHeroClass, mobileSheetClass } from '@/lib/styles'
 import { cn } from '@/lib/utils'
 import { type Season, seasons } from '@/lib/clothing'
 import { EmptyTab } from '@/pages/profile/EmptyTab'
@@ -79,19 +80,27 @@ export function FeedPage() {
   return (
     // Si el sistema pide menos movimiento, las animaciones del feed se reducen
     <MotionConfig reducedMotion="user">
-      {/* Sin ancho maximo: en pantallas grandes las columnas llenan el espacio en vez de dejar orillas vacias */}
-      <div>
-        {/* Encabezado. En celular: titulo y boton, luego Destacados y los filtros. En escritorio los
-            filtros suben a la fila del titulo y Destacados ocupa todo el ancho abajo, sin huecos */}
+      {/* Celular: cabecera negra con el titulo y Destacados; crear se hace con el + de la barra */}
+      <div className={mobileHeroClass}>
+        <h1 className="text-[28px] font-semibold tracking-tight">Feed</h1>
+        <p className="mb-5 text-sm text-muted-foreground">Outfits de la comunidad</p>
+        <FeaturedPosts featured={featured} secondsRemaining={secondsRemaining} onOpen={(id) => openPost(id, false)} />
+      </div>
+      {/* Sin ancho maximo: en pantallas grandes las columnas llenan el espacio en vez de dejar orillas
+          vacias. En celular es la hoja que sube sobre la cabecera negra */}
+      <div className={mobileSheetClass}>
+        {/* Encabezado. En celular solo quedan los filtros (lo demas va en la cabecera negra). En
+            escritorio los filtros suben a la fila del titulo y Destacados ocupa todo el ancho abajo,
+            sin huecos */}
         <div className="mb-4 grid grid-cols-[1fr_auto] items-start gap-x-3 [grid-template-areas:'title_create''featured_featured''filters_filters'] lg:mb-5 lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-x-6 lg:gap-y-5 lg:[grid-template-areas:'title_filters_create''featured_featured_featured']">
-          <PageTitle title="Feed" className="[grid-area:title] lg:mb-0" />
-          <div className="[grid-area:create]">
+          <PageTitle title="Feed" className="[grid-area:title] max-md:hidden lg:mb-0" />
+          <div className="[grid-area:create] max-md:hidden">
             <MorphButton hidden={publishOrigin !== null} onOpen={setPublishOrigin}>
               <Plus />
               Crear publicacion
             </MorphButton>
           </div>
-          <div className="min-w-0 [grid-area:featured]">
+          <div className="min-w-0 [grid-area:featured] max-md:hidden">
             <FeaturedPosts featured={featured} secondsRemaining={secondsRemaining} onOpen={(id) => openPost(id, false)} />
           </div>
 

@@ -8,11 +8,13 @@ type MorphButtonProps = {
   hidden: boolean
   onOpen: (button: HTMLElement) => void
   variant?: ComponentProps<typeof Button>['variant']
+  // Para estirarlo, por ejemplo a todo lo ancho en celular
+  className?: string
   children: ReactNode
 }
 
 // Boton que abre una MorphDialog: la ventana crece desde el y al cerrar regresa a el
-export function MorphButton({ hidden, onOpen, variant, children }: MorphButtonProps) {
+export function MorphButton({ hidden, onOpen, variant, className, children }: MorphButtonProps) {
   return (
     // Mientras la ventana esta abierta el boton se esconde, porque la ventana "sale" de el.
     // Al cerrar reaparece justo cuando la ventana termina de encogerse sobre el, y hace un
@@ -33,9 +35,11 @@ export function MorphButton({ hidden, onOpen, variant, children }: MorphButtonPr
               },
             }
       }
-      className={cn('inline-flex', hidden && 'pointer-events-none')}
+      className={cn('inline-flex', hidden && 'pointer-events-none', className)}
     >
-      <Button variant={variant} onClick={(event) => onOpen(event.currentTarget)}>{children}</Button>
+      <Button variant={variant} className="w-full" onClick={(event) => onOpen(event.currentTarget)}>
+        {children}
+      </Button>
     </motion.span>
   )
 }

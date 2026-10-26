@@ -4,6 +4,7 @@ import { ChoicePill } from '@/components/ChoicePill'
 import { ExpandableSearch } from '@/components/ExpandableSearch'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { CircleAction } from '@/components/CircleAction'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   type ClosetFilterValue,
@@ -20,6 +21,8 @@ import { normalizeText } from '@/lib/text'
 type ClosetFiltersProps = {
   value: ClosetFilterValue
   onChange: (value: ClosetFilterValue) => void
+  // Boton en circulo, para la cabecera negra del celular
+  circle?: boolean
 }
 
 const visibilityOptions: { value: ClosetVisibilityFilter; label: string }[] = [
@@ -33,7 +36,7 @@ function toggle<T>(list: T[], item: T) {
   return list.includes(item) ? list.filter((x) => x !== item) : [...list, item]
 }
 
-export function ClosetFilters({ value, onChange }: ClosetFiltersProps) {
+export function ClosetFilters({ value, onChange, circle = false }: ClosetFiltersProps) {
   const [typeQuery, setTypeQuery] = useState('')
   const search = normalizeText(typeQuery)
   const visibleZones = clothingZones
@@ -50,6 +53,9 @@ export function ClosetFilters({ value, onChange }: ClosetFiltersProps) {
     // Al cerrar el menu se borra la busqueda de tipos
     <Popover onOpenChange={(open) => !open && setTypeQuery('')}>
       <PopoverTrigger asChild>
+        {circle ? (
+          <CircleAction icon={SlidersHorizontal} label="Filtros" badge={active} />
+        ) : (
         <Button variant="outline" className="rounded-full">
           <SlidersHorizontal />
           {/* En celular solo el icono, para que quepan los tres botones del closet en una fila */}
@@ -58,6 +64,7 @@ export function ClosetFilters({ value, onChange }: ClosetFiltersProps) {
             <span className="ml-1 rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{active}</span>
           )}
         </Button>
+        )}
       </PopoverTrigger>
       {/* Apertura rapida: crece desde el boton en 200 ms y se cierra en 150 ms */}
       <PopoverContent

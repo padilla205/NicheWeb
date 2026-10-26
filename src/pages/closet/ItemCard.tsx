@@ -55,8 +55,8 @@ export function ItemCard({ item, open, raised, onOpen, onLayoutAnimationComplete
           className="flex items-center justify-between gap-2 p-3"
         >
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{title}</p>
-            {item.name && <p className="truncate text-xs text-muted-foreground">{typeLabel}</p>}
+            <p className="truncate text-[15px] font-medium md:text-sm">{title}</p>
+            {item.name && <p className="truncate text-[13px] text-muted-foreground md:text-xs">{typeLabel}</p>}
           </div>
           <div className="flex shrink-0 -space-x-1.5">
             {item.colors.map((color) => (

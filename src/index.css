@@ -335,6 +335,42 @@
 .topbar-icon:hover {
   background-color: var(--cer-raised-hover);
 }
+/* En celular no se ven las barras de desplazamiento (la pagina y las filas que se deslizan de lado,
+   como los filtros y Destacados); se sigue pudiendo deslizar igual */
+@media (max-width: 767px) {
+  * {
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
+}
+/* Barra de arriba sobre una cabecera negra (closet en celular): negra con iconos grafito */
+@media (max-width: 767px) {
+  .topbar-hero {
+    background-color: #000000;
+    color: #ffffff;
+    box-shadow: none;
+  }
+  .topbar-hero .topbar-icon {
+    background-color: #1c1c1c;
+    color: #ffffff;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  }
+}
+/* Hoja blanca que sube sobre la cabecera negra (celular, modo claro): adentro las tarjetas y el
+   buscador son cuadritos gris claro, planos, sin borde ni sombra */
+@media (max-width: 767px) {
+  :root:not(.dark) .sheet {
+    --background: #ffffff;
+    --card: #f2f2f2;
+    --muted: #e6e6e6;
+    --cer-edge: transparent;
+    --cer-card-shadow: none;
+    --cer-field: #f2f2f2;
+    --cer-field-shadow: none;
+  }
+}
 .side-nav-ceramic {
   border-color: transparent;
 }
