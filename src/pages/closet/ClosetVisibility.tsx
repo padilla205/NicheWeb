@@ -16,7 +16,7 @@ export function ClosetVisibility() {
       title={closetPublic ? 'Tu closet se ve en tu perfil. Toca para hacerlo privado.' : 'Solo tu ves tu closet. Toca para mostrarlo en tu perfil.'}
     >
       {closetPublic ? <Globe /> : <Lock />}
-      {closetPublic ? 'Publico' : 'Privado'}
+      {closetPublic ? 'Closet publico' : 'Closet privado'}
     </Button>
   )
 }

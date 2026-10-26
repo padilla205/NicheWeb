@@ -10,8 +10,9 @@ function loadImage(src: string) {
 }
 
 // Dibuja la foto girada en un lienzo y de ahi corta el pedazo elegido. Devuelve una foto nueva
-// (despues pasa por la compresion de siempre al subirse)
-export async function cropImage(file: File, crop: Area, rotation: number) {
+// (despues pasa por la compresion de siempre al subirse). Con background, lo transparente (por
+// ejemplo, una foto sin fondo) se rellena de ese color
+export async function cropImage(file: File, crop: Area, rotation: number, background?: string) {
   const url = URL.createObjectURL(file)
   try {
     const image = await loadImage(url)
@@ -33,7 +34,12 @@ export async function cropImage(file: File, crop: Area, rotation: number) {
     const result = document.createElement('canvas')
     result.width = Math.round(crop.width)
     result.height = Math.round(crop.height)
-    result.getContext('2d')!.drawImage(rotated, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height)
+    const resultContext = result.getContext('2d')!
+    if (background) {
+      resultContext.fillStyle = background
+      resultContext.fillRect(0, 0, result.width, result.height)
+    }
+    resultContext.drawImage(rotated, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height)
 
     // PNG y WebP conservan la transparencia; lo demas sale como JPG
     const type = file.type === 'image/png' || file.type === 'image/webp' ? file.type : 'image/jpeg'

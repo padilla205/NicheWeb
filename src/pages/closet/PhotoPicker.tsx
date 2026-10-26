@@ -1,4 +1,4 @@
-import { Crop, ImagePlus, X } from 'lucide-react'
+import { ImagePlus, WandSparkles, X } from 'lucide-react'
 import { type DragEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { PhotoEditor } from '@/components/PhotoEditor'
 import { Button } from '@/components/ui/button'
@@ -80,17 +80,18 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
                 Portada
               </span>
             )}
-            {/* Recortar y enderezar es opcional; los GIF no se editan para que sigan animados */}
+            {/* Editar (quitar fondo, recortar, enderezar) es opcional; los GIF no se editan para que sigan animados */}
             {files[index].type !== 'image/gif' && (
               <Button
                 type="button"
                 variant="secondary"
-                size="icon-xs"
+                size="xs"
                 className="absolute top-1.5 left-1.5"
                 onClick={() => setEditing(index)}
+                aria-label={`Editar foto ${index + 1}`}
               >
-                <Crop />
-                <span className="sr-only">Recortar y enderezar foto {index + 1}</span>
+                <WandSparkles />
+                Editar
               </Button>
             )}
             <Button
@@ -117,7 +118,7 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        {files.length} de {MAX_PHOTOS} fotos. La primera es la portada. Toca el icono de recortar para editar una foto.
+        {files.length} de {MAX_PHOTOS} fotos. La primera es la portada. Toca Editar para quitar el fondo o recortar; si no, se suben tal cual.
       </p>
       {fileInput}
       <PhotoEditor

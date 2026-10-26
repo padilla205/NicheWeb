@@ -1,9 +1,8 @@
-import { Flag, LogOut, Pencil, Plus, Settings } from 'lucide-react'
+import { Flag, Pencil, Plus, Settings } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { Link } from 'react-router'
 import { MorphButton } from '@/components/MorphButton'
 import { Button } from '@/components/ui/button'
-import { useSignOut } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 import { useIsAdmin } from '@/hooks/useReports'
 import { PublishPostDialog } from '@/pages/feed/PublishPostDialog'
@@ -14,7 +13,6 @@ import { ProfileSummary } from './ProfileSummary'
 // Portada, foto, nombre, descripcion y redes del usuario
 export function ProfileHeader() {
   const profile = useProfile()
-  const signOut = useSignOut()
   const isAdmin = useIsAdmin()
   // Boton que abrio "Editar perfil"; null si la ventana esta cerrada
   const [editOrigin, setEditOrigin] = useState<HTMLElement | null>(null)
@@ -50,11 +48,6 @@ export function ProfileHeader() {
             <Link to="/mas-opciones" aria-label="Mas opciones" title="Mas opciones">
               <Settings />
             </Link>
-          </Button>
-          {/* Al cerrar sesion, RequireAuth te manda a /login */}
-          <Button variant="ghost" disabled={signOut.isPending} onClick={() => signOut.mutate()}>
-            <LogOut />
-            Cerrar sesion
           </Button>
         </div>
       </header>

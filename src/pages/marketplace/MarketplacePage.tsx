@@ -91,7 +91,7 @@ export function MarketplacePage() {
               // Buscar te regresa a todas las ventas
               setShowSaved(false)
             }}
-            placeholder="Buscar ventas: chamarra, nike, vintage..."
+            placeholder="Buscar ventas"
             aria-label="Buscar ventas"
             className="h-8 rounded-full pl-9"
           />

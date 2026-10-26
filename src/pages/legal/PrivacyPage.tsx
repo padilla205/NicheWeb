@@ -67,6 +67,10 @@ export function PrivacyPage() {
             <strong>Open-Meteo:</strong> recibe la ubicacion aproximada de tu ciudad para mostrar el clima.
           </li>
           <li>
+            <strong>Hugging Face:</strong> si usas "Quitar fondo" en una foto, tu navegador descarga de ahi la
+            herramienta que lo hace (una sola vez). Tu foto no se envia: el fondo se quita en tu dispositivo.
+          </li>
+          <li>
             <strong>OpenStreetMap:</strong> muestra los mapas de los lugares de entrega y ubica las ciudades.
           </li>
         </LegalList>

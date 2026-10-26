@@ -12,16 +12,18 @@ const sizes = {
 
 type Size = keyof typeof sizes
 
-// WebP pesa cerca de un tercio menos que JPEG con la misma calidad.
-// Si el navegador no sabe crear WebP (Safari viejo), usa JPEG en lugar de un PNG enorme.
+// WebP pesa cerca de un tercio menos que JPEG con la misma calidad, y conserva lo transparente.
+// Si el navegador no sabe crear WebP (Safari), usa JPEG; pero una foto sin fondo (PNG) se queda
+// en PNG, porque en JPEG lo transparente saldria negro
 async function compress(file: File, size: Size) {
   const options = { ...sizes[size], useWebWorker: true }
   const webp = await imageCompression(file, { ...options, fileType: 'image/webp' })
-  return webp.type === 'image/webp' ? webp : imageCompression(file, { ...options, fileType: 'image/jpeg' })
+  if (webp.type === 'image/webp') return webp
+  return imageCompression(file, { ...options, fileType: file.type === 'image/png' ? 'image/png' : 'image/jpeg' })
 }
 
 function extension(file: Blob) {
-  return file.type === 'image/webp' ? 'webp' : file.type === 'image/gif' ? 'gif' : 'jpg'
+  return file.type === 'image/webp' ? 'webp' : file.type === 'image/gif' ? 'gif' : file.type === 'image/png' ? 'png' : 'jpg'
 }
 
 // "<usuario>/<id>.webp" -> "<usuario>/<id>-thumb.webp"

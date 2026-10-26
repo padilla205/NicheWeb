@@ -52,7 +52,8 @@ export function ClosetFilters({ value, onChange }: ClosetFiltersProps) {
       <PopoverTrigger asChild>
         <Button variant="outline" className="rounded-full">
           <SlidersHorizontal />
-          Filtros
+          {/* En celular solo el icono, para que quepan los tres botones del closet en una fila */}
+          <span className="max-sm:sr-only">Filtros</span>
           {active > 0 && (
             <span className="ml-1 rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{active}</span>
           )}

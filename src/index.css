@@ -235,6 +235,11 @@
   }
 }
 
+/* Cuadritos grises detras de una foto sin fondo, para que se note lo transparente */
+.transparency-grid {
+  background: repeating-conic-gradient(#d4d4d4 0 25%, #f5f5f5 0 50%) 0 0 / 16px 16px;
+}
+
 /* Foto que no cargo (ver lib/brokenImages.ts): el icono gris va centrado y chico sobre fondo gris,
    aunque la foto original se recortara para llenar su espacio */
 img[data-broken] {

@@ -67,7 +67,8 @@ export function ClosetPage() {
             Organiza tus prendas, crea outfits y preparate para vender.
           </p>
         </div>
-        <div className="mb-6 flex gap-2">
+        {/* En pantallas muy angostas los botones bajan de fila en vez de salirse */}
+        <div className="mb-6 flex flex-wrap gap-2">
           <ClosetVisibility />
           <ClosetFilters value={filters} onChange={setFilters} />
           <AddItemButton
@@ -85,7 +86,7 @@ export function ClosetPage() {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar en tu closet: chamarra negra, jeans..."
+            placeholder="Buscar en tu closet"
             aria-label="Buscar en tu closet"
             className="h-8 rounded-full pl-9"
           />
