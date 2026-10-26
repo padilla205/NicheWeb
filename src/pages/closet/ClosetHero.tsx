@@ -12,11 +12,13 @@ type ClosetHeroProps = {
   filters: ClosetFilterValue
   onFiltersChange: (filters: ClosetFilterValue) => void
   onAdd: (button: HTMLElement) => void
+  // La ventana de agregar prenda esta abierta (salio del circulo de Agregar)
+  addOpen: boolean
 }
 
 // Cabecera negra del closet en celular: saludo y una fila de atajos en circulos. Debajo, las
 // prendas van en una hoja que sube encima de ella (ver ClosetPage)
-export function ClosetHero({ filters, onFiltersChange, onAdd }: ClosetHeroProps) {
+export function ClosetHero({ filters, onFiltersChange, onAdd, addOpen }: ClosetHeroProps) {
   const profile = useProfile()
   const navigate = useNavigate()
   const firstName = profile.name.split(' ')[0]
@@ -31,7 +33,13 @@ export function ClosetHero({ filters, onFiltersChange, onAdd }: ClosetHeroProps)
         </div>
       </div>
       <div className="mt-6 flex justify-between">
-        <CircleAction icon={Plus} label="Agregar" onClick={(event) => onAdd(event.currentTarget)} />
+        <CircleAction
+          icon={Plus}
+          label="Agregar"
+          hidden={addOpen}
+          iconTurn={90}
+          onClick={(event) => onAdd(event.currentTarget)}
+        />
         <ClosetFilters value={filters} onChange={onFiltersChange} circle />
         <ClosetVisibility circle />
         <CircleAction icon={Sparkles} label="Outfit" onClick={() => navigate('/outfits')} />

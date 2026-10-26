@@ -38,6 +38,7 @@ function toggle<T>(list: T[], item: T) {
 
 export function ClosetFilters({ value, onChange, circle = false }: ClosetFiltersProps) {
   const [typeQuery, setTypeQuery] = useState('')
+  const [open, setOpen] = useState(false)
   const search = normalizeText(typeQuery)
   const visibleZones = clothingZones
     .map(({ zone, label, types }) => ({
@@ -51,10 +52,16 @@ export function ClosetFilters({ value, onChange, circle = false }: ClosetFilters
 
   return (
     // Al cerrar el menu se borra la busqueda de tipos
-    <Popover onOpenChange={(open) => !open && setTypeQuery('')}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (!next) setTypeQuery('')
+      }}
+    >
       <PopoverTrigger asChild>
         {circle ? (
-          <CircleAction icon={SlidersHorizontal} label="Filtros" badge={active} />
+          <CircleAction icon={SlidersHorizontal} label="Filtros" badge={active} active={open} iconTurn={180} />
         ) : (
         <Button variant="outline" className="rounded-full">
           <SlidersHorizontal />

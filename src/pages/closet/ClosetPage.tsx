@@ -65,6 +65,7 @@ export function ClosetPage() {
         filters={filters}
         onFiltersChange={setFilters}
         onAdd={(button) => setAddOrigin({ from: 'top', button })}
+        addOpen={addOrigin?.from === 'top'}
       />
       {/* Tableta y escritorio: titulo con sus botones */}
       <div className="flex flex-wrap items-start justify-between gap-x-4 max-md:hidden">
