@@ -144,8 +144,8 @@ export function MobileNav() {
                   className={cn(
                     'relative flex h-11 items-center justify-center gap-1.5 rounded-full outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 dark:focus-visible:ring-white/40',
                     expanded ? 'px-3.5' : 'w-11',
-                    // Los iconos sin elegir van en gris; la seccion elegida va en blanco sobre su degradado
-                    i === shownIndex ? 'text-white' : 'text-neutral-500 active:text-neutral-900 dark:text-neutral-400 dark:active:text-white',
+                    // Los iconos sin elegir van en gris; la seccion elegida contrasta con su pastilla (carbon o perla)
+                    i === shownIndex ? 'text-white dark:text-black' : 'text-neutral-500 active:text-neutral-900 dark:text-neutral-400 dark:active:text-white',
                   )}
                 >
                   <Icon className="size-5 shrink-0" />
@@ -191,7 +191,7 @@ export function MobileNav() {
                   }
             }
             className={cn(
-              'liquid-glass nav-ceramic-create relative flex size-14 shrink-0 items-center justify-center rounded-full text-white outline-none focus-visible:ring-3 focus-visible:ring-white/40',
+              'liquid-glass nav-ceramic-create relative flex size-14 shrink-0 items-center justify-center rounded-full text-white dark:text-black outline-none focus-visible:ring-3 focus-visible:ring-white/40',
               creating && 'pointer-events-none',
             )}
           >
