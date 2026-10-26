@@ -1,6 +1,7 @@
 import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
+import { Reveal } from '@/components/Reveal'
 import { Button } from '@/components/ui/button'
 
 // Correo para dudas, solicitudes sobre tus datos y reportes que no se puedan hacer en la app
@@ -26,10 +27,10 @@ export function LegalPage({ title, updated, children }: { title: string; updated
 
 export function LegalSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-2">
+    <Reveal as="section" className="flex flex-col gap-2">
       <h2 className="text-base font-semibold">{title}</h2>
       {children}
-    </section>
+    </Reveal>
   )
 }
 

@@ -217,6 +217,24 @@
   }
 }
 
+/* Pantalla de entrar: los anillos de prendas giran despacio; arriba y abajo se desvanecen.
+   Sin movimiento si el sistema lo pide */
+.closet-orbit-ring {
+  animation: closet-orbit 90s linear infinite;
+}
+@keyframes closet-orbit {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+.closet-orbit-fade {
+  mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .closet-orbit-ring {
+    animation: none;
+  }
+}
+
 /* Pagina 404: el oso flota despacio y sus ojos rojos brillan. Sin movimiento si el sistema lo pide */
 .bear-float {
   animation: bear-float 3s ease-in-out infinite alternate;

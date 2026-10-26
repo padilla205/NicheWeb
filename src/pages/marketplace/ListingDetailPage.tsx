@@ -2,6 +2,7 @@ import { ArrowLeft, ExternalLink, LogIn, MapPin, MessageCircle } from 'lucide-re
 import { lazy, type ReactNode, Suspense } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ReportButton } from '@/components/ReportDialog'
+import { Reveal } from '@/components/Reveal'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/hooks/useAuth'
 import { useOpenConversation } from '@/hooks/useChat'
@@ -158,7 +159,9 @@ export function ListingDetailPage() {
               </DetailSection>
             )}
 
-            <SellerCard listing={listing} />
+            <Reveal>
+              <SellerCard listing={listing} />
+            </Reveal>
 
             {isMine ? (
               <ListingOwnerActions listing={listing} />
@@ -190,7 +193,11 @@ export function ListingDetailPage() {
                 <ReportButton type="listing" id={listing.id} label="Reportar venta" />
               </div>
             )}
-            {!isMine && <SafetyTips />}
+            {!isMine && (
+              <Reveal>
+                <SafetyTips />
+              </Reveal>
+            )}
           </div>
         </article>
       )}
@@ -229,11 +236,12 @@ function Detail({ label, value }: { label: string; value: string }) {
   )
 }
 
+// Cada bloque de datos aparece subiendo al bajar por la pagina
 function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-2">
+    <Reveal as="section" className="flex flex-col gap-2">
       <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{title}</h2>
       {children}
-    </section>
+    </Reveal>
   )
 }

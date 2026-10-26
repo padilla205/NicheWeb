@@ -9,6 +9,7 @@ import { FollowButton, FollowStats, MessageButton } from './FollowStats'
 import { ProfileMoreMenu } from './ProfileMoreMenu'
 import { ProfileSummary } from './ProfileSummary'
 import { ProfileTabs } from './ProfileTabs'
+import { Reveal } from '@/components/Reveal'
 
 // Perfil de otra persona (/u/:username): igual que el tuyo, pero sin opciones para editar
 export function UserProfilePage() {
@@ -51,7 +52,9 @@ export function UserProfilePage() {
                 </p>
               )}
             </header>
-            <ProfileTabs user={profile} />
+            <Reveal>
+              <ProfileTabs user={profile} />
+            </Reveal>
           </>
         )}
       </div>

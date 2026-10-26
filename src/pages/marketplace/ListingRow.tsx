@@ -1,3 +1,4 @@
+import { Reveal } from '@/components/Reveal'
 import type { Listing } from '@/lib/marketplace'
 import { ListingCard } from './ListingCard'
 
@@ -5,7 +6,7 @@ import { ListingCard } from './ListingCard'
 export function ListingRow({ title, listings }: { title: string; listings: Listing[] }) {
   if (listings.length === 0) return null
   return (
-    <section className="flex flex-col gap-3">
+    <Reveal as="section" className="flex flex-col gap-3">
       <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
       <ul className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pt-1 pb-3 md:mx-0 md:px-0">
         {listings.map((listing) => (
@@ -14,6 +15,6 @@ export function ListingRow({ title, listings }: { title: string; listings: Listi
           </li>
         ))}
       </ul>
-    </section>
+    </Reveal>
   )
 }
