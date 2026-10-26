@@ -14,8 +14,9 @@ type ChoicePillProps = {
   slideId?: string
 }
 
+// Elegida: fondo del color del texto con letras del color del fondo (carbon en claro, casi blanca en oscuro)
 const selectedClass =
-  'border-primary bg-primary/10 hover:bg-primary/15 dark:border-foreground dark:bg-foreground dark:text-background dark:hover:bg-foreground/90 dark:hover:text-background'
+  'border-foreground bg-foreground text-background hover:bg-foreground/90 hover:text-background'
 
 // Opcion redonda que se marca y desmarca (temporadas, estado de una venta, etc.)
 export function ChoicePill({ active, disabled, onClick, children, slideId }: ChoicePillProps) {
@@ -25,18 +26,17 @@ export function ChoicePill({ active, disabled, onClick, children, slideId }: Cho
       variant="outline"
       size="sm"
       aria-pressed={active}
+      data-choice
       disabled={disabled}
       onClick={onClick}
       className={cn(
         'touch-target relative rounded-full',
-        // Seleccionado: en modo claro borde marcado y fondo apenas iluminado; en modo oscuro
-        // fondo del color del texto con letras del color del fondo (casi blanco y casi negro). Las variantes dark: van completas porque las del
-        // boton outline pesan mas
+        // Seleccionado: fondo del color del texto (carbon en claro, casi blanco en oscuro)
         active && !slideId && selectedClass,
         // Con slideId el fondo lo dibuja la capa que se desliza; el boton solo cambia el color del texto
         active &&
           slideId &&
-          'border-transparent bg-transparent hover:bg-transparent dark:border-transparent dark:bg-transparent dark:text-background dark:hover:bg-transparent dark:hover:text-background',
+          'border-transparent bg-transparent text-background hover:bg-transparent hover:text-background dark:border-transparent dark:bg-transparent dark:hover:bg-transparent',
       )}
     >
       {active && slideId && (

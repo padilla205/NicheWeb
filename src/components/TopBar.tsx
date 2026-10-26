@@ -24,7 +24,7 @@ export function TopBar() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <header className="sticky top-0 z-10 flex h-[calc(4rem+env(safe-area-inset-top))] items-center gap-2 border-b-2 bg-background px-4 pt-[env(safe-area-inset-top)] md:gap-6 md:px-6">
+      <header className="topbar-ceramic sticky top-0 z-10 flex h-[calc(4rem+env(safe-area-inset-top))] items-center gap-2 border-b-2 bg-background px-4 pt-[env(safe-area-inset-top)] md:gap-6 md:px-6">
         {/* En celular, mientras buscas, el logo deja su lugar a la flecha para regresar */}
         <Link
           to="/"

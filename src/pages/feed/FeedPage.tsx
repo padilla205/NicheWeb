@@ -79,30 +79,37 @@ export function FeedPage() {
   return (
     // Si el sistema pide menos movimiento, las animaciones del feed se reducen
     <MotionConfig reducedMotion="user">
-      <div className="mx-auto max-w-6xl">
-        <div className="flex items-start justify-between gap-3">
-          <PageTitle title="Feed" />
-          <MorphButton hidden={publishOrigin !== null} onOpen={setPublishOrigin}>
-            <Plus />
-            Crear publicacion
-          </MorphButton>
-        </div>
-        <FeaturedPosts featured={featured} secondsRemaining={secondsRemaining} onOpen={(id) => openPost(id, false)} />
+      {/* Sin ancho maximo: en pantallas grandes las columnas llenan el espacio en vez de dejar orillas vacias */}
+      <div>
+        {/* Encabezado. En celular: titulo y boton, luego Destacados y los filtros. En escritorio los
+            filtros suben a la fila del titulo y Destacados ocupa todo el ancho abajo, sin huecos */}
+        <div className="mb-4 grid grid-cols-[1fr_auto] items-start gap-x-3 [grid-template-areas:'title_create''featured_featured''filters_filters'] lg:mb-5 lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-x-6 lg:gap-y-5 lg:[grid-template-areas:'title_filters_create''featured_featured_featured']">
+          <PageTitle title="Feed" className="[grid-area:title] lg:mb-0" />
+          <div className="[grid-area:create]">
+            <MorphButton hidden={publishOrigin !== null} onOpen={setPublishOrigin}>
+              <Plus />
+              Crear publicacion
+            </MorphButton>
+          </div>
+          <div className="min-w-0 [grid-area:featured]">
+            <FeaturedPosts featured={featured} secondsRemaining={secondsRemaining} onOpen={(id) => openPost(id, false)} />
+          </div>
 
-        {/* En celular las pastillas se deslizan de lado en una sola fila */}
-        <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-          <ChoicePill slideId="feed-tab" active={tab === 'for-you'} onClick={() => setTab('for-you')}>
-            Para ti
-          </ChoicePill>
-          <ChoicePill slideId="feed-tab" active={tab === 'following'} onClick={() => setTab('following')}>
-            Siguiendo
-          </ChoicePill>
-          <span aria-hidden className="mx-1 w-px shrink-0 self-stretch bg-border" />
-          {seasons.map(({ value, label }) => (
-            <ChoicePill key={value} active={selectedSeasons.includes(value)} onClick={() => toggleSeason(value)}>
-              {label}
+          {/* En celular las pastillas se deslizan de lado en una sola fila */}
+          <div className="-mx-4 flex min-w-0 gap-2 overflow-x-auto px-4 pb-1 [grid-area:filters] sm:mx-0 sm:flex-wrap sm:px-0 lg:pb-0">
+            <ChoicePill slideId="feed-tab" active={tab === 'for-you'} onClick={() => setTab('for-you')}>
+              Para ti
             </ChoicePill>
-          ))}
+            <ChoicePill slideId="feed-tab" active={tab === 'following'} onClick={() => setTab('following')}>
+              Siguiendo
+            </ChoicePill>
+            <span aria-hidden className="mx-1 w-px shrink-0 self-stretch bg-border" />
+            {seasons.map(({ value, label }) => (
+              <ChoicePill key={value} active={selectedSeasons.includes(value)} onClick={() => toggleSeason(value)}>
+                {label}
+              </ChoicePill>
+            ))}
+          </div>
         </div>
 
         {hiddenAuthor && (
@@ -139,7 +146,7 @@ export function FeedPage() {
               </motion.div>
             ) : (
               // ponytail: columnas de CSS (tipo Pinterest); el orden va de arriba hacia abajo por columna
-              <motion.div key="publicaciones" {...crossfade} className="columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4">
+              <motion.div key="publicaciones" {...crossfade} className="columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4 xl:columns-5 2xl:columns-6">
                 {feed.posts.map((post, index) => (
                   // Aparecen en cascada; mientras su publicacion esta abierta, la tarjeta se esconde
                   <motion.div key={post.id} {...cascade(index)} className="mb-3 break-inside-avoid sm:mb-4">
@@ -179,7 +186,7 @@ export function FeedPage() {
 // Tarjetas grises de distintas alturas mientras llegan las publicaciones
 function FeedSkeleton() {
   return (
-    <div aria-hidden className="columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4">
+    <div aria-hidden className="columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4 xl:columns-5 2xl:columns-6">
       {[0.75, 1, 0.67, 0.8, 1, 0.75, 0.67, 0.8].map((aspect, index) => (
         <div key={index} className="mb-3 break-inside-avoid overflow-hidden rounded-2xl border bg-card sm:mb-4">
           <div className="animate-pulse bg-muted" style={{ aspectRatio: aspect }} />

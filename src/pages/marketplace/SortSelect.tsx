@@ -12,7 +12,8 @@ type SortSelectProps = {
 export function SortSelect({ value, onChange, canSortByDistance }: SortSelectProps) {
   const options = listingSorts.filter((option) => option.value !== 'cercanos' || canSortByDistance)
   return (
-    <label className="touch-target relative flex h-8 shrink-0 items-center rounded-full border bg-background text-sm font-medium transition-colors hover:bg-muted focus-within:ring-3 focus-within:ring-ring/50 dark:border-input dark:bg-input/30 dark:hover:bg-input/50">
+    // data-variant: se ve igual que los botones de contorno (ver "Estilo ceramica" en index.css)
+    <label data-variant="outline" className="touch-target relative flex h-8 shrink-0 items-center rounded-full border bg-background text-sm font-medium transition-colors hover:bg-muted focus-within:ring-3 focus-within:ring-ring/50 dark:border-input dark:bg-input/30 dark:hover:bg-input/50">
       <ArrowUpDown className="pointer-events-none absolute left-2.5 size-4" aria-hidden="true" />
       <span className="sr-only">Ordenar ventas</span>
       <select

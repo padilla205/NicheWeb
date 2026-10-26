@@ -51,27 +51,28 @@
 }
 
 :root {
-    /* Paleta "Blanco y negro" (prueba, estilo bencho.dev) - modo claro: el oscuro invertido.
+    /* Paleta "Blanco y negro" - modo claro con estilo ceramica (prueba): fondo gris perla, tarjetas casi
+       blancas que flotan. Antes: fondo #FFFFFF, tarjetas #F5F5F5 (ver git).
        Midnight Concrete: `git show main:src/index.css` */
-    --background: #FFFFFF;
+    --background: #ECECEC;
     --foreground: #000000;
-    --card: #F5F5F5;
+    --card: #F7F7F7;
     --card-foreground: #000000;
-    --popover: #FFFFFF;
+    --popover: #F9F9F9;
     --popover-foreground: #000000;
     --primary: #000000;
     --primary-foreground: #FFFFFF;
     /* Superficie elevada: fondos suaves, hover, pastillas y skeletons */
-    --secondary: #EBEBEB;
+    --secondary: #E2E2E2;
     --secondary-foreground: #000000;
-    --muted: #EBEBEB;
+    --muted: #E2E2E2;
     --muted-foreground: #616161;
-    --accent: #EBEBEB;
+    --accent: #E2E2E2;
     --accent-foreground: #000000;
     /* Estados: el rojo de error se queda */
     --destructive: oklch(0.577 0.245 27.325);
-    --border: #E0E0E0;
-    --input: #E0E0E0;
+    --border: #DADADA;
+    --input: #D6D6D6;
     --ring: #8E8E8E;
     /* Sin color en la interfaz: Destacados y "Recien publicada" van en negro */
     --editorial: #000000;
@@ -82,20 +83,20 @@
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
     --radius: 0.625rem;
-    --sidebar: #FFFFFF;
+    --sidebar: #ECECEC;
     --sidebar-foreground: #000000;
     --sidebar-primary: #000000;
     --sidebar-primary-foreground: #FFFFFF;
-    --sidebar-accent: #EBEBEB;
+    --sidebar-accent: #E2E2E2;
     --sidebar-accent-foreground: #000000;
-    --sidebar-border: #E0E0E0;
+    --sidebar-border: #DADADA;
     --sidebar-ring: #8E8E8E;
 }
 
 .dark {
-    /* Paleta "Blanco y negro" (prueba) - modo oscuro: negro puro, tarjetas gris translucido
+    /* Paleta "Blanco y negro" (prueba) - modo oscuro: casi negro (#0B0B0B, antes negro puro), tarjetas gris translucido
        (blanco al 9% = #171717), lineas al 13% y texto gris #9A9A9A */
-    --background: #000000;
+    --background: #0B0B0B;
     --foreground: #FFFFFF;
     --card: #171717;
     --card-foreground: #FFFFFF;
@@ -121,7 +122,7 @@
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
-    --sidebar: #000000;
+    --sidebar: #0B0B0B;
     --sidebar-foreground: #FFFFFF;
     --sidebar-primary: #FFFFFF;
     --sidebar-primary-foreground: #000000;
@@ -233,6 +234,114 @@
   .closet-orbit-ring {
     animation: none;
   }
+}
+
+/* ---------- Estilo ceramica (prueba) ----------
+   Tarjetas que flotan con borde brillante y sombra suave; botones en forma de pastilla; el
+   principal con brillo (carbon en claro, perla en oscuro); los secundarios flotando sobre el fondo.
+   Los colores de cada modo estan en las variables --cer-*; para quitarlo basta borrar este bloque
+   y regresar los colores de :root y .dark.
+   Las pastillas de opciones elegidas (data-choice, ver ChoicePill) conservan su fondo solido.
+   Los botones se reconocen por data-variant (lo pone ui/button.tsx): data-slot no sirve porque
+   los menus que abren un boton lo cambian */
+:root {
+  --cer-edge: rgb(255 255 255 / 0.9);
+  --cer-card-shadow: 0 12px 28px -16px rgb(0 0 0 / 0.22), 0 2px 6px -3px rgb(0 0 0 / 0.08);
+  --cer-raised: #fbfbfb;
+  --cer-raised-hover: #ffffff;
+  --cer-raised-shadow: 0 6px 14px -8px rgb(0 0 0 / 0.22), 0 1px 2px rgb(0 0 0 / 0.06);
+  --cer-main: linear-gradient(180deg, #4a4a4a, #1c1c1c);
+  --cer-main-hover: linear-gradient(180deg, #575757, #262626);
+  --cer-main-edge: #1c1c1c;
+  --cer-main-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22), 0 8px 16px -8px rgb(0 0 0 / 0.5);
+  --cer-field: #f9f9f9;
+  --cer-field-shadow: inset 0 1px 3px rgb(0 0 0 / 0.07);
+  --cer-nav: rgb(251 251 251 / 0.85);
+  --cer-nav-shadow: 0 12px 28px -12px rgb(0 0 0 / 0.28), 0 2px 6px -3px rgb(0 0 0 / 0.1);
+  --cer-topbar-shadow: 0 6px 16px -14px rgb(0 0 0 / 0.35);
+}
+/* En oscuro: grafito. El brillo va en el borde de arriba (luz que cae) y la sombra es mas profunda */
+.dark {
+  --cer-edge: rgb(255 255 255 / 0.07);
+  --cer-card-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 14px 30px -14px rgb(0 0 0 / 0.9);
+  --cer-raised: #1d1d1d;
+  --cer-raised-hover: #252525;
+  --cer-raised-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 6px 14px -8px rgb(0 0 0 / 0.9);
+  --cer-main: linear-gradient(180deg, #ffffff, #cfcfcf);
+  --cer-main-hover: linear-gradient(180deg, #ffffff, #e0e0e0);
+  --cer-main-edge: #e6e6e6;
+  --cer-main-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 8px 18px -8px rgb(255 255 255 / 0.18);
+  --cer-field: #121212;
+  --cer-field-shadow: inset 0 1px 3px rgb(0 0 0 / 0.6);
+  --cer-nav: rgb(29 29 29 / 0.85);
+  --cer-nav-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 12px 28px -10px rgb(0 0 0 / 0.95);
+  --cer-topbar-shadow: 0 6px 16px -12px rgb(0 0 0 / 0.9);
+}
+.bg-card.border {
+  border-color: var(--cer-edge);
+  box-shadow: var(--cer-card-shadow);
+}
+[data-variant] {
+  border-radius: 9999px;
+}
+[data-variant][data-variant="default"] {
+  background-image: var(--cer-main);
+  border-color: var(--cer-main-edge);
+  box-shadow: var(--cer-main-shadow);
+}
+[data-variant][data-variant="default"]:hover {
+  background-image: var(--cer-main-hover);
+}
+[data-variant]:is([data-variant="outline"], [data-variant="secondary"]):not([data-choice][aria-pressed="true"]) {
+  background-color: var(--cer-raised);
+  border-color: var(--cer-edge);
+  box-shadow: var(--cer-raised-shadow);
+}
+[data-variant]:is([data-variant="outline"], [data-variant="secondary"]):not([data-choice][aria-pressed="true"]):hover {
+  background-color: var(--cer-raised-hover);
+}
+[data-slot="input"],
+[data-slot="textarea"] {
+  background-color: var(--cer-field);
+  border-color: var(--cer-edge);
+  box-shadow: var(--cer-field-shadow);
+}
+
+/* Barras de navegacion en ceramica: la de abajo (celular) flota con la seccion activa y el "+"
+   como el boton principal; la de arriba sin linea dura y con iconos en circulos; en el menu
+   lateral la seccion activa es una pastilla */
+.nav-ceramic {
+  background: var(--cer-nav);
+  border-color: var(--cer-edge);
+  box-shadow: var(--cer-nav-shadow);
+}
+.nav-ceramic .liquid-glass-pill,
+.nav-ceramic-create {
+  background: var(--cer-main);
+  border-color: var(--cer-main-edge);
+  box-shadow: var(--cer-main-shadow);
+}
+:is(.nav-ceramic, .nav-ceramic-create, .nav-ceramic .liquid-glass-pill)::before {
+  display: none;
+}
+.topbar-ceramic {
+  border-color: transparent;
+  box-shadow: var(--cer-topbar-shadow);
+}
+.topbar-icon {
+  background-color: var(--cer-raised);
+  box-shadow: var(--cer-raised-shadow);
+}
+.topbar-icon:hover {
+  background-color: var(--cer-raised-hover);
+}
+.side-nav-ceramic {
+  border-color: transparent;
+}
+.side-nav-ceramic a[aria-current="page"] {
+  border-radius: 9999px;
+  background-color: var(--cer-raised);
+  box-shadow: var(--cer-raised-shadow);
 }
 
 /* Cuadritos grises detras de una foto sin fondo, para que se note lo transparente */

@@ -10,7 +10,7 @@ export function SideNav() {
   return (
     <nav
       aria-label="Secciones"
-      className="sticky top-16 hidden h-[calc(100vh-4rem)] w-56 shrink-0 border-l-2 p-3 md:block"
+      className="side-nav-ceramic sticky top-16 hidden h-[calc(100vh-4rem)] w-56 shrink-0 border-l-2 p-3 md:block"
     >
       <ul className="flex flex-col gap-1">
         {sections.map(({ path, label, icon: Icon }) => (

@@ -1,9 +1,10 @@
-import { Clock3, Flame } from 'lucide-react'
+import { Clock3, Flame, Heart, MessageCircle } from 'lucide-react'
 import type { Post } from '@/lib/feed'
 import { PostPhoto } from './PostPhoto'
 
 // Fila delgada de circulos, tipo historias, con las publicaciones con mas likes y comentarios.
-// Se renueva cada hora; al tocar una se abre completa
+// Se renueva cada hora; al tocar una se abre completa. En escritorio son tarjetas que llenan la fila,
+// con el titulo a la izquierda
 type FeaturedPostsProps = {
   featured: Post[]
   secondsRemaining: number
@@ -16,8 +17,11 @@ export function FeaturedPosts({ featured, secondsRemaining, onOpen }: FeaturedPo
   if (featured.length === 0) return null
 
   return (
-    <section aria-labelledby="featured-title" className="mb-6">
-      <div className="mb-2 flex items-center gap-3 text-sm">
+    <section
+      aria-labelledby="featured-title"
+      className="mb-4 lg:mb-0 lg:flex lg:items-center lg:gap-6"
+    >
+      <div className="mb-2 flex items-center gap-3 text-sm lg:mb-0 lg:shrink-0 lg:flex-col lg:items-start lg:gap-1">
         <h2 id="featured-title" className="flex items-center gap-1.5 font-medium">
           <Flame aria-hidden="true" className="size-4 text-editorial" />
           Destacados
@@ -34,9 +38,9 @@ export function FeaturedPosts({ featured, secondsRemaining, onOpen }: FeaturedPo
           </span>
         </span>
       </div>
-      <ul className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+      <ul className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:grid lg:flex-1 lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:pb-0">
         {featured.map((post, index) => (
-          <li key={post.id} className="shrink-0">
+          <li key={post.id} className="shrink-0 lg:min-w-0">
             <FeaturedCircle post={post} rank={index + 1} onOpen={() => onOpen(post.id)} />
           </li>
         ))}
@@ -51,7 +55,7 @@ function FeaturedCircle({ post, rank, onOpen }: { post: Post; rank: number; onOp
       type="button"
       onClick={onOpen}
       aria-label={`Ver publicacion de ${post.author.username}, lugar ${rank} en destacados`}
-      className="group flex w-18 flex-col items-center gap-1.5 rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="group flex w-18 flex-col items-center gap-1.5 rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50 lg:w-full lg:flex-row lg:gap-3 lg:rounded-2xl lg:border lg:bg-card lg:p-2.5 lg:text-left"
     >
       {/* Aro de color como el de las historias, con el lugar en la esquina */}
       <span className="relative rounded-full bg-editorial p-0.5">
@@ -62,7 +66,20 @@ function FeaturedCircle({ post, rank, onOpen }: { post: Post; rank: number; onOp
           {rank}
         </span>
       </span>
-      <span className="w-full truncate text-xs group-hover:underline">{post.author.username}</span>
+      <span className="w-full min-w-0 lg:flex-1">
+        <span className="block truncate text-xs group-hover:underline lg:text-sm lg:font-medium">{post.author.username}</span>
+        {/* En escritorio hay lugar para los numeros que la hicieron destacar */}
+        <span className="hidden items-center gap-3 text-xs text-muted-foreground tabular-nums lg:flex">
+          <span className="flex items-center gap-1">
+            <Heart aria-hidden="true" className="size-3.5" />
+            {post.likes}
+          </span>
+          <span className="flex items-center gap-1">
+            <MessageCircle aria-hidden="true" className="size-3.5" />
+            {post.commentCount}
+          </span>
+        </span>
+      </span>
     </button>
   )
 }
