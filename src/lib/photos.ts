@@ -5,8 +5,9 @@ const BUCKET = 'photos'
 
 // Cada foto se guarda dos veces: grande para verla completa y chica para las cuadriculas.
 // 1600 px se ve nitido en pantallas de celular y laptop; 480 px alcanza para una tarjeta.
+export const MAX_PHOTO_SIDE = 1600
 const sizes = {
-  full: { maxWidthOrHeight: 1600, maxSizeMB: 0.5, initialQuality: 0.82 },
+  full: { maxWidthOrHeight: MAX_PHOTO_SIDE, maxSizeMB: 0.5, initialQuality: 0.82 },
   thumb: { maxWidthOrHeight: 480, maxSizeMB: 0.08, initialQuality: 0.75 },
 } as const
 

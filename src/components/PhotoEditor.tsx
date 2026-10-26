@@ -1,11 +1,11 @@
-import { Eraser, RotateCw, Undo2 } from 'lucide-react'
+import { Eraser, RotateCw, Undo2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { ChoicePill } from '@/components/ChoicePill'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cropImage } from '@/lib/cropImage'
-import { removeBackground } from '@/lib/removeBackground'
+import { cancelRemoveBackground, removeBackground, RemoveBackgroundCancelled } from '@/lib/removeBackground'
 import { cn } from '@/lib/utils'
 
 type PhotoEditorProps = {
@@ -75,6 +75,9 @@ function EditorBody({ file, onClose, onSave }: { file: File; onClose: () => void
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Al cerrar el editor se detiene lo que se este procesando
+  useEffect(() => () => cancelRemoveBackground(), [])
+
   const rotation = quarterTurns * 90 + straighten
   // Al girar de lado, la forma original se voltea (una foto vertical queda horizontal)
   const sideways = quarterTurns % 2 === 1
@@ -86,8 +89,11 @@ function EditorBody({ file, onClose, onSave }: { file: File; onClose: () => void
     try {
       const result = await removeBackground(file, (percent) => setRemoving(percent < 100 ? percent : 'procesando'))
       setCutout(result)
-    } catch {
-      setError('No se pudo quitar el fondo. Revisa tu conexion e intenta de nuevo.')
+    } catch (error) {
+      // Cancelado a proposito: no es un error
+      if (!(error instanceof RemoveBackgroundCancelled)) {
+        setError('No se pudo quitar el fondo. Revisa tu conexion e intenta de nuevo.')
+      }
     } finally {
       setRemoving(null)
     }
@@ -150,6 +156,12 @@ function EditorBody({ file, onClose, onSave }: { file: File; onClose: () => void
               : removing === 'procesando'
                 ? 'Quitando fondo...'
                 : `Descargando ${removing}%`}
+          </Button>
+        )}
+        {removing !== null && (
+          <Button type="button" variant="ghost" size="sm" onClick={cancelRemoveBackground}>
+            <X />
+            Cancelar
           </Button>
         )}
         <span aria-live="polite" className="text-xs text-muted-foreground">
