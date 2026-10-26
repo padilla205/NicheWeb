@@ -1,13 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/fredoka";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-sans: 'Fredoka Variable', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -250,10 +250,10 @@
   --cer-raised: #fbfbfb;
   --cer-raised-hover: #ffffff;
   --cer-raised-shadow: 0 6px 14px -8px rgb(0 0 0 / 0.22), 0 1px 2px rgb(0 0 0 / 0.06);
-  --cer-main: linear-gradient(180deg, #4a4a4a, #1c1c1c);
-  --cer-main-hover: linear-gradient(180deg, #575757, #262626);
-  --cer-main-edge: #1c1c1c;
-  --cer-main-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22), 0 8px 16px -8px rgb(0 0 0 / 0.5);
+  /* El boton principal, la seccion activa de la barra y el "+" llevan el degradado aurora de la seccion */
+  --cer-main: var(--aurora);
+  --cer-main-edge: transparent;
+  --cer-main-shadow: inset 0 0 10px 1px rgb(255 255 255 / 0.45), 0 8px 18px -8px var(--aurora-glow);
   --cer-field: #f9f9f9;
   --cer-field-shadow: inset 0 1px 3px rgb(0 0 0 / 0.07);
   --cer-nav: rgb(251 251 251 / 0.85);
@@ -267,10 +267,6 @@
   --cer-raised: #1d1d1d;
   --cer-raised-hover: #252525;
   --cer-raised-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 6px 14px -8px rgb(0 0 0 / 0.9);
-  --cer-main: linear-gradient(180deg, #ffffff, #cfcfcf);
-  --cer-main-hover: linear-gradient(180deg, #ffffff, #e0e0e0);
-  --cer-main-edge: #e6e6e6;
-  --cer-main-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 8px 18px -8px rgb(255 255 255 / 0.18);
   --cer-field: #121212;
   --cer-field-shadow: inset 0 1px 3px rgb(0 0 0 / 0.6);
   --cer-nav: rgb(29 29 29 / 0.85);
@@ -289,8 +285,18 @@
   border-color: var(--cer-main-edge);
   box-shadow: var(--cer-main-shadow);
 }
+[data-variant][data-variant="default"],
+.nav-ceramic .liquid-glass-pill,
+.nav-ceramic-create {
+  filter: saturate(var(--aurora-saturation));
+}
+[data-variant][data-variant="default"] {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+}
 [data-variant][data-variant="default"]:hover {
-  background-image: var(--cer-main-hover);
+  background-image: var(--cer-main);
+  filter: saturate(calc(var(--aurora-saturation) * 1.2)) brightness(1.04);
 }
 [data-variant]:is([data-variant="outline"], [data-variant="secondary"]):not([data-choice][aria-pressed="true"]) {
   background-color: var(--cer-raised);
@@ -307,6 +313,57 @@
   box-shadow: var(--cer-field-shadow);
 }
 
+/* Degradados aurora: manchas de color que se mezclan, uno por seccion (AppLayout pone data-section
+   en <html>). La ultima capa es el color de fondo; va como degradado para poder usarlo en
+   background-image. Fuera de las secciones (login, chat, ajustes...) se usa el del closet */
+:root {
+  --aurora:
+    radial-gradient(circle at 35% 40%, #FF2D95 0, transparent 55%),
+    radial-gradient(circle at 40% 85%, #FF8A3D 0, transparent 55%),
+    radial-gradient(circle at 85% 45%, #7B5CFF 0, transparent 55%),
+    radial-gradient(circle at 20% 15%, #FFB8E0 0, transparent 55%),
+    linear-gradient(#C2187A, #C2187A);
+  --aurora-glow: rgb(255 45 149 / 0.5);
+  /* Que tan vivos se ven los degradados: 1 = colores puros, menos = mas apagados */
+  --aurora-saturation: 0.6;
+}
+:root[data-section="outfits"] {
+  --aurora:
+    radial-gradient(circle at 40% 35%, #8B5CFF 0, transparent 55%),
+    radial-gradient(circle at 80% 70%, #3D7BFF 0, transparent 55%),
+    radial-gradient(circle at 20% 80%, #FF6EC7 0, transparent 55%),
+    radial-gradient(circle at 70% 15%, #E4D8FF 0, transparent 55%),
+    linear-gradient(#5B3BD1, #5B3BD1);
+  --aurora-glow: rgb(139 92 255 / 0.5);
+}
+:root[data-section="feed"] {
+  --aurora:
+    radial-gradient(circle at 35% 40%, #2EC5FF 0, transparent 55%),
+    radial-gradient(circle at 80% 70%, #4D6BFF 0, transparent 55%),
+    radial-gradient(circle at 20% 85%, #C08CFF 0, transparent 55%),
+    radial-gradient(circle at 70% 15%, #D6F5FF 0, transparent 55%),
+    linear-gradient(#2A6FD6, #2A6FD6);
+  --aurora-glow: rgb(46 197 255 / 0.5);
+}
+:root[data-section="marketplace"] {
+  --aurora:
+    radial-gradient(circle at 35% 45%, #3DE0A0 0, transparent 55%),
+    radial-gradient(circle at 80% 70%, #14B8C8 0, transparent 55%),
+    radial-gradient(circle at 25% 90%, #3A8DFF 0, transparent 55%),
+    radial-gradient(circle at 70% 15%, #E0FFF0 0, transparent 55%),
+    linear-gradient(#0E9C8A, #0E9C8A);
+  --aurora-glow: rgb(61 224 160 / 0.5);
+}
+:root:is([data-section="profile"], [data-section="u"]) {
+  --aurora:
+    radial-gradient(circle at 35% 45%, #FF7A3D 0, transparent 55%),
+    radial-gradient(circle at 80% 70%, #FF3D8B 0, transparent 55%),
+    radial-gradient(circle at 20% 85%, #FFD23D 0, transparent 55%),
+    radial-gradient(circle at 70% 15%, #FFE3D1 0, transparent 55%),
+    linear-gradient(#E0503A, #E0503A);
+  --aurora-glow: rgb(255 122 61 / 0.5);
+}
+
 /* Barras de navegacion en ceramica: la de abajo (celular) flota con la seccion activa y el "+"
    como el boton principal; la de arriba sin linea dura y con iconos en circulos; en el menu
    lateral la seccion activa es una pastilla */
@@ -319,6 +376,7 @@
 .nav-ceramic-create {
   background: var(--cer-main);
   border-color: var(--cer-main-edge);
+  color: #ffffff;
   box-shadow: var(--cer-main-shadow);
 }
 :is(.nav-ceramic, .nav-ceramic-create, .nav-ceramic .liquid-glass-pill)::before {

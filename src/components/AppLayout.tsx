@@ -1,4 +1,5 @@
 import { MotionConfig, motion } from 'motion/react'
+import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router'
 import { MobileNav } from '@/components/MobileNav'
 import { SideNav } from '@/components/SideNav'
@@ -7,6 +8,11 @@ import { TopBar } from '@/components/TopBar'
 export function AppLayout() {
   // Solo la seccion: abrir un chat (/chat/:id) no vuelve a animar toda la pagina
   const section = useLocation().pathname.split('/')[1]
+  // Cada seccion tiene su degradado aurora (ver index.css); va en <html> para que tambien lo usen
+  // las ventanas, que se abren fuera de este contenedor
+  useEffect(() => {
+    document.documentElement.dataset.section = section
+  }, [section])
 
   return (
     <div className="min-h-screen bg-background text-foreground">
