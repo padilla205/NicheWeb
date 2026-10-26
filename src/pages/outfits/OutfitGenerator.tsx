@@ -103,24 +103,13 @@ export function OutfitGenerator({ items, savedKeys }: OutfitGeneratorProps) {
   const chosen = Object.values(pieces)
 
   return (
-    <section aria-label="Generador de outfits" className="flex flex-col gap-4">
-      <WeatherCard onSuggest={suggestForWeather} />
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-        {seasons.map(({ value, label }) => (
-          <ChoicePill key={value} active={selectedSeasons.includes(value)} onClick={() => toggleSeason(value)}>
-            {label}
-          </ChoicePill>
-        ))}
-        <span aria-hidden className="mx-1 w-px shrink-0 self-stretch bg-border" />
-        {optionalSlots.map((slot) => (
-          <ChoicePill key={slot} active={optional.includes(slot)} onClick={() => toggleOptional(slot)}>
-            {!optional.includes(slot) && <Plus />}
-            {slotLabels[slot]}
-          </ChoicePill>
-        ))}
-      </div>
-
-      <div className="mx-auto w-full max-w-md rounded-3xl border bg-card">
+    // Celular: el outfit primero, luego las opciones, y los botones pegados abajo para tenerlos a la mano.
+    // Escritorio: el outfit a la izquierda; opciones y botones a la derecha (mismo orden que en celular)
+    <section
+      aria-label="Generador de outfits"
+      className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-x-8"
+    >
+      <div className="mx-auto w-full max-w-md rounded-3xl border bg-card lg:row-span-2">
         <OutfitBoard
           pieces={pieces}
           slots={slots}
@@ -148,21 +137,49 @@ export function OutfitGenerator({ items, savedKeys }: OutfitGeneratorProps) {
         />
       </div>
 
-      {repeated && (
-        <p className="text-center text-sm text-muted-foreground">
-          Ya salieron todas las combinaciones posibles; esta se repite. Agrega mas prendas o quita candados.
-        </p>
-      )}
+      <div className="flex min-w-0 flex-col gap-4">
+        <WeatherCard onSuggest={suggestForWeather} />
+        <div className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-muted-foreground">Temporada</h2>
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+            {seasons.map(({ value, label }) => (
+              <ChoicePill key={value} active={selectedSeasons.includes(value)} onClick={() => toggleSeason(value)}>
+                {label}
+              </ChoicePill>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-muted-foreground">Agregar al outfit</h2>
+          <div className="flex flex-wrap gap-2">
+            {optionalSlots.map((slot) => (
+              <ChoicePill key={slot} active={optional.includes(slot)} onClick={() => toggleOptional(slot)}>
+                {!optional.includes(slot) && <Plus />}
+                {slotLabels[slot]}
+              </ChoicePill>
+            ))}
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">Toca el candado de una prenda para dejarla fija al generar.</p>
+        {repeated && (
+          <p className="text-sm text-muted-foreground">
+            Ya salieron todas las combinaciones posibles; esta se repite. Agrega mas prendas o quita candados.
+          </p>
+        )}
+      </div>
 
-      <div className="flex justify-center gap-2">
-        <Button onClick={() => generate()} disabled={items.length === 0}>
-          <Shuffle />
-          Generar outfit
-        </Button>
-        <Button variant="outline" onClick={() => setSaving(true)} disabled={chosen.length < 2}>
-          <Save />
-          Guardar
-        </Button>
+      {/* En celular y tableta se quedan pegados abajo (arriba de la barra de navegacion del celular) */}
+      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex justify-center gap-2 md:bottom-4 lg:static lg:col-start-2 lg:justify-start">
+        <div className="flex gap-2 rounded-full border bg-background/95 p-1.5 shadow-lg lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+          <Button className="rounded-full" onClick={() => generate()} disabled={items.length === 0}>
+            <Shuffle />
+            Generar outfit
+          </Button>
+          <Button variant="outline" className="rounded-full" onClick={() => setSaving(true)} disabled={chosen.length < 2}>
+            <Save />
+            Guardar
+          </Button>
+        </div>
       </div>
 
       <SaveOutfitDialog

@@ -5,11 +5,15 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { replaceBrokenImages } from '@/lib/brokenImages'
 
 // Guarda en memoria lo que llega de Supabase; durante 1 minuto lo reutiliza sin volver a pedirlo
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, refetchOnWindowFocus: false } },
 })
+
+// Las fotos que no cargan se cambian por un icono gris en vez de verse rotas
+replaceBrokenImages()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

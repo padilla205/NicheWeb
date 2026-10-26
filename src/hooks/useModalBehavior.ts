@@ -29,8 +29,8 @@ export function useModalBehavior(onClose: () => void) {
       if (event.key !== 'Escape' || openModals.at(-1) !== id) return
       // Si hay una lista desplegable abierta (tipo de prenda, equipo...), Escape solo cierra esa lista
       if (document.querySelector('[data-radix-popper-content-wrapper]')) return
-      // Si hay una ventana encima (pantalla completa, compartir...), Escape solo cierra esa
-      if (document.querySelector('[data-slot="dialog-content"]')) return
+      // Si hay una ventana encima (pantalla completa, compartir, confirmar borrado...), Escape solo cierra esa
+      if (document.querySelector('[data-slot="dialog-content"], [data-slot="alert-dialog-content"]')) return
       onCloseRef.current()
     }
     window.addEventListener('keydown', handleKey)

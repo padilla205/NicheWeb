@@ -6,6 +6,7 @@ import { FullscreenPhotos } from '@/components/FullscreenPhotos'
 import { MorphButton } from '@/components/MorphButton'
 import { SwipeHandle } from '@/components/SwipeHandle'
 import { ChoicePill } from '@/components/ChoicePill'
+import { ConfirmDelete } from '@/components/ConfirmDelete'
 import { Button } from '@/components/ui/button'
 import { useDeleteItem, useSetItemPrivate } from '@/hooks/useItems'
 import { useProfile } from '@/hooks/useProfile'
@@ -45,8 +46,6 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
   const closeEdit = useCallback(() => setEditOrigin(null), [])
   const navigate = useNavigate()
   const deleteItem = useDeleteItem()
-  // Eliminar pide un segundo toque para confirmar
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const [sharing, setSharing] = useState(false)
   // Se comparte lo que se ve en un perfil: prendas de otros, o las tuyas visibles en tu closet publico
   const shareable = readOnly || (!item.private && closetPublic)
@@ -186,18 +185,16 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
                     <Tag />
                     Vender esta prenda
                   </MorphButton>
-                  <Button
-                    variant={confirmDelete ? 'destructive' : 'ghost'}
-                    disabled={deleteItem.isPending}
-                    onClick={() => {
-                      if (!confirmDelete) return setConfirmDelete(true)
-                      deleteItem.mutate(item, { onSuccess: onClose })
-                    }}
-                    onBlur={() => setConfirmDelete(false)}
+                  <ConfirmDelete
+                    title="Eliminar esta prenda?"
+                    description="Se borra de tu closet con sus fotos y sale de los outfits donde esta. No se puede deshacer."
+                    onConfirm={() => deleteItem.mutate(item, { onSuccess: onClose })}
                   >
-                    <Trash2 />
-                    {deleteItem.isPending ? 'Eliminando' : confirmDelete ? 'Toca otra vez para eliminar' : 'Eliminar'}
-                  </Button>
+                    <Button variant="ghost" className="text-destructive hover:text-destructive" disabled={deleteItem.isPending}>
+                      <Trash2 />
+                      {deleteItem.isPending ? 'Eliminando' : 'Eliminar'}
+                    </Button>
+                  </ConfirmDelete>
                 </div>
                 {deleteItem.isError && (
                   <p role="alert" className="text-sm text-destructive">

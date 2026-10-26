@@ -6,6 +6,7 @@ export function UserAvatar({ user, className }: { user: FeedUser; className?: st
   return (
     <span
       aria-hidden
+      data-avatar
       className={cn(
         'flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-xs font-semibold uppercase',
         className,

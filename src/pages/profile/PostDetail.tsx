@@ -2,6 +2,7 @@ import { ChevronRight, Shirt, Trash2, X } from 'lucide-react'
 import { motion, useIsPresent } from 'motion/react'
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { ConfirmDelete } from '@/components/ConfirmDelete'
 import { SwipeHandle } from '@/components/SwipeHandle'
 import { Button } from '@/components/ui/button'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
@@ -40,8 +41,6 @@ export function PostDetail({ post, onClose, onAuthorHidden, morph = true }: Post
   const viewerId = useSession()?.user.id
   const isMine = viewerId === post.authorId
   const deletePost = useDeletePost()
-  // Eliminar pide un segundo toque para confirmar
-  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useModalBehavior(onClose)
   // Mientras se esta quitando al cerrarse deja pasar los toques al cuadro de abajo
@@ -95,20 +94,21 @@ export function PostDetail({ post, onClose, onAuthorHidden, morph = true }: Post
                 <span className="shrink-0 font-normal text-muted-foreground">{formatTimeAgo(post.createdAt)}</span>
               </AuthorMenu>
               {isMine && (
-                <Button
-                  variant={confirmDelete ? 'destructive' : 'ghost'}
-                  size="sm"
-                  className={cn('ml-auto shrink-0', !confirmDelete && 'text-destructive hover:text-destructive')}
-                  disabled={deletePost.isPending}
-                  onClick={() => {
-                    if (!confirmDelete) return setConfirmDelete(true)
-                    deletePost.mutate(post, { onSuccess: onClose })
-                  }}
-                  onBlur={() => setConfirmDelete(false)}
+                <ConfirmDelete
+                  title="Eliminar esta publicacion?"
+                  description="Se borran sus fotos, likes y comentarios. No se puede deshacer."
+                  onConfirm={() => deletePost.mutate(post, { onSuccess: onClose })}
                 >
-                  <Trash2 />
-                  {deletePost.isPending ? 'Eliminando' : confirmDelete ? 'Toca otra vez' : 'Eliminar'}
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto shrink-0 text-destructive hover:text-destructive"
+                    disabled={deletePost.isPending}
+                  >
+                    <Trash2 />
+                    {deletePost.isPending ? 'Eliminando' : 'Eliminar'}
+                  </Button>
+                </ConfirmDelete>
               )}
             </header>
 

@@ -235,6 +235,14 @@
   }
 }
 
+/* Foto que no cargo (ver lib/brokenImages.ts): el icono gris va centrado y chico sobre fondo gris,
+   aunque la foto original se recortara para llenar su espacio */
+img[data-broken] {
+  object-fit: contain;
+  padding: 32%;
+  background-color: var(--muted);
+}
+
 /* Pagina 404: el oso flota despacio y sus ojos rojos brillan. Sin movimiento si el sistema lo pide */
 .bear-float {
   animation: bear-float 3s ease-in-out infinite alternate;

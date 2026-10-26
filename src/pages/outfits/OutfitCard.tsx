@@ -2,6 +2,7 @@ import { Check, Link2, Send, Shirt, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { OutfitBoard } from '@/components/OutfitBoard'
+import { ConfirmDelete } from '@/components/ConfirmDelete'
 import { Button } from '@/components/ui/button'
 import { useDeleteOutfit, useMakeOutfitPublic, useSetOutfitInCloset } from '@/hooks/useOutfits'
 import { type Outfit, piecesOf } from '@/lib/outfits'
@@ -33,8 +34,6 @@ function OwnerActions({ outfit, onPublish }: { outfit: Outfit; onPublish: (butto
   const makePublic = useMakeOutfitPublic()
   const deleteOutfit = useDeleteOutfit()
   const [copied, setCopied] = useState(false)
-  // Eliminar pide un segundo toque para confirmar
-  const [confirmDelete, setConfirmDelete] = useState(false)
 
   // El aviso de "Link copiado" se quita solo
   useEffect(() => {
@@ -77,18 +76,21 @@ function OwnerActions({ outfit, onPublish }: { outfit: Outfit; onPublish: (butto
       <Button size="icon-sm" variant="outline" onClick={copyLink} aria-label="Copiar link" title="Copiar link">
         {copied ? <Check /> : <Link2 />}
       </Button>
-      <Button
-        size={confirmDelete ? 'sm' : 'icon-sm'}
-        variant={confirmDelete ? 'destructive' : 'ghost'}
-        aria-label="Eliminar outfit"
-        className={cn(!confirmDelete && 'text-destructive hover:text-destructive')}
-        disabled={deleteOutfit.isPending}
-        onClick={() => (confirmDelete ? deleteOutfit.mutate(outfit) : setConfirmDelete(true))}
-        onBlur={() => setConfirmDelete(false)}
+      <ConfirmDelete
+        title="Eliminar este outfit?"
+        description="Tus prendas se quedan en tu closet. Si lo publicaste sin foto propia, esa publicacion tambien se borra. No se puede deshacer."
+        onConfirm={() => deleteOutfit.mutate(outfit)}
       >
-        <Trash2 />
-        {confirmDelete && 'Toca otra vez'}
-      </Button>
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          aria-label="Eliminar outfit"
+          className="text-destructive hover:text-destructive"
+          disabled={deleteOutfit.isPending}
+        >
+          <Trash2 />
+        </Button>
+      </ConfirmDelete>
       {copied && <p className="w-full text-xs text-muted-foreground">Link copiado</p>}
     </div>
   )
