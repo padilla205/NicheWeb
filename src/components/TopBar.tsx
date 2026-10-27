@@ -2,6 +2,7 @@ import { ArrowLeft, MessageCircle, Search, X } from 'lucide-react'
 import { motion, MotionConfig } from 'motion/react'
 import { useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router'
+import { BrandMark } from '@/components/BrandMark'
 import { NotificationBell } from '@/components/NotificationBell'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { UnreadBadge } from '@/components/UnreadBadge'
@@ -35,8 +36,9 @@ export function TopBar() {
         {/* En celular, mientras buscas, el logo deja su lugar a la flecha para regresar */}
         <Link
           to="/"
-          className={cn('shrink-0 text-xl font-semibold tracking-tight', searching && 'hidden md:block')}
+          className={cn('flex shrink-0 items-center gap-2 text-xl font-semibold tracking-tight', searching && 'hidden md:flex')}
         >
+          <BrandMark />
           Niche
         </Link>
         {searching && <BackButton />}

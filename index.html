@@ -2,7 +2,14 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/brand/favicon-48.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preload" as="image" href="/brand/niche-mark.png" />
+    <meta name="apple-mobile-web-app-title" content="Niche" />
+    <meta name="theme-color" content="#ECECEC" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0B0B0B" media="(prefers-color-scheme: dark)" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Niche</title>
     <script>
@@ -14,8 +21,14 @@
       } catch {}
     </script>
     <style>
-      /* Pantalla de carga: una playera que se mece como colgada de un gancho y abajo "Niche".
+      /* Pantalla de carga: el logo del gancho y abajo "Niche".
          Vive aqui para verse desde el primer instante; React (SplashScreen.tsx) usa las mismas clases */
+      .brand-mark {
+        display: inline-block;
+        background-color: currentColor;
+        -webkit-mask: url('/brand/niche-mark.png') center / contain no-repeat;
+        mask: url('/brand/niche-mark.png') center / contain no-repeat;
+      }
       .splash {
         position: fixed;
         inset: 0;
@@ -58,9 +71,9 @@
     </style>
   </head>
   <body>
-        <div id="root">
+    <div id="root">
       <div class="splash" role="status" aria-label="Cargando Niche">
-        <svg class="splash-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>
+        <span class="brand-mark splash-icon" aria-hidden="true"></span>
         <p class="splash-word">Niche</p>
       </div>
     </div>

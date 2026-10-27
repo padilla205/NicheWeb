@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useState } from 'react'
+import { BrandMark } from '@/components/BrandMark'
 import { cn } from '@/lib/utils'
 
 const SLIDES: { icon: LucideIcon; title: string; text: string }[] = [
@@ -77,8 +78,8 @@ export function LoginShowcase() {
       className="relative isolate flex flex-col gap-6 overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground md:h-full md:justify-between md:p-10"
     >
       <FloatingObjects />
-      <p className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-        <Shirt className="size-7" aria-hidden="true" />
+      <p className="flex items-center gap-3 text-2xl font-semibold tracking-tight">
+        <BrandMark className="size-10" />
         Niche
       </p>
 
