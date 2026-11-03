@@ -155,10 +155,10 @@ export function FeedPage() {
               </motion.div>
             ) : (
               // ponytail: columnas de CSS (tipo Pinterest); el orden va de arriba hacia abajo por columna
-              <motion.div key="publicaciones" {...crossfade} className="columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4 xl:columns-5 2xl:columns-6">
+              <motion.div key="publicaciones" {...crossfade} className="focus-cards columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4 xl:columns-5 2xl:columns-6">
                 {feed.posts.map((post, index) => (
                   // Aparecen en cascada; mientras su publicacion esta abierta, la tarjeta se esconde
-                  <motion.div key={post.id} {...cascade(index)} className="mb-3 break-inside-avoid sm:mb-4">
+                  <motion.div key={post.id} {...cascade(index)} className="focus-card mb-3 break-inside-avoid sm:mb-4">
                     <div className={cn(fromCard && openId === post.id && 'pointer-events-none opacity-0')}>
                       <FeedCard
                         key={post.id === closingId ? `${post.id}-cerrando` : post.id}

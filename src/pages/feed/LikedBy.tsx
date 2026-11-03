@@ -1,6 +1,7 @@
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { AnimatedTooltip } from '@/components/AnimatedTooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { usePostLikers } from '@/hooks/usePosts'
 import type { Post } from '@/lib/feed'
@@ -25,15 +26,17 @@ export function LikedBy({ post }: { post: Post }) {
         >
           <span aria-hidden className="flex -space-x-1.5">
             {likers.slice(0, 3).map((user, index) => (
-              <motion.span
-                key={user.username}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: index * 0.04, duration: 0.15 }}
-                className="rounded-full ring-2 ring-popover"
-              >
-                <UserAvatar user={user} className="size-5 text-[9px]" />
-              </motion.span>
+              // Al pasar el mouse sale su nombre en un globito
+              <AnimatedTooltip key={user.username} label={`@${user.username}`}>
+                <motion.span
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: index * 0.04, duration: 0.15 }}
+                  className="rounded-full ring-2 ring-popover"
+                >
+                  <UserAvatar user={user} className="size-5 text-[9px]" />
+                </motion.span>
+              </AnimatedTooltip>
             ))}
           </span>
           <span className="min-w-0 truncate">

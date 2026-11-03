@@ -3,6 +3,7 @@ import { motion, MotionConfig } from 'motion/react'
 import { useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { BrandMark } from '@/components/BrandMark'
+import { CyclingPlaceholder } from '@/components/CyclingPlaceholder'
 import { NotificationBell } from '@/components/NotificationBell'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { UnreadBadge } from '@/components/UnreadBadge'
@@ -116,7 +117,7 @@ function SearchField() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1, duration: 0.2 }}
-        className="flex min-w-0 flex-1 items-center gap-2"
+        className="relative flex min-w-0 flex-1 items-center gap-2"
       >
         <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
         <input
@@ -125,9 +126,14 @@ function SearchField() {
           onChange={(event) => change(event.target.value)}
           onKeyDown={(event) => event.key === 'Escape' && leave()}
           autoFocus
-          placeholder="Buscar personas, ventas u outfits"
           aria-label="Buscar"
           className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm [&::-webkit-search-cancel-button]:hidden"
+        />
+        {/* Ejemplos que van cambiando mientras no has escrito nada */}
+        <CyclingPlaceholder
+          show={!text}
+          className="left-6"
+          texts={['Buscar personas, ventas u outfits', 'Prueba: @nicheguy', 'Prueba: jersey', 'Prueba: chamarra de piel']}
         />
         {text && (
           <button

@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react'
+import { type ButtonState, StatefulButton } from '@/components/StatefulButton'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -17,6 +18,9 @@ export function SaveOutfitDialog({ open, itemIds, onClose }: SaveOutfitDialogPro
   const [name, setName] = useState('')
   const [inCloset, setInCloset] = useState(false)
   const saveOutfit = useSaveOutfit()
+  // Despues de guardar se ve la palomita un momento antes de cerrar
+  const [saved, setSaved] = useState(false)
+  const buttonState: ButtonState = saved ? 'success' : saveOutfit.isPending ? 'loading' : 'idle'
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -24,9 +28,13 @@ export function SaveOutfitDialog({ open, itemIds, onClose }: SaveOutfitDialogPro
       { name, itemIds, inCloset },
       {
         onSuccess: () => {
-          setName('')
-          setInCloset(false)
-          onClose()
+          setSaved(true)
+          window.setTimeout(() => {
+            setSaved(false)
+            setName('')
+            setInCloset(false)
+            onClose()
+          }, 700)
         },
       },
     )
@@ -69,9 +77,9 @@ export function SaveOutfitDialog({ open, itemIds, onClose }: SaveOutfitDialogPro
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saveOutfit.isPending}>
-              {saveOutfit.isPending ? 'Guardando' : 'Guardar'}
-            </Button>
+            <StatefulButton type="submit" state={buttonState}>
+              {buttonState === 'loading' ? 'Guardando' : buttonState === 'success' ? 'Guardado' : 'Guardar'}
+            </StatefulButton>
           </DialogFooter>
         </form>
       </DialogContent>

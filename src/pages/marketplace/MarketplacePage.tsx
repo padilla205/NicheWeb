@@ -2,6 +2,7 @@ import { Heart, Plus, Search } from 'lucide-react'
 import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
 import { ChoicePill } from '@/components/ChoicePill'
+import { CyclingPlaceholder } from '@/components/CyclingPlaceholder'
 import { MorphButton } from '@/components/MorphButton'
 import { PageTitle } from '@/components/PageTitle'
 import { ShowMore } from '@/components/ShowMore'
@@ -92,10 +93,11 @@ export function MarketplacePage() {
               // Buscar te regresa a todas las ventas
               setShowSaved(false)
             }}
-            placeholder="Buscar ventas"
             aria-label="Buscar ventas"
             className="h-10 rounded-full pl-9 md:h-8"
           />
+          {/* Ejemplos que van cambiando mientras el buscador esta vacio */}
+          <CyclingPlaceholder show={!query} texts={['Buscar ventas', 'Prueba: Nike', 'Prueba: jeans', 'Prueba: chamarra de piel']} />
         </div>
         <MarketplaceFilters value={filters} onChange={setFilters} sizes={sizes} brands={brands} />
       </div>

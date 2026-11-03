@@ -2,6 +2,7 @@ import { Eraser, RotateCw, Undo2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { ChoicePill } from '@/components/ChoicePill'
+import { StepsLoader } from '@/components/StepsLoader'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cropImage } from '@/lib/cropImage'
@@ -51,6 +52,8 @@ function EditorBody({ file, onClose, onSave }: { file: File; onClose: () => void
   const [cutout, setCutout] = useState<File | null>(null)
   // null: sin quitar fondo; numero: avance de la descarga del modelo; 'procesando': ya trabajando
   const [removing, setRemoving] = useState<number | 'procesando' | null>(null)
+  // Al terminar, la lista de pasos se queda un momento en "Listo"
+  const [justFinished, setJustFinished] = useState(false)
   const source = cutout ?? file
   const [backdrop, setBackdrop] = useState<Backdrop>('transparente')
   const backdropColor = cutout ? backdrops.find((option) => option.value === backdrop)?.color : undefined
@@ -89,6 +92,8 @@ function EditorBody({ file, onClose, onSave }: { file: File; onClose: () => void
     try {
       const result = await removeBackground(file, (percent) => setRemoving(percent < 100 ? percent : 'procesando'))
       setCutout(result)
+      setJustFinished(true)
+      window.setTimeout(() => setJustFinished(false), 900)
     } catch (error) {
       // Cancelado a proposito: no es un error
       if (!(error instanceof RemoveBackgroundCancelled)) {
@@ -172,6 +177,19 @@ function EditorBody({ file, onClose, onSave }: { file: File; onClose: () => void
               : 'Puede tardar unos segundos.'}
         </span>
       </div>
+
+      {/* Pasos mientras se quita el fondo: preparar, descargar el modelo (solo la primera vez), quitar y listo */}
+      {(removing !== null || justFinished) && (
+        <StepsLoader
+          steps={[
+            'Preparando la foto',
+            typeof removing === 'number' && removing > 0 ? `Descargando el modelo (${removing}%)` : 'Descargando el modelo',
+            'Quitando el fondo',
+            'Listo',
+          ]}
+          current={justFinished ? 3 : removing === 'procesando' ? 2 : typeof removing === 'number' && removing > 0 ? 1 : 0}
+        />
+      )}
 
       {cutout && (
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Fondo de la foto">

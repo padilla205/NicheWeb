@@ -2,15 +2,16 @@ import { Search } from 'lucide-react'
 import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { PageTitle } from '@/components/PageTitle'
 import { ShowMore } from '@/components/ShowMore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useKeepScroll } from '@/hooks/useKeepScroll'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useProfile } from '@/hooks/useProfile'
 import { countClosetFilters, emptyClosetFilters } from '@/lib/clothing'
 import { crossfade } from '@/lib/motion'
 import { mobileSheetClass } from '@/lib/styles'
+import { CyclingPlaceholder } from '@/components/CyclingPlaceholder'
 import { useItems } from '@/hooks/useItems'
 import { AddItemButton } from './AddItemButton'
 import { AddItemDialog } from './AddItemDialog'
@@ -22,6 +23,7 @@ import { ClosetVisibility } from './ClosetVisibility'
 import { ClosetEmptyDesktop } from './desktop/ClosetEmptyDesktop'
 import { ClosetStats } from './desktop/ClosetStats'
 import { ClosetHero } from './ClosetHero'
+import { UserAvatar } from '@/pages/feed/UserAvatar'
 
 export function ClosetPage() {
   const [filters, setFilters] = useState(emptyClosetFilters)
@@ -44,6 +46,7 @@ export function ClosetPage() {
   // Rediseno de escritorio (1024 px o mas): en pantallas menores ni siquiera se monta, asi el
   // celular queda igual que antes y no pide datos que no muestra
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const profile = useProfile()
 
   // El atajo "Agregar prenda" del menu lateral trae a esta pagina con la orden de abrir la ventana,
   // que crece desde el propio atajo. Despues se borra la orden para que no se repita al recargar
@@ -69,12 +72,17 @@ export function ClosetPage() {
       />
       {/* Tableta y escritorio: titulo con sus botones */}
       <div className="flex flex-wrap items-start justify-between gap-x-4 max-md:hidden">
-        <div>
-          <PageTitle title="Closet" />
-          {/* Solo en escritorio */}
-          <p className="-mt-4 mb-6 hidden text-sm text-muted-foreground lg:block">
-            Organiza tus prendas, crea outfits y preparate para vender.
-          </p>
+        {/* Tu foto y tu nombre, como en la cabecera del celular */}
+        <div className="mb-6 flex items-center gap-4">
+          <UserAvatar user={profile} className="size-14 text-lg" />
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-semibold tracking-tight">Hola, {profile.name.split(' ')[0]}</h1>
+            <p className="text-sm text-muted-foreground">
+              Tu closet
+              {/* Solo en escritorio */}
+              <span className="hidden lg:inline"> · Organiza tus prendas, crea outfits y preparate para vender.</span>
+            </p>
+          </div>
         </div>
         <div className="mb-6 flex flex-wrap gap-2">
           <ClosetVisibility />
@@ -96,10 +104,11 @@ export function ClosetPage() {
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar en tu closet"
               aria-label="Buscar en tu closet"
               className="h-10 rounded-full pl-9 md:h-8"
             />
+            {/* Ejemplos que van cambiando mientras el buscador esta vacio */}
+            <CyclingPlaceholder show={!query} texts={['Buscar en tu closet', 'Prueba: chamarra', 'Prueba: tenis blancos', 'Prueba: jeans']} />
           </div>
         )}
         <div ref={keep.ref} style={keep.style}>

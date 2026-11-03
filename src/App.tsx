@@ -18,6 +18,7 @@ import { PrivacyPage } from '@/pages/legal/PrivacyPage'
 import { TermsPage } from '@/pages/legal/TermsPage'
 import { ReportsPage } from '@/pages/reports/ReportsPage'
 import { MoreOptionsPage } from '@/pages/settings/MoreOptionsPage'
+import { WelcomePage } from '@/pages/welcome/WelcomePage'
 import { SearchPage } from '@/pages/search/SearchPage'
 import { UserProfilePage } from '@/pages/profile/UserProfilePage'
 
@@ -27,6 +28,8 @@ function App() {
       <Routes>
         <Route path="login" element={<LoginPage />} />
         <Route path="nueva-contrasena" element={<NewPasswordPage />} />
+        {/* Prueba: pagina de bienvenida para quien aun no tiene cuenta */}
+        <Route path="bienvenida" element={<WelcomePage />} />
         {/* La pagina de una venta se puede ver sin cuenta, para que funcionen los links compartidos */}
         <Route element={<AppLayout />}>
           <Route path="marketplace/:id" element={<ListingDetailPage />} />
