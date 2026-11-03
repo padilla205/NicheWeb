@@ -1,5 +1,6 @@
-import { Plus, Sparkles, Store } from 'lucide-react'
+import { LogOut, Plus, Sparkles, Store } from 'lucide-react'
 import { Link, NavLink } from 'react-router'
+import { useSignOut } from '@/hooks/useAuth'
 import { sections } from '@/lib/sections'
 import { cn } from '@/lib/utils'
 
@@ -7,6 +8,7 @@ const shortcutClass =
   'flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground'
 
 export function SideNav() {
+  const signOut = useSignOut()
   return (
     <nav
       aria-label="Secciones"
@@ -53,6 +55,18 @@ export function SideNav() {
               <Store className="size-4" />
               Explorar marketplace
             </Link>
+          </li>
+          <li>
+            {/* Al cerrar sesion, RequireAuth te manda a /login */}
+            <button
+              type="button"
+              disabled={signOut.isPending}
+              onClick={() => signOut.mutate()}
+              className={cn(shortcutClass, 'w-full text-left disabled:opacity-50')}
+            >
+              <LogOut className="size-4" />
+              {signOut.isPending ? 'Cerrando sesion' : 'Cerrar sesion'}
+            </button>
           </li>
         </ul>
       </div>
