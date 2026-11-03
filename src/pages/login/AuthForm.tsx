@@ -26,9 +26,9 @@ function validate(mode: Mode, data: FormData): Errors {
   }
   if (!/^\S+@\S+\.\S+$/.test(value('email'))) errors.email = 'Correo no valido'
   const password = String(data.get('password') ?? '')
-  if (mode === 'login' && !password) errors.password = 'Escribe tu contrasena'
+  if (mode === 'login' && !password) errors.password = 'Escribe tu contraseña'
   if (mode === 'register' && password.length < 8) errors.password = 'Minimo 8 caracteres'
-  if (mode === 'register' && data.get('confirm') !== password) errors.confirm = 'Las contrasenas no coinciden'
+  if (mode === 'register' && data.get('confirm') !== password) errors.confirm = 'Las contraseñas no coinciden'
   return errors
 }
 
@@ -37,7 +37,7 @@ export function AuthForm() {
   const [mode, setMode] = useState<Mode>('login')
   const [errors, setErrors] = useState<Errors>({})
   const [notice, setNotice] = useState('')
-  // Error que devuelve Supabase (contrasena incorrecta, correo ya usado...)
+  // Error que devuelve Supabase (contraseña incorrecta, correo ya usado...)
   const [formError, setFormError] = useState('')
   const signIn = useSignIn()
   const signUp = useSignUp()
@@ -51,14 +51,14 @@ export function AuthForm() {
     setFormError('')
     setNotice('')
     if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setErrors({ email: 'Escribe tu correo para recuperar tu contrasena' })
+      setErrors({ email: 'Escribe tu correo para recuperar tu contraseña' })
       return
     }
     setErrors({})
     try {
       await sendReset.mutateAsync(email)
       // Mismo aviso exista o no la cuenta, para no revelar que correos estan registrados
-      setNotice('Si hay una cuenta con ese correo, te enviamos un link para cambiar tu contrasena.')
+      setNotice('Si hay una cuenta con ese correo, te enviamos un link para cambiar tu contraseña.')
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Algo salio mal, intenta de nuevo')
     }
@@ -161,7 +161,7 @@ export function AuthForm() {
 
         <Field
           id="password"
-          label="Contrasena"
+          label="Contraseña"
           error={errors.password}
           action={
             mode === 'login' && (
@@ -171,7 +171,7 @@ export function AuthForm() {
                 disabled={sendReset.isPending}
                 className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >
-                Olvidaste tu contrasena?
+                Olvidaste tu contraseña?
               </button>
             )
           }
@@ -187,7 +187,7 @@ export function AuthForm() {
         <AnimatePresence initial={false}>
           {mode === 'register' && (
             <Collapsible key="confirm">
-              <Field id="confirm" label="Confirmar contrasena" error={errors.confirm}>
+              <Field id="confirm" label="Confirmar contraseña" error={errors.confirm}>
                 <PasswordInput id="confirm" name="confirm" autoComplete="new-password" aria-invalid={!!errors.confirm} />
               </Field>
             </Collapsible>

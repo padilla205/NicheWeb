@@ -31,7 +31,7 @@ Disponible en web y celular (PWA).
 - Siempre TypeScript, sin `any` salvo justificación en un comentario.
 - Componentes pequeños y con una sola responsabilidad.
 - Sin emojis en la interfaz: solo iconos de lucide-react. Unica excepcion: las 4 reacciones del chat (😂 👍 👎 😢), que usan los emojis del sistema.
-- Textos de la interfaz sin acentos ni caracteres especiales (nada de á, é, í, ó, ú, ñ, ¿, ¡ ni …). Ejemplo: "Closet", "Aqui veras tus prendas".
+- Textos de la interfaz sin acentos (nada de á, é, í, ó, ú ni …), pero con ñ donde la palabra la lleva (contraseña, Otoño, España). En la pagina de bienvenida las preguntas llevan ¿ y ?. Ejemplo: "Closet", "Aqui veras tus prendas", "Tu contraseña".
 - Las consultas a Supabase van en hooks dentro de src/hooks, nunca directo en los componentes.
 - Variables de entorno en .env.local (nunca se suben a git). Mantener un .env.example sin valores reales.
 - Nunca poner claves secretas en el frontend; solo la anon key de Supabase.

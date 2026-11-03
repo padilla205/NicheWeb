@@ -67,7 +67,7 @@ export const countries = [
   },
   {
     value: 'es',
-    label: 'Espana',
+    label: 'España',
     cities: [
       { value: 'madrid', label: 'Madrid' },
       { value: 'barcelona', label: 'Barcelona' },

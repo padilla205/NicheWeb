@@ -13,7 +13,7 @@ export function PrivacyPage() {
       <LegalSection title="Que datos guardamos">
         <LegalList>
           <li>
-            <strong>Tu cuenta:</strong> correo, usuario y contrasena (guardada cifrada; nadie puede leerla).
+            <strong>Tu cuenta:</strong> correo, usuario y contraseña (guardada cifrada; nadie puede leerla).
           </li>
           <li>
             <strong>Tu perfil:</strong> nombre, foto de perfil, portada, descripcion y redes que tu agregues.

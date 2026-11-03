@@ -11,7 +11,7 @@ export const clothingZones = [
       { value: 'viseras', label: 'Viseras' },
       { value: 'bandanas', label: 'Bandanas' },
       { value: 'diademas', label: 'Diademas' },
-      { value: 'pasamontanas', label: 'Pasamontanas' },
+      { value: 'pasamontanas', label: 'Pasamontañas' },
     ],
   },
   {
@@ -55,7 +55,7 @@ export const clothingZones = [
       { value: 'conjuntos-deportivos', label: 'Conjuntos deportivos' },
       { value: 'corsets', label: 'Corsets' },
       { value: 'pijamas', label: 'Pijamas' },
-      { value: 'trajes-bano', label: 'Trajes de bano' },
+      { value: 'trajes-bano', label: 'Trajes de baño' },
       { value: 'jerseys-futbol', label: 'Jersey de futbol' },
     ],
   },
@@ -108,7 +108,7 @@ export const clothingZones = [
     types: [
       { value: 'cinturones', label: 'Cinturones' },
       { value: 'bufandas', label: 'Bufandas' },
-      { value: 'panuelos', label: 'Panuelos' },
+      { value: 'panuelos', label: 'Pañuelos' },
       { value: 'guantes', label: 'Guantes' },
       { value: 'corbatas', label: 'Corbatas' },
       { value: 'bolsas', label: 'Bolsas' },
@@ -121,7 +121,7 @@ export const clothingZones = [
       { value: 'aretes', label: 'Aretes' },
       { value: 'anillos', label: 'Anillos' },
       { value: 'carteras', label: 'Carteras' },
-      { value: 'rinoneras', label: 'Rinoneras' },
+      { value: 'rinoneras', label: 'Riñoneras' },
       { value: 'tirantes', label: 'Tirantes' },
     ],
   },
@@ -134,7 +134,7 @@ export type ClothingType = (typeof clothingZones)[number]['types'][number]['valu
 export const seasons = [
   { value: 'primavera', label: 'Primavera' },
   { value: 'verano', label: 'Verano' },
-  { value: 'otono', label: 'Otono' },
+  { value: 'otono', label: 'Otoño' },
   { value: 'invierno', label: 'Invierno' },
 ] as const
 

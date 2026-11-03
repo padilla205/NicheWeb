@@ -19,6 +19,9 @@ import { TermsPage } from '@/pages/legal/TermsPage'
 import { ReportsPage } from '@/pages/reports/ReportsPage'
 import { MoreOptionsPage } from '@/pages/settings/MoreOptionsPage'
 import { WelcomePage } from '@/pages/welcome/WelcomePage'
+import { WelcomeLegalLayout } from '@/pages/welcome/WelcomeLegalLayout'
+import { useSession } from '@/hooks/useAuth'
+import { SplashScreen } from '@/components/SplashScreen'
 import { SearchPage } from '@/pages/search/SearchPage'
 import { UserProfilePage } from '@/pages/profile/UserProfilePage'
 
@@ -28,8 +31,14 @@ function App() {
       <Routes>
         <Route path="login" element={<LoginPage />} />
         <Route path="nueva-contrasena" element={<NewPasswordPage />} />
-        {/* Prueba: pagina de bienvenida para quien aun no tiene cuenta */}
+        {/* La raiz: con sesion va al closet; sin sesion, la pagina de bienvenida */}
+        <Route index element={<Home />} />
         <Route path="bienvenida" element={<WelcomePage />} />
+        {/* Textos legales desde la bienvenida: sin la barra de la app */}
+        <Route path="bienvenida" element={<WelcomeLegalLayout />}>
+          <Route path="privacidad" element={<PrivacyPage />} />
+          <Route path="terminos" element={<TermsPage />} />
+        </Route>
         {/* La pagina de una venta se puede ver sin cuenta, para que funcionen los links compartidos */}
         <Route element={<AppLayout />}>
           <Route path="marketplace/:id" element={<ListingDetailPage />} />
@@ -43,7 +52,6 @@ function App() {
         </Route>
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
-            <Route index element={<Navigate to="/closet" replace />} />
             <Route path="closet" element={<ClosetPage />} />
             <Route path="outfits" element={<OutfitsPage />} />
             <Route path="feed" element={<FeedPage />} />
@@ -61,6 +69,15 @@ function App() {
       </Routes>
     </BrowserRouter>
   )
+}
+
+// Mientras se lee la sesion guardada se ve la pantalla de carga, para no mostrar la bienvenida
+// un instante a quien ya tiene cuenta
+function Home() {
+  const session = useSession()
+  if (session === undefined) return <SplashScreen />
+  if (session) return <Navigate to="/closet" replace />
+  return <WelcomePage />
 }
 
 // Falla al dibujarse (solo existe en desarrollo)

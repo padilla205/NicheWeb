@@ -24,14 +24,14 @@ export function useSession() {
 
 // Mensajes de Supabase traducidos para mostrarlos en el formulario
 const messages: Record<string, string> = {
-  invalid_credentials: 'Correo o contrasena incorrectos',
+  invalid_credentials: 'Correo o contraseña incorrectos',
   user_already_exists: 'Ya hay una cuenta con ese correo',
   email_exists: 'Ya hay una cuenta con ese correo',
-  weak_password: 'La contrasena es muy debil',
+  weak_password: 'La contraseña es muy debil',
   email_address_invalid: 'Correo no valido',
   over_request_rate_limit: 'Demasiados intentos, espera un momento',
   over_email_send_rate_limit: 'Demasiados intentos, espera un momento',
-  same_password: 'La nueva contrasena debe ser distinta a la anterior',
+  same_password: 'La nueva contraseña debe ser distinta a la anterior',
 }
 
 function friendly(error: AuthError) {
@@ -75,7 +75,7 @@ export function useSignUp() {
   })
 }
 
-// Manda el correo con el link para cambiar la contrasena; el link abre /nueva-contrasena
+// Manda el correo con el link para cambiar la contraseña; el link abre /nueva-contrasena
 export function useSendPasswordReset() {
   return useMutation({
     mutationFn: async (email: string) => {
@@ -87,7 +87,7 @@ export function useSendPasswordReset() {
   })
 }
 
-// Cambia la contrasena de quien tiene la sesion (la que abre el link del correo)
+// Cambia la contraseña de quien tiene la sesion (la que abre el link del correo)
 export function useUpdatePassword() {
   return useMutation({
     mutationFn: async (password: string) => {

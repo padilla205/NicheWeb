@@ -5,8 +5,8 @@ import { Label } from '@/components/ui/label'
 import { useSession, useUpdatePassword } from '@/hooks/useAuth'
 import { PasswordInput } from './PasswordInput'
 
-// La abre el link del correo "Olvidaste tu contrasena?". Supabase lee el link y deja la sesion
-// iniciada; aqui solo se escribe la contrasena nueva
+// La abre el link del correo "Olvidaste tu contraseña?". Supabase lee el link y deja la sesion
+// iniciada; aqui solo se escribe la contraseña nueva
 export function NewPasswordPage() {
   const session = useSession()
   const navigate = useNavigate()
@@ -18,7 +18,7 @@ export function NewPasswordPage() {
     const data = new FormData(event.currentTarget)
     const password = String(data.get('password') ?? '')
     if (password.length < 8) return setError('Minimo 8 caracteres')
-    if (data.get('confirm') !== password) return setError('Las contrasenas no coinciden')
+    if (data.get('confirm') !== password) return setError('Las contraseñas no coinciden')
     setError('')
     try {
       await updatePassword.mutateAsync(password)
@@ -32,11 +32,11 @@ export function NewPasswordPage() {
     <main className="flex min-h-dvh items-center justify-center bg-background p-4 text-foreground">
       <div className="flex w-full max-w-sm flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Nueva contrasena</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Nueva contraseña</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {session === null
               ? 'Este link ya vencio o ya se uso. Pide otro desde la pantalla para entrar.'
-              : 'Escribe la contrasena que usaras desde ahora.'}
+              : 'Escribe la contraseña que usaras desde ahora.'}
           </p>
         </div>
 
@@ -52,11 +52,11 @@ export function NewPasswordPage() {
         ) : (
           <form noValidate onSubmit={submit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Contrasena nueva</Label>
+              <Label htmlFor="password">Contraseña nueva</Label>
               <PasswordInput id="password" name="password" autoComplete="new-password" autoFocus />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="confirm">Confirmar contrasena</Label>
+              <Label htmlFor="confirm">Confirmar contraseña</Label>
               <PasswordInput id="confirm" name="confirm" autoComplete="new-password" />
             </div>
             {error && (

@@ -15,7 +15,7 @@ export function TermsPage() {
       <LegalSection title="Quien puede usar Niche">
         <p>
           Debes ser mayor de edad o contar con permiso de tu madre, padre o tutor. Eres responsable de lo que pase
-          con tu cuenta: usa una contrasena segura y no la compartas.
+          con tu cuenta: usa una contraseña segura y no la compartas.
         </p>
       </LegalSection>
 
@@ -35,7 +35,7 @@ export function TermsPage() {
           <li>Publicar contenido sexual, violento o que muestre a personas sin su permiso.</li>
           <li>Vender articulos robados, ilegales, peligrosos o que no sean ropa, calzado o accesorios.</li>
           <li>Vender copias o imitaciones haciendolas pasar por originales.</li>
-          <li>Enganar sobre el estado, la talla o el precio de una prenda.</li>
+          <li>Engañar sobre el estado, la talla o el precio de una prenda.</li>
           <li>Hacer spam, crear cuentas falsas o hacerte pasar por alguien mas.</li>
         </LegalList>
       </LegalSection>

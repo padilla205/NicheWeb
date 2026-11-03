@@ -393,6 +393,24 @@
   }
 }
 
+/* Tiras de fotos de la bienvenida en celular (PhotoMarquee): se deslizan solas; la lista va
+   repetida, asi que mover la mitad y volver al inicio no se nota */
+.marquee {
+  animation: marquee 40s linear infinite;
+}
+.marquee-reverse {
+  animation-direction: reverse;
+}
+.marquee-paused .marquee {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to { translate: -50% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee { animation: none; }
+}
+
 /* Cuadritos grises detras de una foto sin fondo, para que se note lo transparente */
 .transparency-grid {
   background: repeating-conic-gradient(#d4d4d4 0 25%, #f5f5f5 0 50%) 0 0 / 16px 16px;
