@@ -1,5 +1,5 @@
 import { Camera, ImagePlus, WandSparkles, X } from 'lucide-react'
-import { type DragEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { type DragEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { PhotoEditor } from '@/components/PhotoEditor'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -28,8 +28,14 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
   const [editing, setEditing] = useState<number | null>(null)
 
   // Crea una direccion temporal para ver cada foto y las libera al cambiarlas (evita gastar memoria)
-  const previewUrls = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files])
-  useEffect(() => () => previewUrls.forEach((url) => URL.revokeObjectURL(url)), [previewUrls])
+  // Se crean y se liberan en el mismo efecto: asi sobreviven al doble montaje de React en desarrollo,
+  // que pasa cuando el selector ya abre con fotos (un borrador recuperado)
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  useEffect(() => {
+    const urls = files.map((file) => URL.createObjectURL(file))
+    setPreviewUrls(urls)
+    return () => urls.forEach((url) => URL.revokeObjectURL(url))
+  }, [files])
 
   // Agrega solo imagenes y solo hasta completar el maximo
   function add(list: FileList | null) {
@@ -112,7 +118,7 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
               </span>
             )}
             {/* Editar (quitar fondo, recortar, enderezar) es opcional; los GIF no se editan para que sigan animados */}
-            {files[index].type !== 'image/gif' && (
+            {files[index]?.type !== 'image/gif' && (
               <Button
                 type="button"
                 variant="secondary"

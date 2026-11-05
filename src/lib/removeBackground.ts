@@ -12,7 +12,8 @@ import type { WorkerMessage, WorkerRequest } from './removeBackground.worker'
 // Avance de la descarga del modelo (0 a 100) para mostrarlo en pantalla
 export type ProgressListener = (percent: number) => void
 
-// El trabajador se crea al primer uso y se queda vivo con el modelo cargado para las siguientes fotos
+// El trabajador se crea para cada foto y se detiene al terminar: el modelo ocupa cientos de MB y esa
+// memoria solo se libera asi. Si se quedara vivo, iOS acaba cerrando la pagina por falta de memoria
 let worker: Worker | null = null
 // Para poder cancelar: termina el trabajo en curso
 let cancelCurrent: (() => void) | null = null
@@ -22,8 +23,8 @@ function getWorker() {
   return worker
 }
 
-// Detiene el trabajador por completo (cancelar o si se trabo). La proxima foto crea uno nuevo; el
-// modelo ya descargado sigue guardado en el navegador
+// Detiene el trabajador por completo. La proxima foto crea uno nuevo; el modelo ya descargado sigue
+// guardado en el navegador, asi que no se vuelve a bajar
 function stopWorker() {
   worker?.terminate()
   worker = null
@@ -44,6 +45,7 @@ export function removeBackground(file: File, onProgress?: ProgressListener) {
       const message = event.data
       if (message.type === 'progress') return onProgress?.(message.percent)
       finish()
+      stopWorker()
       if (message.type === 'done') {
         resolve(new File([message.blob], file.name.replace(/\.\w+$/, '') + '-sin-fondo.png', { type: 'image/png' }))
       } else {

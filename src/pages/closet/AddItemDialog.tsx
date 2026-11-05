@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ChoicePill } from '@/components/ChoicePill'
 import { MorphDialog } from '@/components/MorphDialog'
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAddItem, useUpdateItem } from '@/hooks/useItems'
 import { useListingBrands } from '@/hooks/useListings'
+import { useProfile } from '@/hooks/useProfile'
+import { clearItemDraft, type ItemDraft, loadItemDraft, saveItemDraft } from '@/lib/itemDraft'
 import { type ClosetItem, type ClothingType, itemDecades, type Season } from '@/lib/clothing'
 import { fileFromPhoto } from '@/lib/photos'
 import { ClothingTypePicker } from './ClothingTypePicker'
@@ -31,20 +33,43 @@ export function AddItemDialog({ origin, onClose, item }: AddItemDialogProps) {
       title={item ? 'Editar prenda' : 'Agregar prenda'}
       description={item ? 'Cambia lo que necesites de tu prenda.' : 'Toma o sube hasta 5 fotos y llena los datos.'}
     >
-      <AddItemForm onDone={onClose} item={item} />
+      {item ? <AddItemForm onDone={onClose} item={item} /> : <NewItemForm onDone={onClose} />}
     </MorphDialog>
   )
 }
 
-function AddItemForm({ onDone, item }: { onDone: () => void; item?: ClosetItem }) {
-  const [photos, setPhotos] = useState<File[]>([])
-  const [name, setName] = useState(item?.name ?? '')
-  const [type, setType] = useState<ClothingType | ''>(item?.type ?? '')
-  const [selectedSeasons, setSelectedSeasons] = useState<Season[]>(item?.seasons ?? [])
-  const [colors, setColors] = useState<string[]>(item?.colors ?? [])
-  const [team, setTeam] = useState(item?.team ?? '')
-  const [brand, setBrand] = useState(item?.brand ?? '')
-  const [decade, setDecade] = useState<number | undefined>(item?.decade)
+// Prenda nueva: primero busca si quedo un borrador, para que la camara no se abra encima de el
+function NewItemForm({ onDone }: { onDone: () => void }) {
+  const { id: userId } = useProfile()
+  const [draft, setDraft] = useState<ItemDraft | null | undefined>(undefined)
+  useEffect(() => {
+    loadItemDraft(userId).then(setDraft)
+  }, [userId])
+  if (draft === undefined) return <div aria-hidden className="h-56 animate-pulse rounded-lg bg-muted" />
+  return <AddItemForm onDone={onDone} draft={draft ?? undefined} draftOwner={userId} />
+}
+
+type AddItemFormProps = {
+  onDone: () => void
+  item?: ClosetItem
+  // Lo recuperado de la vez pasada
+  draft?: ItemDraft
+  // Con esto, lo que escribas se va guardando como borrador (solo en prendas nuevas)
+  draftOwner?: string
+}
+
+function AddItemForm({ onDone, item, draft, draftOwner }: AddItemFormProps) {
+  const [photos, setPhotos] = useState<File[]>(draft?.photos ?? [])
+  const [name, setName] = useState(item?.name ?? draft?.name ?? '')
+  const [type, setType] = useState<ClothingType | ''>(item?.type ?? draft?.type ?? '')
+  const [selectedSeasons, setSelectedSeasons] = useState<Season[]>(item?.seasons ?? draft?.seasons ?? [])
+  const [colors, setColors] = useState<string[]>(item?.colors ?? draft?.colors ?? [])
+  const [team, setTeam] = useState(item?.team ?? draft?.team ?? '')
+  const [brand, setBrand] = useState(item?.brand ?? draft?.brand ?? '')
+  const [decade, setDecade] = useState<number | undefined>(item?.decade ?? draft?.decade)
+  const [recovered, setRecovered] = useState(!!draft)
+  // Al guardar o cancelar ya no se debe escribir el borrador
+  const finished = useRef(false)
   const brands = useListingBrands()
   const addItem = useAddItem()
   const updateItem = useUpdateItem()
@@ -57,6 +82,38 @@ function AddItemForm({ onDone, item }: { onDone: () => void; item?: ClosetItem }
   useEffect(() => {
     if (photoKey) Promise.all(photoKey.split('|').map(fileFromPhoto)).then(setPhotos)
   }, [photoKey])
+
+  // Guarda el borrador poco despues de cada cambio. Asi ya esta a salvo cuando empieza algo pesado como
+  // quitar el fondo. Si el formulario queda vacio, no hay nada que recuperar
+  useEffect(() => {
+    if (!draftOwner || finished.current) return
+    const empty = photos.length === 0 && !name && !type && !brand && !decade && !team && selectedSeasons.length === 0 && colors.length === 0
+    const timer = window.setTimeout(() => {
+      if (finished.current) return
+      if (empty) clearItemDraft(draftOwner)
+      else saveItemDraft(draftOwner, { photos, name, type, seasons: selectedSeasons, colors, team, brand, decade })
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [draftOwner, photos, name, type, selectedSeasons, colors, team, brand, decade])
+
+  function resetForm() {
+    setPhotos([])
+    setName('')
+    setType('')
+    setSelectedSeasons([])
+    setColors([])
+    setTeam('')
+    setBrand('')
+    setDecade(undefined)
+    setRecovered(false)
+  }
+
+  // Cancelar a proposito tira el borrador; cerrar con la X o tocando afuera lo conserva
+  function discardAndClose() {
+    finished.current = true
+    if (draftOwner) clearItemDraft(draftOwner)
+    onDone()
+  }
 
   const canSave = photos.length > 0 && type !== ''
   const isJersey = type === 'jerseys-futbol'
@@ -85,6 +142,8 @@ function AddItemForm({ onDone, item }: { onDone: () => void; item?: ClosetItem }
     try {
       if (item) await updateItem.mutateAsync({ item, changes })
       else await addItem.mutateAsync(changes)
+      finished.current = true
+      if (draftOwner) await clearItemDraft(draftOwner)
       onDone()
     } catch {
       setSaveError('No se pudo guardar la prenda. Revisa tu conexion e intenta de nuevo.')
@@ -93,6 +152,14 @@ function AddItemForm({ onDone, item }: { onDone: () => void; item?: ClosetItem }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {recovered && (
+        <div role="status" className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2 text-sm">
+          <span className="text-pretty">Recuperamos tu prenda sin guardar.</span>
+          <Button type="button" variant="ghost" size="sm" onClick={resetForm}>
+            Descartar
+          </Button>
+        </div>
+      )}
       {/* En celular, al agregar una prenda nueva, la camara ya esta abierta */}
       <PhotoPicker files={photos} onChange={setPhotos} camera autoOpenCamera={!item} />
 
@@ -177,7 +244,7 @@ function AddItemForm({ onDone, item }: { onDone: () => void; item?: ClosetItem }
       )}
 
       <DialogFooter>
-        <Button type="button" variant="outline" onClick={onDone}>
+        <Button type="button" variant="outline" onClick={discardAndClose}>
           Cancelar
         </Button>
         <Button type="submit" disabled={!canSave || saving}>

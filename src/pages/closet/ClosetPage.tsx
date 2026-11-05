@@ -9,8 +9,10 @@ import { useKeepScroll } from '@/hooks/useKeepScroll'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useProfile } from '@/hooks/useProfile'
 import { countClosetFilters, emptyClosetFilters } from '@/lib/clothing'
+import { loadItemDraft } from '@/lib/itemDraft'
 import { crossfade } from '@/lib/motion'
 import { mobileSheetClass } from '@/lib/styles'
+import { cn } from '@/lib/utils'
 import { CyclingPlaceholder } from '@/components/CyclingPlaceholder'
 import { useItems } from '@/hooks/useItems'
 import { AddItemButton } from './AddItemButton'
@@ -47,6 +49,15 @@ export function ClosetPage() {
   // celular queda igual que antes y no pide datos que no muestra
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const profile = useProfile()
+  // Busca el borrador al entrar y al cerrar la ventana (un momento despues, cuando ya se termino de guardar)
+  const [hasDraft, setHasDraft] = useState(false)
+  useEffect(() => {
+    if (addOrigin) return
+    const timer = window.setTimeout(() => {
+      loadItemDraft(profile.id).then((draft) => setHasDraft(draft !== null))
+    }, 500)
+    return () => window.clearTimeout(timer)
+  }, [addOrigin, profile.id])
 
   // El atajo "Agregar prenda" del menu lateral trae a esta pagina con la orden de abrir la ventana,
   // que crece desde el propio atajo. Despues se borra la orden para que no se repita al recargar
@@ -96,6 +107,16 @@ export function ClosetPage() {
       {isDesktop && <ClosetStats />}
       {/* Hoja de las prendas: en celular sube sobre la cabecera negra con las esquinas redondeadas */}
       <div className={mobileSheetClass}>
+        {/* Si la pagina se reinicio o cerraste la ventana sin guardar, aqui se retoma */}
+        {hasDraft && (
+          // Con la ventana abierta sigue en su lugar, invisible: la ventana regresa a este boton al cerrar
+          <div role="status" className={cn('mb-4 flex items-center justify-between gap-3 rounded-2xl border bg-card px-4 py-2.5 text-sm', addOrigin && 'invisible')}>
+            <span className="text-pretty">Tienes una prenda sin guardar.</span>
+            <Button size="sm" className="shrink-0 rounded-full" onClick={(event) => setAddOrigin({ from: 'shortcut', button: event.currentTarget })}>
+              Continuar
+            </Button>
+          </div>
+        )}
         {/* Con el closet vacio no hay nada que buscar */}
         {(isPending || items.length > 0 || filtering) && (
           <div className="relative mb-4">
