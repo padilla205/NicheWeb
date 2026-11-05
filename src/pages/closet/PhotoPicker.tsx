@@ -3,7 +3,7 @@ import { type DragEvent, type ReactNode, useEffect, useMemo, useRef, useState } 
 import { PhotoEditor } from '@/components/PhotoEditor'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { CameraCapture } from './CameraCapture'
+import { CameraCapture, garmentSteps } from './CameraCapture'
 
 const MAX_PHOTOS = 5
 
@@ -64,26 +64,23 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
     />
   )
 
-  // Despues de la foto se cierra el visor para que se vea el formulario de abajo
-  if (cameraOpen) {
-    return (
-      <>
-        <CameraCapture
-          onCapture={(file) => {
-            onChange([...files, file].slice(0, MAX_PHOTOS))
-            setCameraOpen(false)
-          }}
-          onPickFromGallery={() => inputRef.current?.click()}
-          onClose={() => setCameraOpen(false)}
-        />
-        {fileInput}
-      </>
-    )
-  }
+  // Sin fotos pide frente, atras y etiqueta; con fotos, solo una mas. Al terminar se ve el formulario
+  const cameraView = cameraOpen && (
+    <CameraCapture
+      steps={files.length === 0 ? garmentSteps : [{ label: 'Otra foto', hint: 'Toma otra foto de la prenda' }]}
+      onDone={(taken) => {
+        onChange([...files, ...taken].slice(0, MAX_PHOTOS))
+        setCameraOpen(false)
+      }}
+      onPickFromGallery={() => inputRef.current?.click()}
+      onClose={() => setCameraOpen(false)}
+    />
+  )
 
   if (files.length === 0) {
     return (
       <>
+        {cameraView}
         {camera && (
           <Button type="button" className="w-full" onClick={() => setCameraOpen(true)}>
             <Camera />
@@ -104,6 +101,7 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
 
   return (
     <div className="flex flex-col gap-2">
+      {cameraView}
       <div className="grid grid-cols-3 gap-2">
         {previewUrls.map((url, index) => (
           <div key={url} className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
