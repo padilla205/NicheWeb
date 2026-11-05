@@ -1,8 +1,9 @@
-import { ImagePlus, WandSparkles, X } from 'lucide-react'
+import { Camera, ImagePlus, WandSparkles, X } from 'lucide-react'
 import { type DragEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { PhotoEditor } from '@/components/PhotoEditor'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { CameraCapture } from './CameraCapture'
 
 const MAX_PHOTOS = 5
 
@@ -11,9 +12,16 @@ type PhotoPickerProps = {
   onChange: (files: File[]) => void
   // Texto del area vacia
   label?: string
+  // Agrega la opcion de tomar la foto con la camara
+  camera?: boolean
+  // En celular abre la camara de una vez si aun no hay fotos
+  autoOpenCamera?: boolean
 }
 
-export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda' }: PhotoPickerProps) {
+export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda', camera = false, autoOpenCamera = false }: PhotoPickerProps) {
+  const [cameraOpen, setCameraOpen] = useState(
+    () => camera && autoOpenCamera && files.length === 0 && matchMedia('(pointer: coarse)').matches,
+  )
   const inputRef = useRef<HTMLInputElement>(null)
   const isFull = files.length >= MAX_PHOTOS
   // Foto que se esta recortando o enderezando; null si el editor esta cerrado
@@ -26,7 +34,9 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
   // Agrega solo imagenes y solo hasta completar el maximo
   function add(list: FileList | null) {
     const images = Array.from(list ?? []).filter((file) => file.type.startsWith('image/'))
-    if (images.length > 0) onChange([...files, ...images].slice(0, MAX_PHOTOS))
+    if (images.length === 0) return
+    onChange([...files, ...images].slice(0, MAX_PHOTOS))
+    setCameraOpen(false)
   }
 
   function remove(index: number) {
@@ -54,9 +64,32 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
     />
   )
 
+  // Despues de la foto se cierra el visor para que se vea el formulario de abajo
+  if (cameraOpen) {
+    return (
+      <>
+        <CameraCapture
+          onCapture={(file) => {
+            onChange([...files, file].slice(0, MAX_PHOTOS))
+            setCameraOpen(false)
+          }}
+          onPickFromGallery={() => inputRef.current?.click()}
+          onClose={() => setCameraOpen(false)}
+        />
+        {fileInput}
+      </>
+    )
+  }
+
   if (files.length === 0) {
     return (
       <>
+        {camera && (
+          <Button type="button" className="w-full" onClick={() => setCameraOpen(true)}>
+            <Camera />
+            Tomar foto
+          </Button>
+        )}
         <AddPhotoArea onPick={() => inputRef.current?.click()} onDropFiles={add} className="h-56">
           <ImagePlus className="size-8" />
           <span className="text-sm font-medium text-foreground">{label}</span>
@@ -115,6 +148,16 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
             <ImagePlus className="size-6" />
             <span className="text-xs">Agregar</span>
           </AddPhotoArea>
+        )}
+        {!isFull && camera && (
+          <button
+            type="button"
+            onClick={() => setCameraOpen(true)}
+            className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed text-muted-foreground transition-colors duration-150 outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <Camera className="size-6" />
+            <span className="text-xs">Camara</span>
+          </button>
         )}
       </div>
       <p className="text-xs text-muted-foreground">

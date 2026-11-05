@@ -118,6 +118,18 @@ export function ItemDetail({ item, onClose, readOnly }: ItemDetailProps) {
               </p>
             </div>
 
+            {item.brand && (
+              <DetailSection title="Marca">
+                <p className="text-sm">{item.brand}</p>
+              </DetailSection>
+            )}
+
+            {item.decade && (
+              <DetailSection title="Decada">
+                <p className="text-sm tabular-nums">{item.decade}</p>
+              </DetailSection>
+            )}
+
             {item.team && (
               <DetailSection title="Equipo">
                 <p className="text-sm">{getTeamLabel(item.team)}</p>

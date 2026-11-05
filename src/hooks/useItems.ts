@@ -24,6 +24,8 @@ export type NewItem = {
   seasons: Season[]
   colors: string[]
   team?: string
+  brand?: string
+  decade?: number
 }
 
 type ItemsPage = { items: ClosetItem[]; total: number }
@@ -41,6 +43,8 @@ export function itemFromRow(row: Tables<'items'>): ClosetItem {
     seasons: row.seasons as Season[],
     colors: row.colors,
     team: row.team ?? undefined,
+    brand: row.brand ?? undefined,
+    decade: row.decade ?? undefined,
     private: row.is_private,
     createdAt: new Date(row.created_at),
   }
@@ -48,7 +52,7 @@ export function itemFromRow(row: Tables<'items'>): ClosetItem {
 
 const allTypes = clothingZones.flatMap<{ value: ClothingType; label: string }>((zone) => [...zone.types])
 
-// Cada palabra de la busqueda tiene que aparecer en el nombre, el tipo de prenda o el color.
+// Cada palabra de la busqueda tiene que aparecer en el nombre, la marca, el tipo de prenda o el color.
 // Asi "chamarra negra" encuentra una chamarra de color negro aunque se llame "Mi favorita"
 function searchConditions(text: string) {
   return normalizeText(text)
@@ -67,6 +71,7 @@ function searchConditions(text: string) {
           : []
       return [
         `name.ilike."%${word}%"`,
+        `brand.ilike."%${word}%"`,
         ...(types.length > 0 ? [`type.in.(${types.join(',')})`] : []),
         ...(colors.length > 0 ? [`colors.ov.{${colors.join(',')}}`] : []),
       ].join(',')
@@ -155,6 +160,8 @@ export function useAddItem() {
         seasons: item.seasons,
         colors: item.colors,
         team: item.team ?? null,
+        brand: item.brand?.trim() || null,
+        decade: item.decade ?? null,
       })
       if (error) {
         deletePhotos(paths).catch(() => {})
@@ -183,6 +190,8 @@ export function useUpdateItem() {
           seasons: changes.seasons,
           colors: changes.colors,
           team: changes.team ?? null,
+          brand: changes.brand?.trim() || null,
+          decade: changes.decade ?? null,
         })
         .eq('id', item.id)
       if (error) {

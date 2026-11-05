@@ -184,6 +184,9 @@ export function countClosetFilters(filters: ClosetFilterValue) {
   )
 }
 
+// Decadas que se pueden elegir para una prenda
+export const itemDecades = [1960, 1970, 1980, 1990, 2000, 2010, 2020]
+
 // Una prenda guardada en el closet
 export type ClosetItem = {
   id: string
@@ -199,6 +202,9 @@ export type ClosetItem = {
   colors: string[]
   // Solo en jerseys de futbol (valor de la lista de equipos)
   team?: string
+  brand?: string
+  // Decada en que salio la prenda (1990, 2000...)
+  decade?: number
   // Si es true no se ve en tu perfil aunque tu closet sea publico
   private: boolean
   createdAt: Date

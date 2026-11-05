@@ -68,6 +68,17 @@ export function ItemCard({ item, open, raised, onOpen, onLayoutAnimationComplete
             ))}
           </div>
         </motion.div>
+        {/* Cuadritos con la marca y la decada, si los tiene */}
+        {(item.brand || item.decade) && (
+          <motion.div
+            layout="position"
+            animate={{ opacity: open ? 0 : 1 }}
+            className="flex flex-wrap gap-1.5 px-3 pb-3 text-[11px] font-medium"
+          >
+            {item.brand && <span className="max-w-full truncate rounded-md bg-muted px-2 py-0.5">{item.brand}</span>}
+            {item.decade && <span className="rounded-md bg-muted px-2 py-0.5 tabular-nums">{item.decade}</span>}
+          </motion.div>
+        )}
       </motion.button>
     </div>
   )

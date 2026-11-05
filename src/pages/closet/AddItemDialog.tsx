@@ -1,11 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { ChoicePill } from '@/components/ChoicePill'
 import { MorphDialog } from '@/components/MorphDialog'
 import { Button } from '@/components/ui/button'
 import { DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAddItem, useUpdateItem } from '@/hooks/useItems'
-import type { ClosetItem, ClothingType, Season } from '@/lib/clothing'
+import { useListingBrands } from '@/hooks/useListings'
+import { type ClosetItem, type ClothingType, itemDecades, type Season } from '@/lib/clothing'
 import { fileFromPhoto } from '@/lib/photos'
 import { ClothingTypePicker } from './ClothingTypePicker'
 import { ColorPicker } from './ColorPicker'
@@ -27,7 +29,7 @@ export function AddItemDialog({ origin, onClose, item }: AddItemDialogProps) {
       origin={origin}
       onClose={onClose}
       title={item ? 'Editar prenda' : 'Agregar prenda'}
-      description={item ? 'Cambia lo que necesites de tu prenda.' : 'Sube hasta 5 fotos y elige el tipo de prenda.'}
+      description={item ? 'Cambia lo que necesites de tu prenda.' : 'Toma o sube hasta 5 fotos y llena los datos.'}
     >
       <AddItemForm onDone={onClose} item={item} />
     </MorphDialog>
@@ -41,6 +43,9 @@ function AddItemForm({ onDone, item }: { onDone: () => void; item?: ClosetItem }
   const [selectedSeasons, setSelectedSeasons] = useState<Season[]>(item?.seasons ?? [])
   const [colors, setColors] = useState<string[]>(item?.colors ?? [])
   const [team, setTeam] = useState(item?.team ?? '')
+  const [brand, setBrand] = useState(item?.brand ?? '')
+  const [decade, setDecade] = useState<number | undefined>(item?.decade)
+  const brands = useListingBrands()
   const addItem = useAddItem()
   const updateItem = useUpdateItem()
   const saving = addItem.isPending || updateItem.isPending
@@ -74,6 +79,8 @@ function AddItemForm({ onDone, item }: { onDone: () => void; item?: ClosetItem }
       seasons: selectedSeasons,
       colors,
       team: isJersey && team ? team : undefined,
+      brand,
+      decade,
     }
     try {
       if (item) await updateItem.mutateAsync({ item, changes })
@@ -86,7 +93,8 @@ function AddItemForm({ onDone, item }: { onDone: () => void; item?: ClosetItem }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <PhotoPicker files={photos} onChange={setPhotos} />
+      {/* En celular, al agregar una prenda nueva, la camara ya esta abierta */}
+      <PhotoPicker files={photos} onChange={setPhotos} camera autoOpenCamera={!item} />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="item-type">Tipo de prenda</Label>
@@ -112,6 +120,40 @@ function AddItemForm({ onDone, item }: { onDone: () => void; item?: ClosetItem }
           onChange={(event) => setName(event.target.value)}
           placeholder="Ej. Jeans azules"
         />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="item-brand">
+          Marca <span className="font-normal text-muted-foreground">(opcional)</span>
+        </Label>
+        {/* Sugiere las marcas que ya existen para que "Nike" no aparezca escrito de mil formas */}
+        <Input
+          id="item-brand"
+          list="item-brands"
+          value={brand}
+          onChange={(event) => setBrand(event.target.value)}
+          placeholder="Ej. Nike, Zara"
+          maxLength={60}
+        />
+        <datalist id="item-brands">
+          {brands.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-medium">
+          Decada <span className="font-normal text-muted-foreground">(opcional)</span>
+        </span>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Decada de la prenda">
+          {itemDecades.map((option) => (
+            // Tocar la elegida la quita
+            <ChoicePill key={option} active={decade === option} onClick={() => setDecade(decade === option ? undefined : option)}>
+              {option}
+            </ChoicePill>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">

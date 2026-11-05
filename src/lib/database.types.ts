@@ -353,8 +353,10 @@ export type Database = {
       }
       items: {
         Row: {
+          brand: string | null
           colors: string[]
           created_at: string
+          decade: number | null
           id: string
           is_private: boolean
           name: string
@@ -365,11 +367,13 @@ export type Database = {
           type: string
         }
         Insert: {
+          brand?: string | null
           colors?: string[]
           created_at?: string
+          decade?: number | null
           id?: string
           is_private?: boolean
-          name: string
+          name?: string
           owner_id?: string
           photos?: string[]
           seasons?: string[]
@@ -377,8 +381,10 @@ export type Database = {
           type: string
         }
         Update: {
+          brand?: string | null
           colors?: string[]
           created_at?: string
+          decade?: number | null
           id?: string
           is_private?: boolean
           name?: string
