@@ -24,18 +24,22 @@ type OutfitBoardProps = {
   renderControl?: (slot: OutfitSlot) => ReactNode
   // Lo que se ve en un lugar sin prenda
   renderEmpty?: (slot: OutfitSlot) => ReactNode
+  // Reemplaza la foto de un lugar mientras algo la anima (la tragaperras del generador). Si regresa
+  // algo, el nombre de la prenda tampoco se muestra todavia, para no adelantar cual saldra
+  renderPiece?: (slot: OutfitSlot) => ReactNode
   // En miniatura (tarjetas) no se ven los nombres
   compact?: boolean
   className?: string
 }
 
-export function OutfitBoard({ pieces, slots, renderControl, renderEmpty, compact, className }: OutfitBoardProps) {
+export function OutfitBoard({ pieces, slots, renderControl, renderEmpty, renderPiece, compact, className }: OutfitBoardProps) {
   const shown = slots ?? (Object.keys(pieces) as OutfitSlot[])
 
   return (
     <div className={cn('grid grid-cols-[1fr_1.5fr_1fr] items-start', compact ? 'gap-1.5 p-2' : 'gap-3 p-4', className)}>
       {shown.map((slot) => {
         const item = pieces[slot]
+        const custom = renderPiece?.(slot)
         return (
           <div key={slot} className={cn('relative flex flex-col gap-1', area[slot])}>
             <div
@@ -45,7 +49,9 @@ export function OutfitBoard({ pieces, slots, renderControl, renderEmpty, compact
                 !item && 'border border-dashed',
               )}
             >
-              {item?.thumbUrl ? (
+              {custom ? (
+                custom
+              ) : item?.thumbUrl ? (
                 <img src={item.thumbUrl} alt={item.name || getTypeInfo(item.type).label} loading="lazy" className="size-full object-cover text-transparent" />
               ) : item ? (
                 <Shirt aria-hidden className="size-1/3 text-muted-foreground" strokeWidth={1.5} />
@@ -56,7 +62,7 @@ export function OutfitBoard({ pieces, slots, renderControl, renderEmpty, compact
             </div>
             {!compact && (
               <p className="truncate text-center text-xs text-muted-foreground">
-                {item ? item.name || getTypeInfo(item.type).label : slotLabels[slot]}
+                {item && !custom ? item.name || getTypeInfo(item.type).label : slotLabels[slot]}
               </p>
             )}
           </div>

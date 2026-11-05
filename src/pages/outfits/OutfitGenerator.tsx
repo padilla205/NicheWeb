@@ -1,4 +1,5 @@
 import { Lock, LockOpen, Plus, Save, Shuffle } from 'lucide-react'
+import { useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { ChoicePill } from '@/components/ChoicePill'
@@ -13,10 +14,12 @@ import {
   type OutfitPieces,
   type OutfitSlot,
   slotLabels,
+  slotOf,
   type weatherSuggestion,
 } from '@/lib/outfits'
 import { cn } from '@/lib/utils'
 import { SaveOutfitDialog } from './SaveOutfitDialog'
+import { REEL_SECONDS, REEL_STAGGER_SECONDS, SlotReel } from './SlotReel'
 import { WeatherCard } from './WeatherCard'
 
 const optionalSlots: OptionalSlot[] = ['cabeza', 'chamarra', 'accesorio']
@@ -37,9 +40,27 @@ export function OutfitGenerator({ items, savedKeys }: OutfitGeneratorProps) {
   const [saving, setSaving] = useState(false)
   // Lo que ya salio en esta visita
   const seen = useRef(new Set<string>())
+  const reduceMotion = useReducedMotion()
+  // Lugares girando como tragaperras; round hace que cada tirada empiece de nuevo
+  const [spin, setSpin] = useState<{ round: number; slots: OutfitSlot[] }>({ round: 0, slots: [] })
+
+  // Las fotos se cargan antes para que los carretes no giren en blanco
+  useEffect(() => {
+    items.slice(0, 60).forEach((item) => {
+      if (item.thumbUrl) new Image().src = item.thumbUrl
+    })
+  }, [items])
+
+  // Cuando se detiene el ultimo carrete (mas un momento para el rebote), se ven los nombres
+  useEffect(() => {
+    if (spin.slots.length === 0) return
+    const seconds = REEL_SECONDS + (spin.slots.length - 1) * REEL_STAGGER_SECONDS + 0.3
+    const timer = window.setTimeout(() => setSpin((current) => ({ ...current, slots: [] })), seconds * 1000)
+    return () => window.clearTimeout(timer)
+  }, [spin.round, spin.slots.length])
 
   const generate = useCallback(
-    (options: { seasons?: Season[]; optional?: OptionalSlot[]; lock?: OutfitSlot[] } = {}) => {
+    (options: { seasons?: Season[]; optional?: OptionalSlot[]; lock?: OutfitSlot[]; still?: boolean } = {}) => {
       const lock = options.lock ?? locked
       const lockedPieces: OutfitPieces = Object.fromEntries(lock.map((slot) => [slot, pieces[slot]]).filter(([, item]) => item))
       const result = generateOutfit({
@@ -52,8 +73,13 @@ export function OutfitGenerator({ items, savedKeys }: OutfitGeneratorProps) {
       seen.current.add(comboKey(result.pieces))
       setPieces(result.pieces)
       setRepeated(result.repeated)
+      // Giran solo las prendas nuevas: las que tienen candado se quedan quietas
+      if (!options.still && !reduceMotion) {
+        const spinning = (Object.keys(result.pieces) as OutfitSlot[]).filter((slot) => !lock.includes(slot))
+        setSpin((current) => ({ round: current.round + 1, slots: spinning }))
+      }
     },
-    [items, locked, pieces, selectedSeasons, optional, savedKeys],
+    [items, locked, pieces, selectedSeasons, optional, savedKeys, reduceMotion],
   )
 
   // El primer outfit sale solo en cuanto llegan las prendas
@@ -61,7 +87,7 @@ export function OutfitGenerator({ items, savedKeys }: OutfitGeneratorProps) {
   useEffect(() => {
     if (started.current || items.length === 0) return
     started.current = true
-    generate()
+    generate({ still: true })
   }, [items, generate])
 
   function toggleSeason(season: Season) {
@@ -113,6 +139,19 @@ export function OutfitGenerator({ items, savedKeys }: OutfitGeneratorProps) {
         <OutfitBoard
           pieces={pieces}
           slots={slots}
+          renderPiece={(slot) => {
+            const item = pieces[slot]
+            const order = spin.slots.indexOf(slot)
+            if (!item || order === -1) return null
+            return (
+              <SlotReel
+                key={`${spin.round}-${slot}`}
+                item={item}
+                pool={items.filter((candidate) => slotOf(candidate.type) === slot)}
+                order={order}
+              />
+            )
+          }}
           renderControl={(slot) =>
             pieces[slot] && (
               <button
@@ -171,7 +210,7 @@ export function OutfitGenerator({ items, savedKeys }: OutfitGeneratorProps) {
       {/* En celular y tableta se quedan pegados abajo (arriba de la barra de navegacion del celular) */}
       <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex justify-center gap-2 md:bottom-4 lg:static lg:col-start-2 lg:justify-start">
         <div className="flex gap-2 rounded-full border bg-background/95 p-1.5 shadow-lg lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
-          <Button className="rounded-full" onClick={() => generate()} disabled={items.length === 0}>
+          <Button className="rounded-full" onClick={() => generate()} disabled={items.length === 0 || spin.slots.length > 0}>
             <Shuffle />
             Generar outfit
           </Button>
