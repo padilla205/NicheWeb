@@ -1,6 +1,6 @@
 import { X } from 'lucide-react'
 import { AnimatePresence, motion, useAnimate, usePresence, useReducedMotion } from 'motion/react'
-import { type PointerEvent, type ReactNode, useEffect, useId, useLayoutEffect, useRef } from 'react'
+import { type ReactNode, useEffect, useId, useLayoutEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { cn } from '@/lib/utils'
@@ -12,7 +12,7 @@ type MorphDialogProps = {
   title: string
   description: string
   children: ReactNode
-  // En celular, deslizar la ventana hacia arriba (desde su titulo) la cierra
+  // En celular, deslizar la ventana hacia arriba o hacia abajo (desde su titulo) la cierra
   swipeUpToClose?: boolean
 }
 
@@ -53,7 +53,7 @@ type PanelProps = {
   swipeUpToClose?: boolean
 }
 
-// Cuanto hay que subir la ventana (px) o que tan rapido (px/s) para que se cierre al soltarla
+// Cuanto hay que mover la ventana (px) o que tan rapido (px/s) para que se cierre al soltarla
 const CLOSE_DISTANCE = 100
 const CLOSE_VELOCITY = 600
 
@@ -84,38 +84,76 @@ function MorphPanel({ origin, onClose, title, description, children, swipeUpToCl
     )
   }, [animate, scope, origin, reduceMotion])
 
-  // Deslizar hacia arriba para cerrar: la ventana sigue al dedo (solo hacia arriba; hacia abajo
-  // apenas cede) y al soltarla se va por arriba o regresa a su lugar
-  const swipe = useRef<{ startY: number; lastY: number; lastTime: number; velocity: number } | null>(null)
+  // Deslizar para cerrar (solo con el dedo): la ventana sigue al dedo y, al soltarla, sale por ese lado
+  // o regresa a su lugar. Desde la agarradera o el titulo se puede hacia arriba o hacia abajo; desde
+  // cualquier otra parte, solo hacia abajo y estando hasta arriba del contenido (asi no estorba al
+  // desplazar el formulario). Se usan eventos de toque para poder frenar el desplazamiento de iPhone
   const swipedAway = useRef(false)
-  function onSwipeStart(event: PointerEvent<HTMLDivElement>) {
-    if (!swipeUpToClose || event.pointerType === 'mouse') return
-    event.currentTarget.setPointerCapture(event.pointerId)
-    swipe.current = { startY: event.clientY, lastY: event.clientY, lastTime: event.timeStamp, velocity: 0 }
-  }
-  function onSwipeMove(event: PointerEvent<HTMLDivElement>) {
-    const s = swipe.current
-    if (!s) return
-    const elapsed = Math.max(1, event.timeStamp - s.lastTime)
-    s.velocity = ((event.clientY - s.lastY) / elapsed) * 1000
-    s.lastY = event.clientY
-    s.lastTime = event.timeStamp
-    const dy = event.clientY - s.startY
-    animate(scope.current, { y: dy < 0 ? dy : dy * 0.2 }, { duration: 0 })
-  }
-  function onSwipeEnd() {
-    const s = swipe.current
-    if (!s) return
-    swipe.current = null
-    const dy = s.lastY - s.startY
-    if (dy < -CLOSE_DISTANCE || s.velocity < -CLOSE_VELOCITY) {
-      swipedAway.current = true
-      animate(scope.current, { y: -window.innerHeight, opacity: 0 }, { duration: 0.25, ease: 'easeOut' })
-      onClose()
-    } else {
-      animate(scope.current, { y: 0 }, openSpring)
+  // La ventana puede recibir una funcion nueva en cada render; asi el arrastre no se reinicia
+  const closeRef = useRef(onClose)
+  useEffect(() => {
+    closeRef.current = onClose
+  })
+  useEffect(() => {
+    const panel = scope.current
+    if (!swipeUpToClose || !panel) return
+    let start: { y: number; fromZone: boolean; atTop: boolean } | null = null
+    let dragging = false
+    let last = { y: 0, time: 0, velocity: 0 }
+
+    const onStart = (event: TouchEvent) => {
+      if (event.touches.length !== 1) return
+      const y = event.touches[0].clientY
+      const fromZone = !!(event.target as HTMLElement).closest('[data-swipe-zone]')
+      start = { y, fromZone, atTop: panel.scrollTop <= 0 }
+      dragging = false
+      last = { y, time: event.timeStamp, velocity: 0 }
     }
-  }
+    const onMove = (event: TouchEvent) => {
+      if (!start) return
+      const y = event.touches[0].clientY
+      const dy = y - start.y
+      if (!dragging) {
+        if (Math.abs(dy) < 6) return
+        dragging = start.fromZone || (start.atTop && dy > 0)
+        if (!dragging) {
+          start = null
+          return
+        }
+      }
+      event.preventDefault()
+      last = { y, time: event.timeStamp, velocity: ((y - last.y) / Math.max(1, event.timeStamp - last.time)) * 1000 }
+      animate(panel, { y: dy }, { duration: 0 })
+    }
+    const onEnd = () => {
+      if (!start || !dragging) {
+        start = null
+        return
+      }
+      const dy = last.y - start.y
+      start = null
+      dragging = false
+      const fast = Math.abs(last.velocity) > CLOSE_VELOCITY
+      if (Math.abs(dy) > CLOSE_DISTANCE || fast) {
+        swipedAway.current = true
+        const up = fast ? last.velocity < 0 : dy < 0
+        animate(panel, { y: up ? -window.innerHeight : window.innerHeight, opacity: 0 }, { duration: 0.25, ease: 'easeOut' })
+        closeRef.current()
+      } else {
+        animate(panel, { y: 0 }, openSpring)
+      }
+    }
+    panel.addEventListener('touchstart', onStart, { passive: true })
+    panel.addEventListener('touchmove', onMove, { passive: false })
+    panel.addEventListener('touchend', onEnd)
+    panel.addEventListener('touchcancel', onEnd)
+    return () => {
+      panel.removeEventListener('touchstart', onStart)
+      panel.removeEventListener('touchmove', onMove)
+      panel.removeEventListener('touchend', onEnd)
+      panel.removeEventListener('touchcancel', onEnd)
+    }
+  }, [swipeUpToClose, scope, animate])
 
   // Al cerrar: hace el camino de regreso y se desvanece justo al llegar al boton
   useEffect(() => {
@@ -163,25 +201,17 @@ function MorphPanel({ origin, onClose, title, description, children, swipeUpToCl
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
             className="grid gap-4"
           >
-            {/* Agarradera en celular: de aqui se desliza hacia arriba para cerrar */}
+            {/* Agarradera en celular: de aqui se desliza hacia arriba o hacia abajo para cerrar */}
             {swipeUpToClose && (
               <div
                 aria-hidden
-                onPointerDown={onSwipeStart}
-                onPointerMove={onSwipeMove}
-                onPointerUp={onSwipeEnd}
-                onPointerCancel={onSwipeEnd}
+                data-swipe-zone
                 className="-mx-4 -mt-4 -mb-2 flex h-6 touch-none cursor-grab justify-center pt-2 md:hidden"
               >
                 <span className="h-1 w-10 rounded-full bg-muted-foreground/30" />
               </div>
             )}
-            <div
-              onPointerDown={onSwipeStart}
-              onPointerMove={onSwipeMove}
-              onPointerUp={onSwipeEnd}
-              onPointerCancel={onSwipeEnd}
-              className={cn('flex flex-col gap-2', swipeUpToClose && 'max-md:touch-none')}
+            <div data-swipe-zone={swipeUpToClose || undefined} className={cn('flex flex-col gap-2', swipeUpToClose && 'max-md:touch-none')}
             >
               <h2 id={titleId} className="text-base leading-none font-medium">
                 {title}
