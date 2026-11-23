@@ -94,7 +94,7 @@ export function MarketplacePage() {
               setShowSaved(false)
             }}
             aria-label="Buscar ventas"
-            className="h-10 rounded-full pl-9 md:h-8"
+            className="h-12 rounded-full pl-9 md:h-8"
           />
           {/* Ejemplos que van cambiando mientras el buscador esta vacio */}
           <CyclingPlaceholder show={!query} texts={['Buscar ventas', 'Prueba: Nike', 'Prueba: jeans', 'Prueba: chamarra de piel']} />

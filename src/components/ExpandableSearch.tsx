@@ -17,8 +17,8 @@ export function ExpandableSearch({ value, onChange, placeholder, label }: Expand
   return (
     <div
       className={cn(
-        'relative h-8 transition-[width] duration-200 ease-out',
-        expanded ? 'w-48' : 'w-8',
+        'relative h-11 md:h-8 transition-[width] duration-200 ease-out',
+        expanded ? 'w-48' : 'w-11 md:w-8',
       )}
     >
       {expanded ? (
@@ -33,7 +33,7 @@ export function ExpandableSearch({ value, onChange, placeholder, label }: Expand
             onBlur={() => value === '' && setExpanded(false)}
             placeholder={placeholder}
             aria-label={label}
-            className="h-8 rounded-full pl-8"
+            className="h-11 md:h-8 rounded-full pl-9 md:pl-8"
           />
         </>
       ) : (
@@ -41,7 +41,7 @@ export function ExpandableSearch({ value, onChange, placeholder, label }: Expand
           type="button"
           onClick={() => setExpanded(true)}
           aria-label={label}
-          className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+          className="flex size-11 md:size-8 items-center justify-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
         >
           <Search className="size-4" />
         </button>

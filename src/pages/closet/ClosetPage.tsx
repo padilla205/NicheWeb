@@ -126,7 +126,7 @@ export function ClosetPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               aria-label="Buscar en tu closet"
-              className="h-10 rounded-full pl-9 md:h-8"
+              className="h-12 rounded-full pl-9 md:h-8"
             />
             {/* Ejemplos que van cambiando mientras el buscador esta vacio */}
             <CyclingPlaceholder show={!query} texts={['Buscar en tu closet', 'Prueba: chamarra', 'Prueba: tenis blancos', 'Prueba: jeans']} />

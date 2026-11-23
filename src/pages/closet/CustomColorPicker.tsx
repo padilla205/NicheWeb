@@ -39,7 +39,7 @@ export function CustomColorPicker({ disabled, triggerClassName, onAdd }: CustomC
         <HexColorPicker color={hex} onChange={setHex} className="custom-color-picker" />
         <div className="flex items-center gap-2">
           <span
-            className="size-8 shrink-0 rounded-full outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+            className="size-10 md:size-8 shrink-0 rounded-full outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
             style={{ backgroundColor: hex }}
             aria-hidden
           />
@@ -48,7 +48,7 @@ export function CustomColorPicker({ disabled, triggerClassName, onAdd }: CustomC
             onChange={setHex}
             prefixed
             aria-label="Codigo del color"
-            className="h-8 min-w-0 flex-1 rounded-md border border-input bg-transparent px-2.5 font-mono text-sm uppercase outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="h-11 md:h-8 min-w-0 flex-1 rounded-md border border-input bg-transparent px-2.5 font-mono text-sm uppercase outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         </div>
         <Button type="button" size="sm" onClick={handleAdd}>

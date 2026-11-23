@@ -142,13 +142,13 @@ export function MobileNav() {
                   onClick={(event) => dragged.current && event.preventDefault()}
                   draggable={false}
                   className={cn(
-                    'relative flex h-11 items-center justify-center gap-1.5 rounded-full outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 dark:focus-visible:ring-white/40',
+                    'relative flex h-12 items-center justify-center gap-1.5 rounded-full outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 dark:focus-visible:ring-white/40',
                     expanded ? 'px-3.5' : 'w-11',
                     // Los iconos sin elegir van en gris; la seccion elegida contrasta con su pastilla (carbon o perla)
                     i === shownIndex ? 'text-white dark:text-black' : 'text-neutral-500 active:text-neutral-900 dark:text-neutral-400 dark:active:text-white',
                   )}
                 >
-                  <Icon className="size-5 shrink-0" />
+                  <Icon className="size-[22px] shrink-0" />
                   {expanded && (
                     <motion.span
                       initial={{ opacity: 0, x: -4 }}

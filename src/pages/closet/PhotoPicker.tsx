@@ -123,7 +123,7 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
   return (
     <div className="flex flex-col gap-2">
       {cameraView}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {files.map((file, index) => (
           // La direccion de cada foto no cambia al reordenar: sirve de clave y su cuadrito se desliza
           <PhotoTile
