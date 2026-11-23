@@ -1,13 +1,15 @@
 import { MapPin } from 'lucide-react'
 import { useState } from 'react'
+import { CircleAction } from '@/components/CircleAction'
 import { LocationFields } from '@/components/LocationFields'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useSetUserLocation, useUserLocation } from '@/hooks/useUserLocation'
 import { formatLocation, toLocation } from '@/lib/locations'
 
-// Boton para elegir tu pais y ciudad; el marketplace usa esto para mostrar ventas cercanas
-export function LocationButton() {
+// Boton para elegir tu pais y ciudad; el marketplace usa esto para mostrar ventas cercanas.
+// circle: como atajo en circulo, para la cabecera negra del celular
+export function LocationButton({ circle = false }: { circle?: boolean }) {
   const location = useUserLocation()
   const setLocation = useSetUserLocation()
   const [open, setOpen] = useState(false)
@@ -23,10 +25,14 @@ export function LocationButton() {
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="max-w-56">
-          <MapPin />
-          <span className="truncate">{location ? formatLocation(location) : 'Localizacion'}</span>
-        </Button>
+        {circle ? (
+          <CircleAction icon={MapPin} label="Ciudad" active={open} />
+        ) : (
+          <Button variant="outline" className="max-w-56">
+            <MapPin />
+            <span className="truncate">{location ? formatLocation(location) : 'Localizacion'}</span>
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent
         align="end"

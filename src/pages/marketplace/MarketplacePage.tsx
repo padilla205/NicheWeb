@@ -21,6 +21,8 @@ import { ListingsSkeleton } from './ListingsSkeleton'
 import { useKeepScroll } from '@/hooks/useKeepScroll'
 import { LocationButton } from './LocationButton'
 import { MarketplaceFilters } from './MarketplaceFilters'
+import { MarketplaceHero } from './MarketplaceHero'
+import { mobileSheetClass } from '@/lib/styles'
 import { SortSelect } from './SortSelect'
 
 export function MarketplacePage() {
@@ -70,18 +72,31 @@ export function MarketplacePage() {
   return (
     // Mismo resorte que el closet; si el sistema pide menos movimiento, se respeta
     <MotionConfig transition={{ type: 'spring', visualDuration: 0.3, bounce: 0.15 }} reducedMotion="user">
-      <div className="flex flex-wrap items-start justify-between gap-x-4">
+      <MarketplaceHero
+        filters={filters}
+        onFiltersChange={setFilters}
+        sizes={sizes}
+        brands={brands}
+        showSaved={showSaved}
+        onToggleSaved={() => setShowSaved(!showSaved)}
+        onCreate={setCreateOrigin}
+        createOpen={createOrigin !== null}
+      />
+      {/* En escritorio: titulo, localizacion y crear venta. En celular eso va en la cabecera negra */}
+      <div className="flex flex-wrap items-start justify-between gap-x-4 max-md:hidden">
         <PageTitle title="Marketplace" />
         {/* En celular Localizacion queda junto al titulo y "Crear venta" baja a todo lo ancho */}
-        <div className="mb-6 flex gap-2 max-md:contents">
+        <div className="mb-6 flex gap-2">
           <LocationButton />
-          <MorphButton hidden={createOrigin !== null} onOpen={setCreateOrigin} className="max-md:mb-6 max-md:w-full">
+          <MorphButton hidden={createOrigin !== null} onOpen={setCreateOrigin}>
             <Plus />
             Crear venta
           </MorphButton>
         </div>
       </div>
 
+      {/* Hoja de las ventas: en celular sube sobre la cabecera negra con las esquinas redondeadas */}
+      <div className={mobileSheetClass}>
       <div className="mb-4 flex gap-2">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -99,14 +114,22 @@ export function MarketplacePage() {
           {/* Ejemplos que van cambiando mientras el buscador esta vacio */}
           <CyclingPlaceholder show={!query} texts={['Buscar ventas', 'Prueba: Nike', 'Prueba: jeans', 'Prueba: chamarra de piel']} />
         </div>
-        <MarketplaceFilters value={filters} onChange={setFilters} sizes={sizes} brands={brands} />
+        <div className="max-md:hidden">
+          <MarketplaceFilters value={filters} onChange={setFilters} sizes={sizes} brands={brands} />
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <ChoicePill active={showSaved} onClick={() => setShowSaved(!showSaved)}>
-          {!showSaved && <Heart />}
-          Guardados
-        </ChoicePill>
+        <div className="max-md:hidden">
+          <ChoicePill active={showSaved} onClick={() => setShowSaved(!showSaved)}>
+            {!showSaved && <Heart />}
+            Guardados
+          </ChoicePill>
+        </div>
+        {/* En celular, a la izquierda de Ordenar: cuantas ventas hay (o que estas viendo tus guardadas) */}
+        <p className="text-sm font-medium tabular-nums md:hidden">
+          {showSaved ? 'Tus ventas guardadas' : !isPending && `${total} ${total === 1 ? 'venta' : 'ventas'}`}
+        </p>
         {location && !showSaved && (
           <div className="flex flex-wrap gap-2" role="group" aria-label="Mostrar ventas">
             <ChoicePill slideId="market-city" active={onlyMyCity} onClick={() => setShowAll(false)}>
@@ -179,6 +202,7 @@ export function MarketplacePage() {
           )}
         </AnimatePresence>
         {!showSaved && <ShowMore shown={listings.length} total={total} onClick={loadMore} />}
+      </div>
       </div>
       <CreateListingDialog origin={createOrigin} onClose={closeCreate} />
     </MotionConfig>

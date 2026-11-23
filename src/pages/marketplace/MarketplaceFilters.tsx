@@ -1,6 +1,7 @@
 import { SlidersHorizontal } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { ChoicePill } from '@/components/ChoicePill'
+import { CircleAction } from '@/components/CircleAction'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -20,6 +21,8 @@ type MarketplaceFiltersProps = {
   sizes: string[]
   // Marcas que existen en las ventas
   brands: string[]
+  // Como atajo en circulo, para la cabecera negra del celular
+  circle?: boolean
 }
 
 // Agrega o quita un valor de una lista
@@ -32,13 +35,17 @@ function toPrice(text: string) {
   return text === '' ? undefined : Math.max(0, Number(text))
 }
 
-export function MarketplaceFilters({ value, onChange, sizes, brands }: MarketplaceFiltersProps) {
+export function MarketplaceFilters({ value, onChange, sizes, brands, circle = false }: MarketplaceFiltersProps) {
+  const [open, setOpen] = useState(false)
   const active = countActiveFilters(value)
   const set = (changes: Partial<ListingFilters>) => onChange({ ...value, ...changes })
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
+        {circle ? (
+          <CircleAction icon={SlidersHorizontal} label="Filtros" badge={active} active={open} iconTurn={180} />
+        ) : (
         <Button variant="outline" className="rounded-full">
           <SlidersHorizontal />
           Filtros
@@ -46,6 +53,7 @@ export function MarketplaceFilters({ value, onChange, sizes, brands }: Marketpla
             <span className="ml-1 rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{active}</span>
           )}
         </Button>
+        )}
       </PopoverTrigger>
       {/* Misma apertura rapida que los filtros del closet */}
       <PopoverContent
