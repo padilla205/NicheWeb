@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Sparkles } from 'lucide-react'
 import { ChoicePill } from '@/components/ChoicePill'
 import { MorphDialog } from '@/components/MorphDialog'
 import { Button } from '@/components/ui/button'
@@ -8,12 +9,14 @@ import { Label } from '@/components/ui/label'
 import { useAddItem, useUpdateItem } from '@/hooks/useItems'
 import { useListingBrands } from '@/hooks/useListings'
 import { useProfile } from '@/hooks/useProfile'
+import type { GarmentScan } from '@/lib/garmentScan'
 import { clearItemDraft, type ItemDraft, loadItemDraft, saveItemDraft } from '@/lib/itemDraft'
 import { type ClosetItem, type ClothingType, itemDecades, type Season } from '@/lib/clothing'
 import { fileFromPhoto } from '@/lib/photos'
 import { ClothingTypePicker } from './ClothingTypePicker'
 import { ColorPicker } from './ColorPicker'
 import { PhotoPicker } from './PhotoPicker'
+import { ScanResult } from './ScanResult'
 import { MAX_SEASONS, SeasonPicker } from './SeasonPicker'
 import { TeamPicker } from './TeamPicker'
 
@@ -68,6 +71,7 @@ function AddItemForm({ onDone, item, draft, draftOwner }: AddItemFormProps) {
   const [brand, setBrand] = useState(item?.brand ?? draft?.brand ?? '')
   const [decade, setDecade] = useState<number | undefined>(item?.decade ?? draft?.decade)
   const [recovered, setRecovered] = useState(!!draft)
+  const [scanning, setScanning] = useState(false)
   // Al guardar o cancelar ya no se debe escribir el borrador
   const finished = useRef(false)
   const brands = useListingBrands()
@@ -95,6 +99,16 @@ function AddItemForm({ onDone, item, draft, draftOwner }: AddItemFormProps) {
     }, 300)
     return () => window.clearTimeout(timer)
   }, [draftOwner, photos, name, type, selectedSeasons, colors, team, brand, decade])
+
+  // Lo que encontro la IA llena el formulario; todo se puede corregir antes de guardar
+  function applyScan(scan: GarmentScan) {
+    setName(scan.model)
+    setType(scan.type)
+    if (scan.brand && scan.brand !== 'Sin marca visible') setBrand(scan.brand)
+    setDecade(scan.decade)
+    setColors(scan.colors)
+    setScanning(false)
+  }
 
   function resetForm() {
     setPhotos([])
@@ -162,6 +176,15 @@ function AddItemForm({ onDone, item, draft, draftOwner }: AddItemFormProps) {
       )}
       {/* En celular, al agregar una prenda nueva, la camara ya esta abierta */}
       <PhotoPicker files={photos} onChange={setPhotos} camera autoOpenCamera={!item} />
+
+      {/* Prueba de diseño: por ahora solo en tu computadora y con datos de ejemplo, hasta conectar la IA */}
+      {import.meta.env.DEV && photos.length > 0 && (
+        <Button type="button" variant="outline" className="w-full" onClick={() => setScanning(true)}>
+          <Sparkles />
+          Identificar con IA
+        </Button>
+      )}
+      {scanning && <ScanResult photos={photos} onUse={applyScan} onClose={() => setScanning(false)} />}
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="item-type">Tipo de prenda</Label>

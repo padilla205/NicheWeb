@@ -1,6 +1,8 @@
-import { Camera, ImagePlus, WandSparkles, X } from 'lucide-react'
-import { type DragEvent, type ReactNode, useEffect, useRef, useState } from 'react'
+import { Camera, GripVertical, ImagePlus, WandSparkles, X } from 'lucide-react'
+import { motion, useDragControls } from 'motion/react'
+import { type DragEvent, type KeyboardEvent, type PointerEvent, type ReactNode, useRef, useState } from 'react'
 import { PhotoEditor } from '@/components/PhotoEditor'
+import { useObjectUrls } from '@/hooks/useObjectUrls'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { CameraCapture, garmentSteps } from './CameraCapture'
@@ -27,15 +29,8 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
   // Foto que se esta recortando o enderezando; null si el editor esta cerrado
   const [editing, setEditing] = useState<number | null>(null)
 
-  // Crea una direccion temporal para ver cada foto y las libera al cambiarlas (evita gastar memoria)
-  // Se crean y se liberan en el mismo efecto: asi sobreviven al doble montaje de React en desarrollo,
-  // que pasa cuando el selector ya abre con fotos (un borrador recuperado)
-  const [previewUrls, setPreviewUrls] = useState<string[]>([])
-  useEffect(() => {
-    const urls = files.map((file) => URL.createObjectURL(file))
-    setPreviewUrls(urls)
-    return () => urls.forEach((url) => URL.revokeObjectURL(url))
-  }, [files])
+  // Direccion fija por foto: sirve de clave y no se rompe al reordenar
+  const urlOf = useObjectUrls(files)
 
   // Agrega solo imagenes y solo hasta completar el maximo
   function add(list: FileList | null) {
@@ -47,6 +42,26 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
 
   function remove(index: number) {
     onChange(files.filter((_, i) => i !== index))
+  }
+
+  // Mueve una foto a otro lugar (arrastrandola o con las flechas); la que quede primera es la portada
+  function move(from: number, to: number) {
+    if (from === to || to < 0 || to >= files.length) return
+    const next = [...files]
+    next.splice(to, 0, ...next.splice(from, 1))
+    onChange(next)
+  }
+
+  // Cuadrito sobre el que se va a soltar la foto que se arrastra (se marca con un borde)
+  const [dropTarget, setDropTarget] = useState<number | null>(null)
+  const tiles = useRef<(HTMLDivElement | null)[]>([])
+  function tileAt(x: number, y: number, dragging: number) {
+    const index = tiles.current.findIndex((tile, i) => {
+      if (!tile || i === dragging) return false
+      const box = tile.getBoundingClientRect()
+      return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom
+    })
+    return index === -1 ? null : index
   }
 
   // La foto editada reemplaza a la original en el mismo lugar
@@ -109,39 +124,28 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
     <div className="flex flex-col gap-2">
       {cameraView}
       <div className="grid grid-cols-3 gap-2">
-        {previewUrls.map((url, index) => (
-          <div key={url} className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
-            <img src={url} alt={`Foto ${index + 1}`} className="size-full object-cover" />
-            {index === 0 && (
-              <span className="absolute bottom-1.5 left-1.5 rounded-full bg-background/85 px-2 py-0.5 text-xs font-medium">
-                Portada
-              </span>
-            )}
-            {/* Editar (quitar fondo, recortar, enderezar) es opcional; los GIF no se editan para que sigan animados */}
-            {files[index]?.type !== 'image/gif' && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="xs"
-                className="absolute top-1.5 left-1.5"
-                onClick={() => setEditing(index)}
-                aria-label={`Editar foto ${index + 1}`}
-              >
-                <WandSparkles />
-                Editar
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon-xs"
-              className="absolute top-1.5 right-1.5"
-              onClick={() => remove(index)}
-            >
-              <X />
-              <span className="sr-only">Quitar foto {index + 1}</span>
-            </Button>
-          </div>
+        {files.map((file, index) => (
+          // La direccion de cada foto no cambia al reordenar: sirve de clave y su cuadrito se desliza
+          <PhotoTile
+            key={urlOf(file)}
+            ref={(tile) => {
+              tiles.current[index] = tile
+            }}
+            url={urlOf(file)}
+            index={index}
+            count={files.length}
+            isDropTarget={dropTarget === index}
+            canEdit={file.type !== 'image/gif'}
+            onEdit={() => setEditing(index)}
+            onRemove={() => remove(index)}
+            onMove={(to) => move(index, to)}
+            onDragOver={(x, y) => setDropTarget(tileAt(x, y, index))}
+            onDrop={(x, y) => {
+              const to = tileAt(x, y, index)
+              setDropTarget(null)
+              if (to !== null) move(index, to)
+            }}
+          />
         ))}
         {!isFull && (
           <AddPhotoArea
@@ -165,7 +169,7 @@ export function PhotoPicker({ files, onChange, label = 'Sube fotos de la prenda'
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        {files.length} de {MAX_PHOTOS} fotos. La primera es la portada. Toca Editar para quitar el fondo o recortar; si no, se suben tal cual.
+        {files.length} de {MAX_PHOTOS} fotos. Arrastralas para cambiar el orden; la primera es la portada. Toca Editar para quitar el fondo o recortar; si no, se suben tal cual.
       </p>
       {fileInput}
       <PhotoEditor
@@ -212,5 +216,91 @@ function AddPhotoArea({ onPick, onDropFiles, className, children }: AddPhotoArea
     >
       {children}
     </button>
+  )
+}
+
+type PhotoTileProps = {
+  ref: (tile: HTMLDivElement | null) => void
+  url: string
+  index: number
+  count: number
+  isDropTarget: boolean
+  // Los GIF no se editan para que sigan animados
+  canEdit: boolean
+  onEdit: () => void
+  onRemove: () => void
+  onMove: (to: number) => void
+  onDragOver: (x: number, y: number) => void
+  onDrop: (x: number, y: number) => void
+}
+
+// Cuadrito de una foto. Se arrastra para cambiarla de lugar: con el mouse desde cualquier parte, y en
+// celular desde la agarradera (asi deslizar sobre las fotos sigue moviendo la pagina). Con el teclado,
+// la agarradera la mueve con las flechas
+function PhotoTile({ ref, url, index, count, isDropTarget, canEdit, onEdit, onRemove, onMove, onDragOver, onDrop }: PhotoTileProps) {
+  const controls = useDragControls()
+
+  function startDrag(event: PointerEvent) {
+    // Los botones de Editar y Quitar siguen funcionando normal
+    if ((event.target as HTMLElement).closest('button:not([data-grip])')) return
+    if (event.pointerType !== 'mouse' && !(event.target as HTMLElement).closest('[data-grip]')) return
+    controls.start(event)
+  }
+
+  function moveWithKeys(event: KeyboardEvent) {
+    const step = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[event.key]
+    if (!step) return
+    event.preventDefault()
+    onMove(index + step)
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      layout
+      transition={{ type: 'spring', visualDuration: 0.25, bounce: 0.15 }}
+      drag
+      dragControls={controls}
+      dragListener={false}
+      dragSnapToOrigin
+      dragElastic={1}
+      onPointerDown={startDrag}
+      onDrag={(_, info) => onDragOver(info.point.x - scrollX, info.point.y - scrollY)}
+      onDragEnd={(_, info) => onDrop(info.point.x - scrollX, info.point.y - scrollY)}
+      whileDrag={{ scale: 1.06, zIndex: 10, boxShadow: '0 16px 32px -12px rgb(0 0 0 / 0.45)' }}
+      className={cn(
+        'relative aspect-square overflow-hidden rounded-lg border bg-muted select-none md:cursor-grab md:active:cursor-grabbing',
+        isDropTarget && 'ring-2 ring-foreground ring-offset-2 ring-offset-background',
+      )}
+    >
+      <img src={url} alt={`Foto ${index + 1}`} draggable={false} className="pointer-events-none size-full object-cover" />
+      {index === 0 && (
+        <span className="absolute bottom-1.5 left-1.5 rounded-full bg-background/85 px-2 py-0.5 text-xs font-medium">Portada</span>
+      )}
+      {/* Editar (quitar fondo, recortar, enderezar) es opcional */}
+      {canEdit && (
+        <Button type="button" variant="secondary" size="xs" className="absolute top-1.5 left-1.5" onClick={onEdit} aria-label={`Editar foto ${index + 1}`}>
+          <WandSparkles />
+          Editar
+        </Button>
+      )}
+      <Button type="button" variant="secondary" size="icon-xs" className="absolute top-1.5 right-1.5" onClick={onRemove}>
+        <X />
+        <span className="sr-only">Quitar foto {index + 1}</span>
+      </Button>
+      {count > 1 && (
+        <Button
+          type="button"
+          data-grip
+          variant="secondary"
+          size="icon-xs"
+          className="absolute right-1.5 bottom-1.5 cursor-grab touch-none"
+          onKeyDown={moveWithKeys}
+          aria-label={`Mover foto ${index + 1} de ${count}. Usa las flechas para cambiarla de lugar`}
+        >
+          <GripVertical />
+        </Button>
+      )}
+    </motion.div>
   )
 }

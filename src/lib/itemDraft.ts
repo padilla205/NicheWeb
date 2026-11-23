@@ -50,7 +50,11 @@ export async function loadItemDraft(userId: string): Promise<ItemDraft | null> {
   if (!stored) return null
   return {
     ...stored,
-    photos: stored.photos.map(({ name, blob }) => new File([blob], name, { type: blob.type })),
+    // Se copian a memoria: en Firefox la foto leida de la base sigue apuntando a ella, y al guardar de
+    // nuevo el borrador (cada cambio) la copia vieja se borra y la foto ya no se puede ver ni subir
+    photos: await Promise.all(
+      stored.photos.map(async ({ name, blob }) => new File([await blob.arrayBuffer()], name, { type: blob.type })),
+    ),
   }
 }
 
