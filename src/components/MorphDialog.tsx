@@ -14,6 +14,8 @@ type MorphDialogProps = {
   children: ReactNode
   // En celular, deslizar la ventana hacia arriba o hacia abajo (desde su titulo) la cierra
   swipeUpToClose?: boolean
+  // En celular ocupa toda la pantalla y salta hacia adelante con un poco mas de rebote
+  fullscreenOnMobile?: boolean
 }
 
 // Ventana que nace del boton que la abrio (ver MorphButton) y al cerrarse regresa a el
@@ -26,6 +28,8 @@ export function MorphDialog({ origin, ...props }: MorphDialogProps) {
 // Mismo rebote que la apertura de las tarjetas (unos 300 ms)
 const openSpring = { type: 'spring', visualDuration: 0.3, bounce: 0.15 } as const
 const PANEL_RADIUS = 16
+// A pantalla completa salta hacia adelante con un poco mas de rebote
+const fullscreenSpring = { type: 'spring', visualDuration: 0.35, bounce: 0.25 } as const
 const BUTTON_RADIUS = 8
 
 // Cuanto hay que mover y encoger el panel (siempre centrado en la pantalla) para que
@@ -51,13 +55,18 @@ type PanelProps = {
   description: string
   children: ReactNode
   swipeUpToClose?: boolean
+  fullscreenOnMobile?: boolean
 }
 
 // Cuanto hay que mover la ventana (px) o que tan rapido (px/s) para que se cierre al soltarla
 const CLOSE_DISTANCE = 100
 const CLOSE_VELOCITY = 600
 
-function MorphPanel({ origin, onClose, title, description, children, swipeUpToClose = false }: PanelProps) {
+function MorphPanel({ origin, onClose, title, description, children, swipeUpToClose = false, fullscreenOnMobile = false }: PanelProps) {
+  // A pantalla completa (celular) no lleva esquinas redondeadas y el salto rebota un poco mas
+  const fullscreen = fullscreenOnMobile && matchMedia('(max-width: 767px)').matches
+  const radius = fullscreen ? 0 : PANEL_RADIUS
+  const growSpring = fullscreen ? fullscreenSpring : openSpring
   const titleId = useId()
   const descriptionId = useId()
   useModalBehavior(onClose)
@@ -78,11 +87,11 @@ function MorphPanel({ origin, onClose, title, description, children, swipeUpToCl
         y: [start.y, 0],
         scaleX: [start.scaleX, 1],
         scaleY: [start.scaleY, 1],
-        borderRadius: [start.borderRadius, `${PANEL_RADIUS}px / ${PANEL_RADIUS}px`],
+        borderRadius: [start.borderRadius, `${radius}px / ${radius}px`],
       },
-      openSpring,
+      growSpring,
     )
-  }, [animate, scope, origin, reduceMotion])
+  }, [animate, scope, origin, reduceMotion, radius, growSpring])
 
   // Deslizar para cerrar (solo con el dedo): la ventana sigue al dedo y, al soltarla, sale por ese lado
   // o regresa a su lugar. Desde la agarradera o el titulo se puede hacia arriba o hacia abajo; desde
@@ -179,19 +188,20 @@ function MorphPanel({ origin, onClose, title, description, children, swipeUpToCl
         onClick={onClose}
         className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs"
       />
-      <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className={cn('pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4', fullscreen && 'p-0')}>
         <div
           ref={scope}
           role="dialog"
           aria-modal
           aria-labelledby={titleId}
           aria-describedby={descriptionId}
-          style={{ opacity: 0, borderRadius: PANEL_RADIUS }}
+          style={{ opacity: 0, borderRadius: radius }}
           // Mientras se cierra ya no recibe clics, para no bloquear la pagina
           // La ventana se sigue pudiendo desplazar, pero sin mostrar la barrita de scroll
           className={cn(
             'relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border bg-popover p-4 text-sm text-popover-foreground',
             isPresent ? 'pointer-events-auto' : 'pointer-events-none',
+            fullscreen && 'h-dvh max-h-dvh max-w-none border-0 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]',
           )}
         >
           {/* El contenido aparece un instante despues de que la ventana se abre */}
@@ -199,7 +209,7 @@ function MorphPanel({ origin, onClose, title, description, children, swipeUpToCl
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, transition: { delay: 0.1, duration: 0.2 } }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
-            className="grid gap-4"
+            className={cn('grid gap-4', fullscreen && 'flex min-h-full flex-col')}
           >
             {/* Agarradera en celular: de aqui se desliza hacia arriba o hacia abajo para cerrar */}
             {swipeUpToClose && (

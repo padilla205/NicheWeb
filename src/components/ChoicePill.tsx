@@ -16,7 +16,8 @@ type ChoicePillProps = {
 
 // Elegida: fondo del color del texto con letras del color del fondo (carbon en claro, casi blanca en oscuro)
 const selectedClass =
-  'border-foreground bg-foreground text-background hover:bg-foreground/90 hover:text-background'
+  // (con dark: tambien, porque el boton de contorno trae su propio fondo para el modo oscuro)
+  'border-foreground bg-foreground text-background hover:bg-foreground/90 hover:text-background dark:border-foreground dark:bg-foreground dark:hover:bg-foreground/90'
 
 // Opcion redonda que se marca y desmarca (temporadas, estado de una venta, etc.)
 export function ChoicePill({ active, disabled, onClick, children, slideId }: ChoicePillProps) {
