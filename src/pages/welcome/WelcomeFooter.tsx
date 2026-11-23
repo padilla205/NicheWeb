@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { BrandMark } from '@/components/BrandMark'
+import { BrandLogo } from '@/components/BrandLogo'
 
 // Pie de la bienvenida: marca y links legales (el correo de contacto se agrega despues)
 export function WelcomeFooter() {
@@ -9,7 +9,7 @@ export function WelcomeFooter() {
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-14 md:flex-row md:items-start md:justify-between md:px-8">
         <div className="flex flex-col gap-3">
           <Link to="/" className="flex items-center gap-2 text-xl font-semibold tracking-tight">
-            <BrandMark />
+            <BrandLogo />
             Niche
           </Link>
           <p className="max-w-xs text-sm text-pretty text-muted-foreground">Tu closet digital: guarda tus prendas, arma outfits, comparte y vende.</p>

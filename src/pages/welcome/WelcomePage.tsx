@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router'
-import { BrandMark } from '@/components/BrandMark'
+import { BrandLogo } from '@/components/BrandLogo'
 import { ContainerScroll } from '@/components/ContainerScroll'
 import { FlipWords } from '@/components/FlipWords'
 import { HeroParallax } from '@/components/HeroParallax'
@@ -70,7 +70,7 @@ export function WelcomePage() {
       <Faq />
 
       <section className="flex flex-col items-center gap-6 px-8 pb-28 text-center">
-        <BrandMark className="size-16" />
+        <BrandLogo className="w-24" />
         <h2 className="text-5xl font-bold tracking-tight">Beta abierta</h2>
         <p className="max-w-xl text-lg text-muted-foreground">Gratis mientras dure la beta. Tu opinion decide lo que sigue.</p>
         <Button asChild size="lg" className="rounded-full px-6">

@@ -6,7 +6,8 @@
     <link rel="icon" type="image/png" sizes="48x48" href="/brand/favicon-48.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <link rel="preload" as="image" href="/brand/niche-mark.png" />
+    <link rel="preload" as="image" href="/brand/jacket-line.png" />
+    <link rel="preload" as="image" href="/brand/jacket-fill.png" />
     <meta name="apple-mobile-web-app-title" content="Niche" />
     <meta name="theme-color" content="#ECECEC" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0B0B0B" media="(prefers-color-scheme: dark)" />
@@ -37,14 +38,48 @@
       } catch {}
     </script>
     <style>
-      /* Pantalla de carga: el logo del gancho y abajo "Niche".
-         Vive aqui para verse desde el primer instante; React (SplashScreen.tsx) usa las mismas clases */
+      /* Logos de Niche y pantalla de carga. Viven aqui para verse desde el primer instante; React
+         (BrandMark, BrandLogo y SplashScreen) usa las mismas clases.
+         brand-mark: una chamarra de contorno, del color del texto (barra de arriba). */
       .brand-mark {
         display: inline-block;
         background-color: currentColor;
-        -webkit-mask: url('/brand/niche-mark.png') center / contain no-repeat;
-        mask: url('/brand/niche-mark.png') center / contain no-repeat;
+        -webkit-mask: url('/brand/jacket-line.png') center / contain no-repeat;
+        mask: url('/brand/jacket-line.png') center / contain no-repeat;
       }
+      /* brand-logo: las 4 chamarras rojas en fila. Cada una es un relleno del color del fondo (tapa a la
+         de atras) y encima su contorno rojo. En el HTML van de la de atras a la de enfrente */
+      .brand-logo {
+        --logo-bg: var(--background, #fff);
+        position: relative;
+        display: inline-block;
+        flex-shrink: 0;
+        aspect-ratio: 983 / 925;
+      }
+      .brand-logo > span {
+        position: absolute;
+        aspect-ratio: 626 / 595;
+      }
+      .brand-logo > span::before,
+      .brand-logo > span::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+      }
+      .brand-logo > span::before {
+        background: var(--logo-bg);
+        -webkit-mask: url('/brand/jacket-fill.png') center / contain no-repeat;
+        mask: url('/brand/jacket-fill.png') center / contain no-repeat;
+      }
+      .brand-logo > span::after {
+        background: #f13733;
+        -webkit-mask: url('/brand/jacket-line.png') center / contain no-repeat;
+        mask: url('/brand/jacket-line.png') center / contain no-repeat;
+      }
+      .brand-logo > span:nth-child(1) { left: 59.92%; top: 0; width: 40.08%; --i: 3; }
+      .brand-logo > span:nth-child(2) { left: 42.73%; top: 10.49%; width: 45.57%; --i: 2; }
+      .brand-logo > span:nth-child(3) { left: 24.31%; top: 21.41%; width: 51.58%; --i: 1; }
+      .brand-logo > span:nth-child(4) { left: 0; top: 35.68%; width: 63.68%; --i: 0; }
       .splash {
         position: fixed;
         inset: 0;
@@ -61,11 +96,19 @@
         background: #000000;
         color: #ffffff;
       }
-      .splash-icon {
-        width: 80px;
-        height: 80px;
-        transform-origin: 50% 0;
-        animation: splash-swing 1.4s ease-in-out infinite alternate;
+      .splash .brand-logo {
+        --logo-bg: #ffffff;
+        width: 128px;
+      }
+      .dark .splash .brand-logo {
+        --logo-bg: #000000;
+      }
+      /* Las chamarras aparecen una tras otra, de la de enfrente a la de atras; cuando sale la ultima,
+         la primera ya se esta yendo para volver a empezar */
+      .splash .brand-logo > span {
+        opacity: 0;
+        animation: jacket-in 2s ease-out infinite;
+        animation-delay: calc(var(--i) * 0.2s);
       }
       .splash-word {
         margin: 0;
@@ -73,23 +116,26 @@
         font-weight: 600;
         letter-spacing: -0.02em;
       }
-      @keyframes splash-swing {
-        from { transform: rotate(-10deg); }
-        to { transform: rotate(10deg); }
+      @keyframes jacket-in {
+        0% { opacity: 0; transform: translate(-10%, 10%) scale(0.9); }
+        18% { opacity: 1; transform: none; }
+        72% { opacity: 1; transform: none; }
+        88%, 100% { opacity: 0; transform: none; }
       }
       @keyframes splash-pulse {
         from { opacity: 1; }
         to { opacity: 0.5; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .splash-icon { animation-name: splash-pulse; }
+        .splash .brand-logo > span { opacity: 1; animation: none; }
+        .splash .brand-logo { animation: splash-pulse 1.4s ease-in-out infinite alternate; }
       }
     </style>
   </head>
   <body>
     <div id="root">
       <div class="splash" role="status" aria-label="Cargando Niche">
-        <span class="brand-mark splash-icon" aria-hidden="true"></span>
+        <span class="brand-logo" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
         <p class="splash-word">Niche</p>
       </div>
     </div>
