@@ -34,6 +34,7 @@ type CreateListingDialogProps = {
 export function CreateListingDialog({ origin, onClose, listing, fromItem, onPublished }: CreateListingDialogProps) {
   return (
     <MorphDialog
+      swipeUpToClose
       origin={origin}
       onClose={onClose}
       title={listing ? 'Editar venta' : 'Crear venta'}

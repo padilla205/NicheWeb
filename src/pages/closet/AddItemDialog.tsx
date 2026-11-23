@@ -31,6 +31,7 @@ type AddItemDialogProps = {
 export function AddItemDialog({ origin, onClose, item }: AddItemDialogProps) {
   return (
     <MorphDialog
+      swipeUpToClose
       origin={origin}
       onClose={onClose}
       title={item ? 'Editar prenda' : 'Agregar prenda'}

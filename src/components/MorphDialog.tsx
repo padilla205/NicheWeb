@@ -1,6 +1,6 @@
 import { X } from 'lucide-react'
 import { AnimatePresence, motion, useAnimate, usePresence, useReducedMotion } from 'motion/react'
-import { type ReactNode, useEffect, useId, useLayoutEffect } from 'react'
+import { type PointerEvent, type ReactNode, useEffect, useId, useLayoutEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { cn } from '@/lib/utils'
@@ -12,6 +12,8 @@ type MorphDialogProps = {
   title: string
   description: string
   children: ReactNode
+  // En celular, deslizar la ventana hacia arriba (desde su titulo) la cierra
+  swipeUpToClose?: boolean
 }
 
 // Ventana que nace del boton que la abrio (ver MorphButton) y al cerrarse regresa a el
@@ -48,9 +50,14 @@ type PanelProps = {
   title: string
   description: string
   children: ReactNode
+  swipeUpToClose?: boolean
 }
 
-function MorphPanel({ origin, onClose, title, description, children }: PanelProps) {
+// Cuanto hay que subir la ventana (px) o que tan rapido (px/s) para que se cierre al soltarla
+const CLOSE_DISTANCE = 100
+const CLOSE_VELOCITY = 600
+
+function MorphPanel({ origin, onClose, title, description, children, swipeUpToClose = false }: PanelProps) {
   const titleId = useId()
   const descriptionId = useId()
   useModalBehavior(onClose)
@@ -77,10 +84,48 @@ function MorphPanel({ origin, onClose, title, description, children }: PanelProp
     )
   }, [animate, scope, origin, reduceMotion])
 
+  // Deslizar hacia arriba para cerrar: la ventana sigue al dedo (solo hacia arriba; hacia abajo
+  // apenas cede) y al soltarla se va por arriba o regresa a su lugar
+  const swipe = useRef<{ startY: number; lastY: number; lastTime: number; velocity: number } | null>(null)
+  const swipedAway = useRef(false)
+  function onSwipeStart(event: PointerEvent<HTMLDivElement>) {
+    if (!swipeUpToClose || event.pointerType === 'mouse') return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    swipe.current = { startY: event.clientY, lastY: event.clientY, lastTime: event.timeStamp, velocity: 0 }
+  }
+  function onSwipeMove(event: PointerEvent<HTMLDivElement>) {
+    const s = swipe.current
+    if (!s) return
+    const elapsed = Math.max(1, event.timeStamp - s.lastTime)
+    s.velocity = ((event.clientY - s.lastY) / elapsed) * 1000
+    s.lastY = event.clientY
+    s.lastTime = event.timeStamp
+    const dy = event.clientY - s.startY
+    animate(scope.current, { y: dy < 0 ? dy : dy * 0.2 }, { duration: 0 })
+  }
+  function onSwipeEnd() {
+    const s = swipe.current
+    if (!s) return
+    swipe.current = null
+    const dy = s.lastY - s.startY
+    if (dy < -CLOSE_DISTANCE || s.velocity < -CLOSE_VELOCITY) {
+      swipedAway.current = true
+      animate(scope.current, { y: -window.innerHeight, opacity: 0 }, { duration: 0.25, ease: 'easeOut' })
+      onClose()
+    } else {
+      animate(scope.current, { y: 0 }, openSpring)
+    }
+  }
+
   // Al cerrar: hace el camino de regreso y se desvanece justo al llegar al boton
   useEffect(() => {
     if (isPresent) return
     const panel = scope.current
+    // Si se cerro deslizandola, ya va saliendo por arriba: solo espera a que termine
+    if (swipedAway.current) {
+      const timer = setTimeout(safeToRemove, 250)
+      return () => clearTimeout(timer)
+    }
     if (!reduceMotion) animate(panel, transformToButton(panel, origin), openSpring)
     // Se quita en cuanto termina de desvanecerse (sin esperar el final del rebote)
     animate(panel, { opacity: 0 }, { delay: 0.2, duration: 0.1 }).then(safeToRemove)
@@ -118,7 +163,26 @@ function MorphPanel({ origin, onClose, title, description, children }: PanelProp
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
             className="grid gap-4"
           >
-            <div className="flex flex-col gap-2">
+            {/* Agarradera en celular: de aqui se desliza hacia arriba para cerrar */}
+            {swipeUpToClose && (
+              <div
+                aria-hidden
+                onPointerDown={onSwipeStart}
+                onPointerMove={onSwipeMove}
+                onPointerUp={onSwipeEnd}
+                onPointerCancel={onSwipeEnd}
+                className="-mx-4 -mt-4 -mb-2 flex h-6 touch-none cursor-grab justify-center pt-2 md:hidden"
+              >
+                <span className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+              </div>
+            )}
+            <div
+              onPointerDown={onSwipeStart}
+              onPointerMove={onSwipeMove}
+              onPointerUp={onSwipeEnd}
+              onPointerCancel={onSwipeEnd}
+              className={cn('flex flex-col gap-2', swipeUpToClose && 'max-md:touch-none')}
+            >
               <h2 id={titleId} className="text-base leading-none font-medium">
                 {title}
               </h2>

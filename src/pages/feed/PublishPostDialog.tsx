@@ -22,6 +22,7 @@ type PublishPostDialogProps = {
 export function PublishPostDialog({ origin, onClose, outfit }: PublishPostDialogProps) {
   return (
     <MorphDialog
+      swipeUpToClose
       origin={origin}
       onClose={onClose}
       title={outfit ? 'Publicar outfit' : 'Publicar'}
