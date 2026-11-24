@@ -351,6 +351,30 @@ export type Database = {
           },
         ]
       }
+      item_scans: {
+        Row: {
+          created_at: string
+          id: string
+          ok: boolean
+          searches: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ok?: boolean
+          searches?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ok?: boolean
+          searches?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       items: {
         Row: {
           brand: string | null

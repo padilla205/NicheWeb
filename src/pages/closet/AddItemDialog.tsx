@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Sparkles } from 'lucide-react'
 import { ChoicePill } from '@/components/ChoicePill'
 import { MorphDialog } from '@/components/MorphDialog'
 import { Button } from '@/components/ui/button'
@@ -16,6 +15,7 @@ import { fileFromPhoto } from '@/lib/photos'
 import { ClothingTypePicker } from './ClothingTypePicker'
 import { ColorPicker } from './ColorPicker'
 import { PhotoPicker } from './PhotoPicker'
+import { ScanButton } from './ScanButton'
 import { ScanResult } from './ScanResult'
 import { MAX_SEASONS, SeasonPicker } from './SeasonPicker'
 import { TeamPicker } from './TeamPicker'
@@ -103,11 +103,12 @@ function AddItemForm({ onDone, item, draft, draftOwner }: AddItemFormProps) {
 
   // Lo que encontro la IA llena el formulario; todo se puede corregir antes de guardar
   function applyScan(scan: GarmentScan) {
+    // Solo lo que la IA si supo; lo demas se queda como estaba
     setName(scan.model)
-    setType(scan.type)
-    if (scan.brand && scan.brand !== 'Sin marca visible') setBrand(scan.brand)
-    setDecade(scan.decade)
-    setColors(scan.colors)
+    if (scan.type) setType(scan.type)
+    if (scan.brand) setBrand(scan.brand)
+    if (scan.decade) setDecade(scan.decade)
+    if (scan.colors.length) setColors(scan.colors)
     setScanning(false)
   }
 
@@ -178,13 +179,8 @@ function AddItemForm({ onDone, item, draft, draftOwner }: AddItemFormProps) {
       {/* En celular, al agregar una prenda nueva, la camara ya esta abierta */}
       <PhotoPicker files={photos} onChange={setPhotos} camera autoOpenCamera={!item} />
 
-      {/* Prueba de diseño: por ahora solo en tu computadora y con datos de ejemplo, hasta conectar la IA */}
-      {import.meta.env.DEV && photos.length > 0 && (
-        <Button type="button" variant="outline" className="w-full" onClick={() => setScanning(true)}>
-          <Sparkles />
-          Identificar con IA
-        </Button>
-      )}
+      {/* Opcional: llenar los datos con IA. Por ahora solo en tu computadora, hasta probarlo con la clave real */}
+      {import.meta.env.DEV && photos.length > 0 && <ScanButton onScan={() => setScanning(true)} />}
       {scanning && <ScanResult photos={photos} onUse={applyScan} onClose={() => setScanning(false)} />}
 
       <div className="flex flex-col gap-2">

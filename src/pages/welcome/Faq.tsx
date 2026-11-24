@@ -28,6 +28,10 @@ const questions = [
     a: 'Al subir una prenda toca Editar y luego Quitar fondo. Se hace en tu propio dispositivo: tu foto no se manda a ningun servidor para eso.',
   },
   {
+    q: '¿Como funciona el escaneo con IA?',
+    a: 'Es opcional. Al subir una prenda toca Identificar con IA: la IA de Google mira tus fotos, busca el modelo y su precio de reventa en internet, y llena los datos por ti. Tienes 10 escaneos al dia; subir prendas llenando los datos tu mismo es gratis y sin limite.',
+  },
+  {
     q: '¿Que hago si alguien me molesta o publica algo inapropiado?',
     a: 'Puedes reportar o bloquear a cualquier usuario. Las publicaciones con varios reportes se ocultan mientras se revisan.',
   },

@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { useObjectUrls } from '@/hooks/useObjectUrls'
 import { getTypeInfo } from '@/lib/clothing'
-import { type GarmentScan, scanGarment } from '@/lib/garmentScan'
+import { scanGarment, ScanError, useRefreshScansLeft } from '@/hooks/useGarmentScan'
+import type { GarmentScan } from '@/lib/garmentScan'
 import { cn } from '@/lib/utils'
 import { PriceReveal } from './PriceReveal'
 
@@ -24,7 +25,9 @@ const steps = ['Analizando la prenda', 'Leyendo la etiqueta', 'Buscando el model
 // la etiqueta y, en una barra abajo, el precio aproximado de reventa
 export function ScanResult({ photos, onUse, onClose }: ScanResultProps) {
   const [scan, setScan] = useState<GarmentScan | null>(null)
-  const [failed, setFailed] = useState(false)
+  // Mensaje de error (limite diario, sin conexion, no es una prenda...) o null si todo va bien
+  const [failed, setFailed] = useState<string | null>(null)
+  const refreshScansLeft = useRefreshScansLeft()
   const [step, setStep] = useState(0)
   useModalBehavior(onClose)
   const loading = !scan && !failed
@@ -34,17 +37,21 @@ export function ScanResult({ photos, onUse, onClose }: ScanResultProps) {
 
   useEffect(() => {
     let cancelled = false
-    scanGarment(photos).then(
-      (result) => !cancelled && setScan(result),
-      () => !cancelled && setFailed(true),
-    )
+    scanGarment(photos)
+      .then(
+        (result) => !cancelled && setScan(result),
+        (error) =>
+          !cancelled &&
+          setFailed(error instanceof ScanError ? error.message : 'No se pudo identificar la prenda. Revisa tu conexion e intenta de nuevo.'),
+      )
+      .finally(refreshScansLeft)
     // Los pasos avanzan solos mientras espera (la respuesta llega toda junta)
     const timer = window.setInterval(() => setStep((s) => Math.min(s + 1, steps.length - 1)), 700)
     return () => {
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [photos])
+  }, [photos, refreshScansLeft])
 
   const urlOf = useObjectUrls(photos)
   const urls = photos.map(urlOf)
@@ -56,7 +63,6 @@ export function ScanResult({ photos, onUse, onClose }: ScanResultProps) {
           <ArrowLeft />
         </Button>
         <h2 className="text-lg font-semibold tracking-tight">Resultado</h2>
-        {scan?.example && <span className="ml-auto rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">Datos de ejemplo</span>}
       </header>
 
       <div className="flex-1 overflow-y-auto">
@@ -99,7 +105,7 @@ export function ScanResult({ photos, onUse, onClose }: ScanResultProps) {
 
           {failed ? (
             <p role="alert" className="text-sm text-destructive">
-              No se pudo identificar la prenda. Revisa tu conexion e intenta de nuevo, o llena los datos a mano.
+              {failed}
             </p>
           ) : !scan ? (
             <motion.div layout transition={move} className="mx-auto flex flex-col gap-3">
@@ -140,8 +146,8 @@ const confidenceText = { alta: 'Seguro', media: 'Probable', baja: 'Poco seguro' 
 function Details({ scan }: { scan: GarmentScan }) {
   const facts = [
     { label: 'Marca', value: scan.brand },
-    { label: 'Año', value: scan.year ? String(scan.year) : `${scan.decade}s` },
-    { label: 'Tipo', value: getTypeInfo(scan.type).label },
+    { label: 'Año', value: scan.year ? String(scan.year) : scan.decade ? `${scan.decade}s` : undefined },
+    { label: 'Tipo', value: scan.type && getTypeInfo(scan.type).label },
     { label: 'Estilo', value: scan.style },
     { label: 'Rareza', value: scan.rarity },
     // Lo que se leyo en la etiqueta, solo si se pudo leer
@@ -173,7 +179,8 @@ function Details({ scan }: { scan: GarmentScan }) {
       </section>
 
       {/* Lo mejor del resultado, justo despues de la descripcion: cuanto vale */}
-      <PriceReveal price={scan.price} />
+      {/* Si la IA no pudo dar ni un precio aproximado, la tarjeta no se muestra */}
+      {scan.price.max > 0 && <PriceReveal price={scan.price} />}
 
       {/* Ficha: tarjeta con titulo y renglones separados por una linea fina */}
       <section aria-labelledby="ficha-titulo" className="rounded-3xl border bg-card px-5 pt-4 pb-2 shadow-sm">

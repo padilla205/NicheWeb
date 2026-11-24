@@ -54,23 +54,28 @@ export function PriceReveal({ price }: { price: GarmentScan['price'] }) {
         {price.basis === 'reventa' ? `Segun ${price.found} ventas de reventa` : 'Estimado: sin ventas de este modelo'}
       </p>
 
-      {/* Cuadro que resalta: lo que vale hoy y si conviene vender, en blanco para que se distinga */}
-      <div className="mt-5 flex items-center gap-3 rounded-2xl border-2 border-white bg-white p-4 text-black shadow-[0_0_0_4px_rgb(255_255_255/0.08)]">
-        <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-full text-white', rising ? 'bg-emerald-600' : 'bg-red-500')}>
-          <Trend className="size-5" aria-hidden />
-        </span>
-        <div className="min-w-0">
-          <p className="text-xs text-black/60">Hoy se vende en</p>
-          <p className="text-xl leading-tight font-bold tabular-nums">MX${money.format(today)}</p>
-          <p className="text-sm font-medium text-pretty">{rising ? 'Buen momento para vender' : 'Su precio va bajando: si la vendes, mejor pronto'}</p>
-        </div>
-      </div>
+      {/* Con al menos 2 años de precios: cuanto vale hoy, si conviene vender y la grafica */}
+      {price.history.length >= 2 && (
+        <>
+          {/* Cuadro que resalta: lo que vale hoy y si conviene vender, en blanco para que se distinga */}
+          <div className="mt-5 flex items-center gap-3 rounded-2xl border-2 border-white bg-white p-4 text-black shadow-[0_0_0_4px_rgb(255_255_255/0.08)]">
+            <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-full text-white', rising ? 'bg-emerald-600' : 'bg-red-500')}>
+              <Trend className="size-5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs text-black/60">Hoy se vende en</p>
+              <p className="text-xl leading-tight font-bold tabular-nums">MX${money.format(today)}</p>
+              <p className="text-sm font-medium text-pretty">{rising ? 'Buen momento para vender' : 'Su precio va bajando: si la vendes, mejor pronto'}</p>
+            </div>
+          </div>
 
-      {/* La grafica en su propio recuadro */}
-      <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-        <p className="mb-3 text-xs font-medium tracking-wide text-muted-foreground uppercase">Ultimos 5 años</p>
-        <PriceHistoryChart points={price.history} estimated={price.basis === 'estimado'} />
-      </div>
+          {/* La grafica en su propio recuadro */}
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <p className="mb-3 text-xs font-medium tracking-wide text-muted-foreground uppercase">Ultimos 5 años</p>
+            <PriceHistoryChart points={price.history} estimated={price.basis === 'estimado'} />
+          </div>
+        </>
+      )}
 
       {price.sources.length > 0 && (
         <ul className="mt-4 divide-y divide-white/10 rounded-2xl border border-white/10 px-4">

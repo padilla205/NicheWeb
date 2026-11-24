@@ -1,18 +1,19 @@
-import type { ClothingType } from '@/lib/clothing'
+import { type ClothingType, clothingZones } from '@/lib/clothing'
 
-// Lo que la IA dice de una prenda a partir de sus fotos (frente, atras y etiqueta)
+// Lo que la IA dice de una prenda a partir de sus fotos (frente, atras y etiqueta). Los datos que no
+// pudo confirmar quedan vacios: la pantalla solo muestra lo que si sabe
 export type GarmentScan = {
   // Nombre del modelo, tal como se conoce en reventa
   model: string
-  brand: string
+  brand?: string
   // Año en que salio, si se sabe; si no, solo la decada
   year?: number
-  decade: number
-  type: ClothingType
+  decade?: number
+  type?: ClothingType
   colors: string[]
   description: string
   // Estilo o escena a la que pertenece (streetwear, futbol retro, outdoor...)
-  style: string
+  style?: string
   rarity: 'Comun' | 'Poco comun' | 'Rara'
   // Lo que se lee en la etiqueta
   tag: { size?: string; material?: string; madeIn?: string }
@@ -25,76 +26,61 @@ export type GarmentScan = {
     basis: 'reventa' | 'estimado'
     // Cuantas ventas encontro (solo con basis reventa)
     found?: number
+    // Paginas que la IA cito al buscar en Google (las da Google, no las escribe la IA)
     sources: { title: string; url: string }[]
     // Precio tipico de reventa en cada uno de los ultimos 5 años (para la grafica)
     history: { year: number; price: number }[]
   }
-  // Solo mientras no esta conectada la IA: los datos son inventados para ver la pantalla
-  example?: boolean
 }
 
-// ponytail: datos de ejemplo para disenar la pantalla. Se reemplaza por la llamada a la funcion de
-// Supabase que le pasa las fotos a Claude cuando exista la cuenta de la API
-const examples: GarmentScan[] = [
-  {
-    model: 'Jersey Xolos de Tijuana local 2012',
-    brand: 'Nike',
-    year: 2012,
-    decade: 2010,
-    type: 'jerseys-futbol',
-    colors: ['negro', 'rojo'],
-    description: 'Jersey local negro con franja roja al frente y patrocinador en el pecho. Corte de los primeros años del club en primera division.',
-    style: 'Futbol retro',
-    rarity: 'Poco comun',
-    tag: { size: 'M', material: 'Poliester', madeIn: 'Tailandia' },
-    confidence: 'alta',
+// Respuesta cruda de la funcion escanear-prenda (ver supabase/functions/escanear-prenda)
+export type RawScan = {
+  identified: boolean
+  model: string
+  brand: string
+  year: number
+  decade: number
+  type: string
+  colors: string[]
+  description: string
+  style: string
+  rarity: GarmentScan['rarity']
+  tag: { size: string; material: string; madeIn: string }
+  confidence: GarmentScan['confidence']
+  price: { min: number; max: number; basis: GarmentScan['price']['basis']; found: number; history: { year: number; price: number }[] }
+}
+
+const typeValues = new Set<string>(clothingZones.flatMap((zone) => zone.types.map((t) => t.value)))
+const text = (value: unknown) => (typeof value === 'string' && value.trim() ? value.trim() : undefined)
+const positive = (value: unknown) => (typeof value === 'number' && value > 0 ? Math.round(value) : undefined)
+
+// Limpia lo que devolvio la IA: lo vacio o fuera de las listas de Niche se descarta
+export function toGarmentScan(raw: RawScan, sources: GarmentScan['price']['sources']): GarmentScan {
+  const min = positive(raw.price?.min) ?? 0
+  const max = Math.max(positive(raw.price?.max) ?? 0, min)
+  const history = (raw.price?.history ?? [])
+    .filter((point) => positive(point.year) && positive(point.price))
+    .sort((a, b) => a.year - b.year)
+  return {
+    model: text(raw.model) ?? 'Prenda sin identificar',
+    brand: text(raw.brand),
+    year: positive(raw.year),
+    decade: positive(raw.decade),
+    type: typeValues.has(raw.type) ? (raw.type as ClothingType) : undefined,
+    colors: (raw.colors ?? []).slice(0, 3),
+    description: text(raw.description) ?? '',
+    style: text(raw.style),
+    rarity: raw.rarity ?? 'Comun',
+    tag: { size: text(raw.tag?.size), material: text(raw.tag?.material), madeIn: text(raw.tag?.madeIn) },
+    confidence: raw.confidence ?? 'baja',
     price: {
-      min: 700,
-      max: 1100,
-      basis: 'reventa',
-      found: 5,
-      sources: [],
-      history: [
-        { year: 2022, price: 520 },
-        { year: 2023, price: 610 },
-        { year: 2024, price: 590 },
-        { year: 2025, price: 780 },
-        { year: 2026, price: 900 },
-      ],
+      min,
+      max,
+      // Sin precio no puede presumir de ventas reales
+      basis: min > 0 && raw.price?.basis === 'reventa' ? 'reventa' : 'estimado',
+      found: positive(raw.price?.found),
+      sources,
+      history,
     },
-    example: true,
-  },
-  {
-    model: 'Sudadera con capucha basica',
-    brand: 'Sin marca visible',
-    decade: 2020,
-    type: 'sudaderas-capucha',
-    colors: ['negro'],
-    description: 'Sudadera lisa con capucha y bolsa canguro. No se encontro el modelo exacto: los datos son una estimacion por el corte y la tela.',
-    style: 'Casual',
-    rarity: 'Comun',
-    tag: { size: 'L' },
-    confidence: 'baja',
-    price: {
-      min: 150,
-      max: 300,
-      basis: 'estimado',
-      sources: [],
-      history: [
-        { year: 2022, price: 280 },
-        { year: 2023, price: 260 },
-        { year: 2024, price: 250 },
-        { year: 2025, price: 230 },
-        { year: 2026, price: 220 },
-      ],
-    },
-    example: true,
-  },
-]
-// Identifica la prenda. Hoy devuelve un ejemplo tras una espera: segun la foto de portada sale el caso
-// con ventas encontradas o el de precio estimado, siempre el mismo para la misma foto
-export async function scanGarment(photos: File[]): Promise<GarmentScan> {
-  if (photos.length === 0) throw new Error('Sin fotos')
-  await new Promise((resolve) => setTimeout(resolve, 2600))
-  return examples[photos[0].size % examples.length]
+  }
 }

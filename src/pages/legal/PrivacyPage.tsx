@@ -71,6 +71,11 @@ export function PrivacyPage() {
             herramienta que lo hace (una sola vez). Tu foto no se envia: el fondo se quita en tu dispositivo.
           </li>
           <li>
+            <strong>Google (Gemini):</strong> solo si tocas "Identificar con IA" al agregar una prenda, las fotos
+            de esa prenda se envian a Gemini, la IA de Google, para reconocerla y buscar su precio en internet.
+            No se envian tu nombre ni tus otros datos. Si no usas ese boton, tus fotos no se envian.
+          </li>
+          <li>
             <strong>OpenStreetMap:</strong> muestra los mapas de los lugares de entrega y ubica las ciudades.
           </li>
         </LegalList>
