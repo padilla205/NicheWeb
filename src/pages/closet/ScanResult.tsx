@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, ExternalLink, Sparkles } from 'lucide-react'
+import { ArrowLeft, Check, Info, Sparkles, Tag } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button'
 import { useModalBehavior } from '@/hooks/useModalBehavior'
 import { useObjectUrls } from '@/hooks/useObjectUrls'
 import { getTypeInfo } from '@/lib/clothing'
-import { formatPriceRange, type GarmentScan, scanGarment } from '@/lib/garmentScan'
+import { type GarmentScan, scanGarment } from '@/lib/garmentScan'
 import { cn } from '@/lib/utils'
-import { PriceHistoryChart } from './PriceHistoryChart'
+import { PriceReveal } from './PriceReveal'
 
 type ScanResultProps = {
   photos: File[]
@@ -77,7 +77,7 @@ export function ScanResult({ photos, onUse, onClose }: ScanResultProps) {
                 animate={{ rotate: loading ? (i - (urls.length - 1) / 2) * 7 : 0 }}
                 className={cn(
                   'relative shrink-0 overflow-hidden rounded-2xl',
-                  loading ? 'h-56 w-44 shadow-[0_24px_40px_-20px_rgb(0_0_0/0.5)]' : 'h-40 w-32',
+                  loading ? 'h-56 w-44 shadow-[0_24px_40px_-20px_rgb(0_0_0/0.5)]' : 'h-40 w-32 shadow-md ring-1 ring-foreground/10',
                   loading && i > 0 && '-ml-28',
                 )}
                 // La portada queda encima de las demas en el abanico
@@ -115,21 +115,16 @@ export function ScanResult({ photos, onUse, onClose }: ScanResultProps) {
         </div>
       </div>
 
-      {/* Barra de abajo: precio aproximado de reventa y usar los datos */}
+      {/* Abajo, siempre a la mano: usar los datos en el formulario */}
       {scan && (
         <motion.div
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', visualDuration: 0.3, bounce: 0.15 }}
-          className="dark fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] mx-auto flex max-w-lg items-center gap-3 rounded-3xl bg-neutral-950 p-4 text-foreground shadow-[0_20px_40px_-20px_rgb(0_0_0/0.6)]"
+          // Franja con el fondo de la pantalla: el texto que pasa por debajo no se encima con el boton
+          className="fixed inset-x-0 bottom-0 border-t bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md"
         >
-          <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground">
-              {scan.price.basis === 'reventa' ? 'Precio de reventa' : 'Precio aproximado'}
-            </p>
-            <p className="text-xl font-bold tracking-tight tabular-nums">{formatPriceRange(scan.price.min, scan.price.max)}</p>
-          </div>
-          <Button type="button" className="shrink-0 rounded-full" onClick={() => onUse(scan)}>
+          <Button type="button" size="lg" className="mx-auto flex w-full max-w-lg rounded-full" onClick={() => onUse(scan)}>
             <Check />
             Usar datos
           </Button>
@@ -157,22 +152,36 @@ function Details({ scan }: { scan: GarmentScan }) {
   return (
     // Entra un momento despues, cuando las fotos ya subieron
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.3 }} className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2">
-        <span
-          className={cn(
-            'self-start rounded-full px-2.5 py-1 text-xs font-medium',
-            scan.confidence === 'baja' ? 'bg-muted text-muted-foreground' : 'bg-foreground text-background',
-          )}
-        >
-          {confidenceText[scan.confidence]}
-        </span>
-        <h3 className="text-3xl font-bold tracking-tight text-balance">{scan.model}</h3>
-        <p className="text-pretty text-muted-foreground">{scan.description}</p>
-      </div>
+      {/* Tarjeta del modelo: que es la prenda y que tan segura esta la IA */}
+      <section className="rounded-3xl border bg-card p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3 border-b pb-3">
+          <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <Sparkles className="size-3.5" />
+            Modelo identificado
+          </p>
+          <span
+            className={cn(
+              'rounded-full border px-2.5 py-1 text-xs font-medium',
+              scan.confidence === 'baja' ? 'bg-muted text-muted-foreground' : 'border-foreground bg-foreground text-background',
+            )}
+          >
+            {confidenceText[scan.confidence]}
+          </span>
+        </div>
+        <h3 className="mt-4 text-3xl font-bold tracking-tight text-balance">{scan.model}</h3>
+        <p className="mt-2 text-pretty text-muted-foreground">{scan.description}</p>
+      </section>
 
-      {/* Ficha: renglones con una linea fina entre ellos, sobre una franja gris (sin cuadros) */}
-      <section aria-label="Ficha de la prenda" className="-mx-4 bg-muted px-4 py-2">
-        <dl className="divide-y divide-foreground/10">
+      {/* Lo mejor del resultado, justo despues de la descripcion: cuanto vale */}
+      <PriceReveal price={scan.price} />
+
+      {/* Ficha: tarjeta con titulo y renglones separados por una linea fina */}
+      <section aria-labelledby="ficha-titulo" className="rounded-3xl border bg-card px-5 pt-4 pb-2 shadow-sm">
+        <h4 id="ficha-titulo" className="flex items-center gap-1.5 border-b pb-3 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <Tag className="size-3.5" />
+          Ficha de la prenda
+        </h4>
+        <dl className="divide-y">
           {facts.map((fact) => (
             <div key={fact.label} className="flex items-baseline justify-between gap-4 py-3">
               <dt className="text-sm text-muted-foreground">{fact.label}</dt>
@@ -182,34 +191,10 @@ function Details({ scan }: { scan: GarmentScan }) {
         </dl>
       </section>
 
-      {/* Precio: seccion negra con la grafica de los ultimos 5 años */}
-      <section aria-label="Precio" className="dark -mx-4 border-y border-white/10 bg-neutral-950 px-4 py-6 text-foreground">
-        <p className="text-sm text-muted-foreground">{scan.price.basis === 'reventa' ? 'Precio de reventa' : 'Precio aproximado'}</p>
-        <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums">{formatPriceRange(scan.price.min, scan.price.max)}</p>
-        <p className="mt-1 text-sm text-pretty text-muted-foreground">
-          {scan.price.basis === 'reventa'
-            ? `Segun ${scan.price.found} ventas encontradas`
-            : 'No encontramos ventas de este modelo; es un estimado'}
-        </p>
-
-        <p className="mt-6 mb-3 text-xs font-medium tracking-wide text-muted-foreground uppercase">Ultimos 5 años</p>
-        <PriceHistoryChart points={scan.price.history} estimated={scan.price.basis === 'estimado'} />
-
-        {scan.price.sources.length > 0 && (
-          <ul className="mt-6 divide-y divide-white/10 border-t border-white/10">
-            {scan.price.sources.map((source) => (
-              <li key={source.url}>
-                <a href={source.url} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 py-3 text-sm hover:underline">
-                  <span className="truncate">{source.title}</span>
-                  <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <p className="text-xs text-pretty text-muted-foreground">Revisa los datos: la IA puede equivocarse. Al usarlos los puedes corregir en el formulario.</p>
+      <p className="flex items-start gap-2 rounded-2xl border border-dashed p-3.5 text-xs text-pretty text-muted-foreground">
+        <Info className="mt-px size-4 shrink-0" />
+        Revisa los datos: la IA puede equivocarse. Al usarlos los puedes corregir en el formulario.
+      </p>
     </motion.div>
   )
 }

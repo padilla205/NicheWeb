@@ -98,9 +98,3 @@ export async function scanGarment(photos: File[]): Promise<GarmentScan> {
   await new Promise((resolve) => setTimeout(resolve, 2600))
   return examples[photos[0].size % examples.length]
 }
-
-// "MX$700 – 1,100"
-const money = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 })
-export function formatPriceRange(min: number, max: number) {
-  return `MX$${money.format(min)} – ${money.format(max)}`
-}
