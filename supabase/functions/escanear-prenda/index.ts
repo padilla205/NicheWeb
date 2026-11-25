@@ -3,7 +3,9 @@
 // Recibe hasta 3 fotos ya achicadas, revisa la sesion y los limites, y devuelve la ficha.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const MODEL = 'gemini-3.8-flash'
+// Gratis: 500 escaneos al dia para toda la app. Sin busqueda en Google (en el nivel gratis los
+// Gemini 3 tienen 0 busquedas). Con presupuesto: volver a gemini-3.8-flash + google_search
+const MODEL = 'gemini-3.5-flash-lite'
 // Escaneos por usuario en 24 horas
 const USER_DAILY_LIMIT = 10
 // Topes de busquedas para toda la app, un poco abajo de lo gratis de Google (1,500 al dia y 5,000 al
@@ -86,9 +88,7 @@ Deno.serve(async (req) => {
         { type: 'text', text: 'Identifica esta prenda. Las fotos pueden ser frente, atras y etiqueta.' },
         ...photos.map((p) => ({ type: 'image', data: p.data, mime_type: p.mime })),
       ],
-      tools: [{ type: 'google_search' }],
       response_format: { type: 'text', mime_type: 'application/json', schema: schema(year, lists) },
-      generation_config: { thinking_level: 'medium' },
     }),
   })
 
@@ -145,10 +145,10 @@ function instructions(year: number, lists: Lists) {
 Te mandan fotos de UNA prenda (frente, atras y a veces la etiqueta). Identificala y estima su valor de reventa en Mexico.
 
 Reglas para no dar informacion falsa:
-- Usa la busqueda de Google para confirmar el modelo exacto y buscar precios reales de reventa en pesos mexicanos (Mercado Libre, Facebook Marketplace, eBay, Vinted, Depop, Grailed, tiendas de segunda mano).
+- No tienes busqueda en internet: identifica la prenda por lo que se ve en las fotos y la etiqueta, y estima el precio con lo que sabes del mercado de reventa en Mexico (Mercado Libre, Facebook Marketplace, Vinted, Depop, tiendas de segunda mano).
 - No inventes. Si no estas seguro de un dato, dejalo vacio ("" o 0) y baja la confianza.
 - Si la marca no se ve ni se lee en la etiqueta, deja brand vacio.
-- price.basis = "reventa" solo si encontraste anuncios o ventas reales de este modelo; en price.found pon cuantos. Si no, basis = "estimado" y found = 0.
+- price.basis siempre "estimado" y price.found = 0.
 - price.history: precio tipico de reventa en pesos para cada año de ${year - 4} a ${year}. Si no hay datos de algun año, estimalo con criterio, pero entonces basis debe ser "estimado".
 - Si las fotos no muestran ropa, pon identified = false.
 
@@ -160,7 +160,7 @@ Formato:
 - colors: de 1 a 3 colores principales de esta lista: ${lists.colors.join(', ')}.
 - decade: una de ${lists.decades.join(', ')}, o 0 si no sabes. year: año exacto si lo sabes, si no 0.
 - rarity: "Comun", "Poco comun" o "Rara".
-- confidence: "alta" si confirmaste el modelo, "media" si es probable, "baja" si no lo encontraste.`
+- confidence: "alta" si el modelo se reconoce claro en las fotos, "media" si es probable, "baja" si no.`
 }
 
 function schema(year: number, lists: Lists) {
