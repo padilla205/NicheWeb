@@ -179,9 +179,20 @@ function AddItemForm({ onDone, item, draft, draftOwner }: AddItemFormProps) {
       {/* En celular, al agregar una prenda nueva, la camara ya esta abierta */}
       <PhotoPicker files={photos} onChange={setPhotos} camera autoOpenCamera={!item} />
 
-      {/* Opcional: llenar los datos con IA. Por ahora solo en tu computadora, hasta probarlo con la clave real */}
+      {/* Opcional: llenar los datos con IA */}
       {photos.length > 0 && <ScanButton onScan={() => setScanning(true)} />}
-      {scanning && <ScanResult photos={photos} onUse={applyScan} onClose={() => setScanning(false)} />}
+      {scanning && (
+        <ScanResult
+          photos={photos}
+          onUse={applyScan}
+          // Sin guardar: se vacia el formulario (y el borrador) para tomar fotos de otra prenda
+          onRestart={() => {
+            resetForm()
+            setScanning(false)
+          }}
+          onClose={() => setScanning(false)}
+        />
+      )}
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="item-type">Tipo de prenda</Label>

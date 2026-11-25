@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Info, Sparkles, Tag } from 'lucide-react'
+import { ArrowLeft, Check, Info, RotateCcw, Sparkles, Tag } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -16,6 +16,8 @@ type ScanResultProps = {
   photos: File[]
   // "Usar estos datos": llena el formulario de la prenda
   onUse: (scan: GarmentScan) => void
+  // "Escanear otra prenda": descarta esta sin guardarla y empieza de cero
+  onRestart: () => void
   onClose: () => void
 }
 
@@ -23,7 +25,7 @@ const steps = ['Analizando la prenda', 'Leyendo la etiqueta', 'Buscando el model
 
 // Pantalla completa con lo que la IA encontro: modelo, descripcion, marca, año, estilo, rareza, lo de
 // la etiqueta y, en una barra abajo, el precio aproximado de reventa
-export function ScanResult({ photos, onUse, onClose }: ScanResultProps) {
+export function ScanResult({ photos, onUse, onRestart, onClose }: ScanResultProps) {
   const [scan, setScan] = useState<GarmentScan | null>(null)
   // Mensaje de error (limite diario, sin conexion, no es una prenda...) o null si todo va bien
   const [failed, setFailed] = useState<string | null>(null)
@@ -67,7 +69,7 @@ export function ScanResult({ photos, onUse, onClose }: ScanResultProps) {
 
       <div className="flex-1 overflow-y-auto">
         {/* Mientras carga, todo va centrado en la pantalla; con el resultado, arriba */}
-        <div className={cn('mx-auto flex max-w-lg flex-col gap-5 px-4 pt-4 pb-40', loading && 'min-h-full justify-center pb-24')}>
+        <div className={cn('mx-auto flex max-w-lg flex-col gap-5 px-4 pt-4 pb-56', loading && 'min-h-full justify-center pb-24')}>
           {/* Las fotos que se escanearon. Cargando: grandes, en abanico y al centro, con una luz que
               las recorre. Al llegar el resultado suben a su lugar arriba (layout anima el cambio) */}
           <motion.div
@@ -121,7 +123,7 @@ export function ScanResult({ photos, onUse, onClose }: ScanResultProps) {
         </div>
       </div>
 
-      {/* Abajo, siempre a la mano: usar los datos en el formulario */}
+      {/* Abajo, siempre a la mano: usar los datos en el formulario, o salir sin guardar y escanear otra */}
       {scan && (
         <motion.div
           initial={{ y: 40, opacity: 0 }}
@@ -130,10 +132,16 @@ export function ScanResult({ photos, onUse, onClose }: ScanResultProps) {
           // Franja con el fondo de la pantalla: el texto que pasa por debajo no se encima con el boton
           className="fixed inset-x-0 bottom-0 border-t bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md"
         >
-          <Button type="button" size="lg" className="mx-auto flex w-full max-w-lg rounded-full" onClick={() => onUse(scan)}>
-            <Check />
-            Usar datos
-          </Button>
+          <div className="mx-auto flex max-w-lg flex-col gap-2">
+            <Button type="button" size="lg" className="w-full rounded-full" onClick={() => onUse(scan)}>
+              <Check />
+              Usar datos
+            </Button>
+            <Button type="button" size="lg" variant="secondary" className="w-full rounded-full" onClick={onRestart}>
+              <RotateCcw />
+              Escanear otra prenda
+            </Button>
+          </div>
         </motion.div>
       )}
     </div>,
