@@ -180,7 +180,7 @@ function AddItemForm({ onDone, item, draft, draftOwner }: AddItemFormProps) {
       <PhotoPicker files={photos} onChange={setPhotos} camera autoOpenCamera={!item} />
 
       {/* Opcional: llenar los datos con IA. Por ahora solo en tu computadora, hasta probarlo con la clave real */}
-      {import.meta.env.DEV && photos.length > 0 && <ScanButton onScan={() => setScanning(true)} />}
+      {photos.length > 0 && <ScanButton onScan={() => setScanning(true)} />}
       {scanning && <ScanResult photos={photos} onUse={applyScan} onClose={() => setScanning(false)} />}
 
       <div className="flex flex-col gap-2">
