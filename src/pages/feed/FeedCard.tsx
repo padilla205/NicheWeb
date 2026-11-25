@@ -46,7 +46,8 @@ export function FeedCard({ post, onOpen, onAuthorHidden, layoutId }: FeedCardPro
     <motion.article
       layoutId={layoutId}
       style={{ borderRadius: 24 }}
-      className={cn('group relative overflow-hidden bg-card shadow-[0_12px_28px_-16px_rgb(0_0_0/0.35)] ring-1 ring-black/5 dark:ring-white/15', hoverLift)}
+      // isolate: Safari (iPhone) no recortaba las esquinas cuando la foto de adentro se anima
+      className={cn('group relative isolate overflow-hidden bg-card shadow-[0_12px_28px_-16px_rgb(0_0_0/0.35)]', hoverLift)}
     >
       <motion.div
         layoutId={layoutId && `${layoutId}-photo`}
@@ -106,6 +107,8 @@ export function FeedCard({ post, onOpen, onAuthorHidden, layoutId }: FeedCardPro
           </button>
         </div>
       </footer>
+      {/* Borde fino por dentro y encima de todo: la foto nunca se ve por fuera de el */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-black/5 ring-inset dark:ring-white/15" />
     </motion.article>
   )
 }
