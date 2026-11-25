@@ -95,6 +95,9 @@ Deno.serve(async (req) => {
   if (!response.ok) {
     console.error('Gemini', response.status, await response.text())
     await admin.from('item_scans').insert({ user_id: user.id, ok: false })
+    if (response.status === 429) {
+      return json({ error: 'tope', message: 'El escaneo esta muy ocupado en este momento. Intenta mas tarde o llena los datos a mano.' }, 429)
+    }
     return json({ error: 'No se pudo identificar la prenda. Intenta de nuevo.' }, 502)
   }
 

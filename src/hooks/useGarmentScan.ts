@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import imageCompression from 'browser-image-compression'
 import { useSession } from '@/hooks/useAuth'
@@ -57,8 +58,9 @@ export function useScansLeft() {
   })
 }
 
-// Despues de escanear, vuelve a contar
+// Despues de escanear, vuelve a contar. Siempre la misma funcion: si cambiara en cada render,
+// la pantalla del resultado volveria a mandar el escaneo una y otra vez
 export function useRefreshScansLeft() {
   const queryClient = useQueryClient()
-  return () => queryClient.invalidateQueries({ queryKey: ['scans-left'] })
+  return useCallback(() => queryClient.invalidateQueries({ queryKey: ['scans-left'] }), [queryClient])
 }
