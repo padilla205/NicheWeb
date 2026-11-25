@@ -46,7 +46,9 @@ export function FeedCard({ post, onOpen, onAuthorHidden, layoutId }: FeedCardPro
     <motion.article
       layoutId={layoutId}
       style={{ borderRadius: 24 }}
-      className={cn('group relative overflow-hidden bg-card shadow-[0_12px_28px_-16px_rgb(0_0_0/0.35)]', hoverLift)}
+      // Celular: toda la tarjeta se recorta con su curva, nada se puede salir de las esquinas (en escritorio
+      // no, para no cortar la sombra al pasar el mouse)
+      className={cn('group relative overflow-hidden bg-card shadow-[0_12px_28px_-16px_rgb(0_0_0/0.35)] max-md:[clip-path:inset(0_round_24px)]', hoverLift)}
     >
       <motion.div
         layoutId={layoutId && `${layoutId}-photo`}
