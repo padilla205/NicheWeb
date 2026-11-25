@@ -153,7 +153,8 @@ Reglas para no dar informacion falsa:
 - Si las fotos no muestran ropa, pon identified = false.
 
 Formato:
-- Escribe en español sin acentos (nada de a con acento, etc.), pero con ñ donde la palabra la lleva.
+- Escribe en español sin acentos, pero con ñ donde la palabra la lleva. Quita SOLO la tilde y deja la letra: algodon, poliester, nylon, licra, lana, Mexico, Tailandia, camiseta. Nunca quites letras: revisa que cada palabra este bien escrita.
+- En la etiqueta (material, hecho en) escribe las palabras completas en español aunque la etiqueta este en otro idioma (cotton = algodon, polyester = poliester, Made in Thailand = Tailandia).
 - model: nombre del modelo como se conoce en reventa (ej. "Jersey Xolos de Tijuana local 2012"). Si no sabes el modelo exacto, una descripcion corta ("Sudadera con capucha basica").
 - description: 1 o 2 frases sobre la prenda.
 - type: uno de los valores de la lista de tipos. Tipos (valor = nombre): ${lists.types.map((t) => `${t.value} = ${t.label}`).join('; ')}.
