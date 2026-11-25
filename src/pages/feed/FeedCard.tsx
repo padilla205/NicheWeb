@@ -46,8 +46,7 @@ export function FeedCard({ post, onOpen, onAuthorHidden, layoutId }: FeedCardPro
     <motion.article
       layoutId={layoutId}
       style={{ borderRadius: 24 }}
-      // isolate: Safari (iPhone) no recortaba las esquinas cuando la foto de adentro se anima
-      className={cn('group relative isolate overflow-hidden bg-card shadow-[0_12px_28px_-16px_rgb(0_0_0/0.35)]', hoverLift)}
+      className={cn('group relative overflow-hidden bg-card shadow-[0_12px_28px_-16px_rgb(0_0_0/0.35)]', hoverLift)}
     >
       <motion.div
         layoutId={layoutId && `${layoutId}-photo`}
@@ -57,15 +56,16 @@ export function FeedCard({ post, onOpen, onAuthorHidden, layoutId }: FeedCardPro
         onPointerDown={onPointerDown}
         onClick={onPhotoClick}
         onKeyDown={(event) => event.key === 'Enter' && onOpen()}
-        className="relative flex min-h-56 cursor-pointer items-center justify-center bg-muted outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        // La foto se recorta sola con la curva de la tarjeta: en iPhone, Safari no recortaba sus esquinas
+        className="relative flex min-h-56 cursor-pointer items-center justify-center bg-muted outline-none [clip-path:inset(0_round_24px)] focus-visible:ring-3 focus-visible:ring-ring/50"
         style={{ aspectRatio: post.aspect }}
       >
         <PostPhotos post={post} carouselId={`feed-${post.id}`} iconClassName="size-10" fit="cover" />
       </motion.div>
 
       {/* Degradados arriba y abajo para que el texto blanco se lea sobre cualquier foto */}
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgb(0_0_0/0.5),transparent_30%,transparent_55%,rgb(0_0_0/0.7))]" />
-      <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/20" />
+      <div className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[linear-gradient(to_bottom,rgb(0_0_0/0.5),transparent_30%,transparent_55%,rgb(0_0_0/0.7))]" />
+      <div className="pointer-events-none absolute inset-0 rounded-[inherit] bg-black/0 transition-colors duration-300 group-hover:bg-black/20" />
 
       {/* Arriba: autor y hace cuanto publico */}
       <header className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2 p-3 text-white">
