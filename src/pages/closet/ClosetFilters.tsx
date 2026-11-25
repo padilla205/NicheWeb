@@ -1,10 +1,12 @@
 import { SlidersHorizontal } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ChoicePill } from '@/components/ChoicePill'
 import { ExpandableSearch } from '@/components/ExpandableSearch'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CircleAction } from '@/components/CircleAction'
+import { MorphDialog } from '@/components/MorphDialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   type ClosetFilterValue,
@@ -37,32 +39,48 @@ function toggle<T>(list: T[], item: T) {
 }
 
 export function ClosetFilters({ value, onChange, circle = false }: ClosetFiltersProps) {
-  const [typeQuery, setTypeQuery] = useState('')
   const [open, setOpen] = useState(false)
-  const search = normalizeText(typeQuery)
-  const visibleZones = clothingZones
-    .map(({ zone, label, types }) => ({
-      zone,
-      label,
-      types: types.filter((type) => normalizeText(type.label).includes(search)),
-    }))
-    .filter(({ types }) => types.length > 0)
+  // Celular: boton en circulo que abre una ventana al frente, igual que los filtros del marketplace
+  const [origin, setOrigin] = useState<HTMLElement | null>(null)
   const active = countClosetFilters(value)
-  const set = (changes: Partial<ClosetFilterValue>) => onChange({ ...value, ...changes })
+  // Limpia los filtros del menu; la busqueda de arriba se queda
+  const clear = () => onChange({ ...emptyClosetFilters, query: value.query })
+  // Se monta solo mientras esta abierto, asi la busqueda de tipos se borra al cerrar
+  const fields = <FilterFields value={value} onChange={onChange} />
+
+  if (circle) {
+    return (
+      <>
+        <CircleAction
+          icon={SlidersHorizontal}
+          label="Filtros"
+          badge={active}
+          hidden={origin !== null}
+          iconTurn={180}
+          onClick={(event) => setOrigin(event.currentTarget)}
+        />
+        {/* A la pagina, fuera de la cabecera negra: si no, tomaria sus colores oscuros en modo claro */}
+        {createPortal(
+          <MorphDialog swipeUpToClose fullscreenOnMobile origin={origin} onClose={() => setOrigin(null)} title="Filtros" description="Elige que prendas quieres ver.">
+            {fields}
+            <div className="sticky -bottom-[calc(1rem+env(safe-area-inset-bottom))] -mx-4 -mb-[calc(1rem+env(safe-area-inset-bottom))] mt-auto flex gap-2 border-t bg-popover p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+              <Button variant="outline" className="flex-1 rounded-full" disabled={active === 0} onClick={clear}>
+                Limpiar
+              </Button>
+              <Button className="flex-1 rounded-full" onClick={() => setOrigin(null)}>
+                Ver prendas
+              </Button>
+            </div>
+          </MorphDialog>,
+          document.body,
+        )}
+      </>
+    )
+  }
 
   return (
-    // Al cerrar el menu se borra la busqueda de tipos
-    <Popover
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next)
-        if (!next) setTypeQuery('')
-      }}
-    >
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        {circle ? (
-          <CircleAction icon={SlidersHorizontal} label="Filtros" badge={active} active={open} iconTurn={180} />
-        ) : (
         <Button variant="outline" className="rounded-full">
           <SlidersHorizontal />
           {/* En celular solo el icono, para que quepan los tres botones del closet en una fila */}
@@ -71,7 +89,6 @@ export function ClosetFilters({ value, onChange, circle = false }: ClosetFilters
             <span className="ml-1 rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{active}</span>
           )}
         </Button>
-        )}
       </PopoverTrigger>
       {/* Apertura rapida: crece desde el boton en 200 ms y se cierra en 150 ms */}
       <PopoverContent
@@ -81,17 +98,31 @@ export function ClosetFilters({ value, onChange, circle = false }: ClosetFilters
       >
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-medium">Filtros</h2>
-          {/* Limpia los filtros del menu; la busqueda de arriba se queda */}
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={active === 0}
-            onClick={() => onChange({ ...emptyClosetFilters, query: value.query })}
-          >
+          <Button variant="ghost" size="sm" disabled={active === 0} onClick={clear}>
             Limpiar
           </Button>
         </div>
+        {fields}
+      </PopoverContent>
+    </Popover>
+  )
+}
 
+// Los filtros en si (perfil, temporada, color y tipo), iguales en las dos versiones
+function FilterFields({ value, onChange }: Omit<ClosetFiltersProps, 'circle'>) {
+  const [typeQuery, setTypeQuery] = useState('')
+  const search = normalizeText(typeQuery)
+  const visibleZones = clothingZones
+    .map(({ zone, label, types }) => ({
+      zone,
+      label,
+      types: types.filter((type) => normalizeText(type.label).includes(search)),
+    }))
+    .filter(({ types }) => types.length > 0)
+  const set = (changes: Partial<ClosetFilterValue>) => onChange({ ...value, ...changes })
+
+  return (
+    <>
         <FilterSection title="En tu perfil">
           <div className="flex flex-wrap gap-2">
             {visibilityOptions.map((option) => (
@@ -177,8 +208,7 @@ export function ClosetFilters({ value, onChange, circle = false }: ClosetFilters
             ))}
           </div>
         </FilterSection>
-      </PopoverContent>
-    </Popover>
+    </>
   )
 }
 
